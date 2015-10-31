@@ -1,0 +1,10 @@
+exportPattern("^[^\\.]")
+import(lme4)
+importFrom("grDevices", "rainbow")
+importFrom("graphics", "barplot", "boxplot", "lines", "par", "plot")
+importFrom("stats", "D", "binomial", "glm", "lm", "predict", "qnorm",
+           "quantile", "sd", "weighted.mean")
+S3method(summary,mlma.boot)
+S3method(plot,mlma.boot)
+S3method(print,mlma)
+S3method(plot,mlma)
