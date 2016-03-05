@@ -8,10 +8,10 @@ Transform and Organize Data for Mediation Analysis
 To transform variables and generate data sets for mediation analysis.
 }
 \usage{
-data.org(x, levelx, m, l1 = NULL, l2 = NULL, c1 = NULL, c1r = rep(1, length(c1)), 
-         c2 = NULL, c2r = rep(1, length(c2)), f01y = NULL, f10y = NULL, f02ky = NULL, 
-         f20ky = NULL, f01km1 = NULL, f01km2 = NULL, f10km = NULL, level, 
-         weight = rep(1, length(x)))
+data.org(x, levelx=1, levely=1, m, l1 = NULL, l2 = NULL, c1 = NULL, 
+         c1r = rep(1, length(c1)), c2 = NULL, c2r = rep(1, length(c2)), 
+         f01y = NULL, f10y = NULL, f02ky = NULL, f20ky = NULL, f01km1 = NULL, 
+         f01km2 = NULL, f10km = NULL, level, weight = rep(1, length(x)))
 }
 %- maybe also 'usage' for other objects documented here.
 \arguments{
@@ -19,25 +19,28 @@ data.org(x, levelx, m, l1 = NULL, l2 = NULL, c1 = NULL, c1r = rep(1, length(c1))
 the vector of the predictive variable.
 }
   \item{levelx}{
-the level of x (1 or 2).
+the level of x (1 or 2), 1 by default.
+}
+  \item{levely}{
+the level of y (1 or 2), 1 by default.
 }
   \item{m}{
 the matrix or vector of mediators.
 }
   \item{l1}{
-the column numbers of level 1 continuous mediators in m.
+the column numbers of level 1 continuous mediators in m or the list of names of the level 1 continuous mediators.
 }
   \item{l2}{
-the column numbers of level 2 continuous mediators in m.
+the column numbers of level 2 continuous mediators in m or the list of names of the level 2 continuous mediators.
 }
   \item{c1}{
-the column numbers of level 1 categorical mediators in m.
+the column numbers of level 1 categorical mediators in m or the list of names of the level 1 categorical mediators.
 }
   \item{c1r}{
 the reference groups of categorical mediators specified by c1.
 }
   \item{c2}{
-the column numbers of level 2 categorical mediators in m.
+the column numbers of level 2 categorical mediators in m or the list of names of the level 2 categorical mediators.
 }
   \item{c2r}{
 the reference groups of categorical mediators specified by c2.
@@ -49,19 +52,19 @@ the transformation function expressions on level 2 predictive variable (x.j) in 
 the transformation function expressions on level 1 predictive variable (xij-x.j) in explaining y.
 }
   \item{f02ky}{
-the transformation-function-expression list on level 2 mediators (m.jk) in explaining y (eg, list(2:3,c("log(x)","sqrt(x)"), "2*x")). The first item lists column numbers of the level 2 mediators in m, which needs to be transformed. By that order, each of the rest items of f01ky list the transformation functional expressions for each mediator. The mediators not specified in the list will not be transformed in any way.
+the transformation-function-expression list on level 2 mediators (m.jk) in explaining y (eg, list(2:3,c("log(x)","sqrt(x)"), "2*x")). The first item lists column numbers/variable names of the level 2 mediators in m, which needs to be transformed. By that order, each of the rest items of f01ky list the transformation functional expressions for each mediator. The mediators not specified in the list will not be transformed in any way.
 }
   \item{f20ky}{
-the transformation-function-expression list on level 1 mediators (mijk-m.jk) in explaining y.The first item lists column numbers of the level 1 mediators in m, which needs to be transformed. By that order, each of the rest items of f02ky list the transformation functional expressions for each mediator. The mediators not specified in the list will not be transformed in any way.
+the transformation-function-expression list on level 1 mediators (mijk-m.jk) in explaining y.The first item lists column numbers/variable names of the level 1 mediators in m, which needs to be transformed. By that order, each of the rest items of f02ky list the transformation functional expressions for each mediator. The mediators not specified in the list will not be transformed in any way.
 }
   \item{f01km1}{
-the transformation-function-expression list on level 2 predictor (x.j) in explaining the level 1 mediators. The first item lists column numbers of the level 1 mediators in m, which should be explained by the transformed predictor(s). By that order, each of the rest items of f01km1 lists the transformation functional expressions for the (aggregated) level 2 predictor in explaining each mediator. The mediators not specified in the list will be explained by the original format of the level 2 predictor only.
+the transformation-function-expression list on level 2 predictor (x.j) in explaining the level 1 mediators. The first item lists column numbers/variable names of the level 1 mediators in m, which should be explained by the transformed predictor(s). By that order, each of the rest items of f01km1 lists the transformation functional expressions for the (aggregated) level 2 predictor in explaining each mediator. The mediators not specified in the list will be explained by the original format of the level 2 predictor only.
 }
   \item{f01km2}{
-the transformation-function-expression list on level 2 predictor (x.j) in explaining the level 2 mediators. The first item lists column numbers of the level 2 mediators in m, which should be explained by the transformed level 2 predictor(s). By that order, each of the rest items of f01km2 lists the transformation functional expressions for the predictor in explaining each mediator. The mediators not specified in the list will be explained by the original format of the (aggregated) level 2 predictor only.
+the transformation-function-expression list on level 2 predictor (x.j) in explaining the level 2 mediators. The first item lists column numbers/variable names of the level 2 mediators in m, which should be explained by the transformed level 2 predictor(s). By that order, each of the rest items of f01km2 lists the transformation functional expressions for the predictor in explaining each mediator. The mediators not specified in the list will be explained by the original format of the (aggregated) level 2 predictor only.
 }
   \item{f10km}{
-the transformation-function-expression list on level 1 predictor (xij-x.j) in explaining the level 1 mediators. The first item lists column numbers of the level 1 mediators in m, which should be explained by the transformed level 1 predictor(s). By that order, each of the rest items of f10km lists the transformation functional expressions for the level 1 predictor in explaining each mediator. The mediators not specified in the list will be explained by the original format of the level 1 predictor only.
+the transformation-function-expression list on level 1 predictor (xij-x.j) in explaining the level 1 mediators. The first item lists column numbers/variable names of the level 1 mediators in m, which should be explained by the transformed level 1 predictor(s). By that order, each of the rest items of f10km lists the transformation functional expressions for the level 1 predictor in explaining each mediator. The mediators not specified in the list will be explained by the original format of the level 1 predictor only.
 }
   \item{level}{
 a vector that record the group number for each observation.
@@ -77,7 +80,7 @@ The function returns a list with transformed and organized data with the followi
   \item{l2x}{the column numbers of level 2 predictors in x1.}
   \item{m1y}{the level 1 mediator matrix in explaining y (eg, f20ky(mijk-m.jk) & mijk or binarized mijk for categorical mediators).}
   \item{m1}{a list where the first item identify column numbers of level 1 mediators in m (eg l1 and c1). For every mediator identified by m1[[1]] and by that order, each of the rest item identify the column number(s) in m1y the (transformed) value(s) of the mediator in explaining y.}
-  \item{m2y}{the level 2 mediator (original or aggregated) matrix in explaining y (eg, f02ky(m.jk) & m.jk.}
+  \item{m2y}{the level 2 mediator (original or aggregated) matrix in explaining y (eg, f02ky(m.jk) & m.jk).}
   \item{m2}{a list where the first item identify column numbers of level 2 mediators in m (eg l2 and c2). For every mediator identified by m2[[1]] and by that order, each of the rest item identify the column number(s) in m2y the (transformed) value(s) of the mediator in explaining y.}
   \item{m12}{a list where the first item identify column numbers of aggregated level 2 mediators in m (eg, aggregated f20ky). For every mediator identified by m12[[1]] and by that order, each of the rest item identify the column number(s) in m2y the aggregated value(s) of the mediator in explaining y.}
   \item{xm1}{the (transformed) level 1 and level 2 predictor(s) in explaining level 1 mediators.}
