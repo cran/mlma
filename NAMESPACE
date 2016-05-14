@@ -1,5 +1,7 @@
 exportPattern("^[^\\.]")
 import(lme4)
+import(splines)
+import(car)
 importFrom("grDevices", "rainbow")
 importFrom("graphics", "barplot", "boxplot", "lines", "par", "plot")
 importFrom("stats", "D", "binomial", "glm", "lm", "predict", "qnorm",
@@ -7,5 +9,7 @@ importFrom("stats", "D", "binomial", "glm", "lm", "predict", "qnorm",
 S3method(summary,mlma.boot)
 S3method(print,summary.mlma.boot)
 S3method(plot,mlma.boot)
+S3method(summary,mlma)
+S3method(print,summary.mlma)
 S3method(print,mlma)
 S3method(plot,mlma)

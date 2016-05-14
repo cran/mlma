@@ -9,7 +9,7 @@ Summary of "mlma.boot" Object
 This function provide summary statistics for all mediation effects.
 }
 \usage{
-\method{summary}{mlma.boot}(object, ..., alpha = 0.05)
+\method{summary}{mlma.boot}(object, ..., alpha = 0.05,RE=FALSE)
 \method{print}{summary.mlma.boot}(x, ...)
 }
 %- maybe also 'usage' for other objects documented here.
@@ -25,6 +25,9 @@ arguments to be passed to methods.
 }
   \item{alpha}{
 the significance level at which to draw the confidence bands.  
+}
+  \item{RE}{
+if true, print the relative effects, otherwise show the mediation effects.  
 }
 }
 \author{

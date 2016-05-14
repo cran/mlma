@@ -1,19 +1,172 @@
-# data clean
+# data clean #start line #292
 data.org<-function(x, levelx=1, levely=1, m, l1=NULL,l2=NULL, c1=NULL, c1r=rep(1,length(c1)), #levelx is the level of x
                    c2=NULL, c2r=rep(1,length(c2)), f01y=NULL, f10y=NULL,                  #level is the level of observations
                    f02ky=NULL, f20ky=NULL, f01km1=NULL, f01km2=NULL, f10km=NULL,          #weight is the level 1 weight of cases
                    level, weight=rep(1,length(x)))                                        #weight2 is the level 2 weight of cases, weight2=rep(1,length(unique(level[!is.na(level)])))   
-{x2fx<-function(x,func) #x is the list of original numerical vector, func is a vector of character functions. 
+{ns.dev<-function (x, df = NULL, knots = NULL, intercept = FALSE, Boundary.knots = range(x),derivs1=0) 
+{
+  nx <- names(x)
+  x <- as.vector(x)
+  nax <- is.na(x)
+  if (nas <- any(nax)) 
+    x <- x[!nax]
+  if (!missing(Boundary.knots)) {
+    Boundary.knots <- sort(Boundary.knots)
+    outside <- (ol <- x < Boundary.knots[1L]) | (or <- x > 
+                                                   Boundary.knots[2L])
+  }
+  else outside <- FALSE
+  if (!is.null(df) && is.null(knots)) {
+    nIknots <- df - 1L - intercept
+    if (nIknots < 0L) {
+      nIknots <- 0L
+      warning(gettextf("'df' was too small; have used %d", 
+                       1L + intercept), domain = NA)
+    }
+    knots <- if (nIknots > 0L) {
+      knots <- seq.int(0, 1, length.out = nIknots + 2L)[-c(1L, 
+                                                           nIknots + 2L)]
+      stats::quantile(x[!outside], knots)
+    }
+  }
+  else nIknots <- length(knots)
+  Aknots <- sort(c(rep(Boundary.knots, 4L), knots))
+  if (any(outside)) {
+    basis <- array(0, c(length(x), nIknots + 4L))
+    if (any(ol)) {
+      k.pivot <- Boundary.knots[1L]
+      xl <- cbind(1, x[ol] - k.pivot)
+      tt <- splineDesign(Aknots, rep(k.pivot, 2L), 4, c(0, 
+                                                        1),derivs=rep(derivs1,2L))
+      basis[ol, ] <- xl %*% tt
+    }
+    if (any(or)) {
+      k.pivot <- Boundary.knots[2L]
+      xr <- cbind(1, x[or] - k.pivot)
+      tt <- splineDesign(Aknots, rep(k.pivot, 2L), 4, c(0,1),derivs=rep(derivs1,2L))
+      basis[or, ] <- xr %*% tt
+    }
+    if (any(inside <- !outside)) 
+      basis[inside, ] <- splineDesign(Aknots, x[inside], 
+                                      4,derivs=rep(derivs1,length(x[inside])))
+  }
+  else basis <- splineDesign(Aknots, x, 4,derivs=rep(derivs1,length(x)))
+  const <- splineDesign(Aknots, Boundary.knots, 4, c(2, 2),derivs=rep(derivs1,length(Boundary.knots)))
+  if (!intercept) {
+    const <- const[, -1, drop = FALSE]
+    basis <- basis[, -1, drop = FALSE]
+  }
+  qr.const <- qr(t(const))
+  basis <- as.matrix((t(qr.qty(qr.const, t(basis))))[, -(1L:2L), 
+                                                     drop = FALSE])
+  n.col <- ncol(basis)
+  if (nas) {
+    nmat <- matrix(NA, length(nax), n.col)
+    nmat[!nax, ] <- basis
+    basis <- nmat
+  }
+  dimnames(basis) <- list(nx, 1L:n.col)
+  a <- list(degree = 3L, knots = if (is.null(knots)) numeric() else knots, 
+            Boundary.knots = Boundary.knots, intercept = intercept)
+  attributes(basis) <- c(attributes(basis), a)
+  class(basis) <- c("ns", "basis", "matrix")
+  basis
+}
+
+
+bs.dev<-function (x, df = NULL, knots = NULL, degree = 3, intercept = FALSE, 
+                  Boundary.knots = range(x),derivs1=0) 
+{
+  nx <- names(x)
+  x <- as.vector(x)
+  nax <- is.na(x)
+  if (nas <- any(nax)) 
+    x <- x[!nax]
+  if (!missing(Boundary.knots)) {
+    Boundary.knots <- sort(Boundary.knots)
+    outside <- (ol <- x < Boundary.knots[1L]) | (or <- x > 
+                                                   Boundary.knots[2L])
+  }
+  else outside <- FALSE
+  ord <- 1L + (degree <- as.integer(degree))
+  if (ord <= 1) 
+    stop("'degree' must be integer >= 1")
+  if (!is.null(df) && is.null(knots)) {
+    nIknots <- df - ord + (1L - intercept)
+    if (nIknots < 0L) {
+      nIknots <- 0L
+      warning(gettextf("'df' was too small; have used %d", 
+                       ord - (1L - intercept)), domain = NA)
+    }
+    knots <- if (nIknots > 0L) {
+      knots <- seq.int(from = 0, to = 1, length.out = nIknots + 
+                         2L)[-c(1L, nIknots + 2L)]
+      stats::quantile(x[!outside], knots)
+    }
+  }
+  Aknots <- sort(c(rep(Boundary.knots, ord), knots))
+  if (any(outside)) {
+    warning("some 'x' values beyond boundary knots may cause ill-conditioned bases")
+    derivs <- 0:degree
+    scalef <- gamma(1L:ord)
+    basis <- array(0, c(length(x), length(Aknots) - degree - 
+                          1L))
+    if (any(ol)) {
+      k.pivot <- Boundary.knots[1L]
+      xl <- cbind(1, outer(x[ol] - k.pivot, 1L:degree, 
+                           "^"))
+      tt <- splineDesign(Aknots, rep(k.pivot, ord), ord, 
+                         derivs+derivs1)
+      basis[ol, ] <- xl %*% (tt/scalef)
+    }
+    if (any(or)) {
+      k.pivot <- Boundary.knots[2L]
+      xr <- cbind(1, outer(x[or] - k.pivot, 1L:degree, 
+                           "^"))
+      tt <- splineDesign(Aknots, rep(k.pivot, ord), ord, 
+                         derivs+derivs1)
+      basis[or, ] <- xr %*% (tt/scalef)
+    }
+    if (any(inside <- !outside)) 
+      basis[inside, ] <- splineDesign(Aknots, x[inside], 
+                                      ord,derivs=rep(derivs1,length(x[inside])))
+  }
+  else basis <- splineDesign(Aknots, x, ord, derivs=rep(derivs1,length(x)))
+  if (!intercept) 
+    basis <- basis[, -1L, drop = FALSE]
+  n.col <- ncol(basis)
+  if (nas) {
+    nmat <- matrix(NA, length(nax), n.col)
+    nmat[!nax, ] <- basis
+    basis <- nmat
+  }
+  dimnames(basis) <- list(nx, 1L:n.col)
+  a <- list(degree = degree, knots = if (is.null(knots)) numeric(0L) else knots, 
+            Boundary.knots = Boundary.knots, intercept = intercept)
+  attributes(basis) <- c(attributes(basis), a)
+  class(basis) <- c("bs", "basis", "matrix")
+  basis
+}
+
+  x2fx<-function(x,func) #x is the list of original numerical vector, func is a vector of character functions. 
 { # eg.  func <- c("x","x+1","x+2","x+3","log(x)")
   func.list <- list()
-  test.data <- matrix(data=rep(x,length(func)),length(x),length(func))
-  test.data <- data.frame(test.data)
+  #test.data <- matrix(data=rep(x,length(func)),length(x),length(func))
+  #test.data <- data.frame(test.data)
+  result<-NULL
   for(i in 1:length(func)){
     func.list[[i]] <- function(x){}
     body(func.list[[i]]) <- parse(text=func[i])
   }
-  result <- mapply(do.call,func.list,lapply(test.data,list))
-  as.matrix(result)
+  #result <- mapply(do.call,func.list,lapply(test.data,list))
+  col_fun<-NULL
+  z<-1
+  for (i in 1:length(func.list))
+  {res<-as.matrix(func.list[[i]](x))
+   result<-cbind(result,res)
+   col_fun<-cbind(col_fun,c(z,z+ncol(res)-1))
+   z<-z+ncol(res)}
+  list(values=as.matrix(result),col_fun=as.matrix(col_fun))
 }
 
 one2two<-function(x,l1,weight=rep(1,length(x))) #l1 is a vector that distribute x to different level 1 groups
@@ -59,6 +212,12 @@ for(i in 1:length(func)){
   fun3<-paste(str[1],"x1,x2)",sep=",")
   fdx<-cbind(fdx,eval(parse(text=fun3)))
   }
+  else if(length(grep("ns",func[i]))>0)
+  {temp<-paste("ns.dev",substring(func[i],3,nchar(func[i])-1),",derivs1=1)",sep="")
+   fdx<-cbind(fdx,eval(parse(text=temp)))}
+  else if(length(grep("bs",func[i]))>0)
+  {temp<-paste("bs.dev",substring(func[i],3,nchar(func[i])-1),",derivs1=1)",sep="")
+   fdx<-cbind(fdx,eval(parse(text=temp)))}
   else{
     dx2x <- D(parse(text=func[i]), "x") 
     temp<-eval(dx2x)
@@ -117,7 +276,7 @@ for (i in cat1)
  m1y<-cbind(m1y,f)
  m1y.der<-cbind(m1y.der,f)
  m1<-append(m1,list((g+1):(g+l-1)))
- temp3<-z[1:dim1[1],]
+ temp3<-as.matrix(z[1:dim1[1],])
  colnames(temp3)<-paste(ntemp[j],"12",b,sep=".")  ##
  m12y<-cbind(m12y,temp3)
  m12y.der<-cbind(m12y.der,matrix(1,nrow(temp3),ncol(temp3))) ## for changes per unit percent
@@ -160,13 +319,13 @@ if(levelx==2)
   l2x<-1
   x1.der<-rep(1,n)}
  else
- {x1<-x2fx(x,f01y)
+ {x1<-x2fx(x,f01y)$values
   x1.der<-x2fdx(x,f01y)
-  l2x<-1:length(f01y)
   x1<-as.matrix(x1)
-  colnames(x1)<-paste("x",1:length(f01y),sep=".")
+  l2x<-1:ncol(x1)
+  colnames(x1)<-paste("x",1:ncol(x1),sep=".")
   x1.der<-as.matrix(x1.der)
-  colnames(x1.der)<-paste("x",1:length(f01y),sep=".")}
+  colnames(x1.der)<-paste("x",1:ncol(x1),sep=".")}
  
  if(!is.null(l2))        #create level 2 m variables to explain y
  {m2y<-as.matrix(m[,l2])
@@ -180,17 +339,17 @@ if(levelx==2)
     {a<-f02ky[[1]][i-1]
      if(sum(l2==a)>0)
      {b<-(1:length(l2))[l2==a]
-      d<-as.matrix(x2fx(m[,a],f02ky[[i]]))
+      d<-as.matrix(x2fx(m[,a],f02ky[[i]])$values)
       d.der<-as.matrix(x2fdx(m[,a],f02ky[[i]]))
-      colnames(d)<-paste(mnames[a],1:length(f02ky[[i]]),sep=".")
-      colnames(d.der)<-paste(mnames[a],1:length(f02ky[[i]]),sep=".")
+      colnames(d)<-paste(mnames[a],1:ncol(d),sep=".")
+      colnames(d.der)<-paste(mnames[a],1:ncol(d.der),sep=".")
       if(dim(as.matrix(d))[2]==1)
       {m2y[,b]<-d
        m2y.der[,b]<-d.der}
       else {
        m2y[,b]<-d[,1]
        m2y.der[,b]<-d.der[,1]
-       m2[[b+1]]<-c(m2[[b+1]],(dim(as.matrix(m2y))[2]+1):(dim(as.matrix(m2y))[2]+length(f02ky[[i]])-1))
+       m2[[b+1]]<-c(m2[[b+1]],(dim(as.matrix(m2y))[2]+1):(dim(as.matrix(m2y))[2]+ncol(d)-1))
        temp.m2<-c(colnames(m2y),colnames(d)[-1])
        m2y<-cbind(m2y,d[,-1])
        colnames(m2y)<-temp.m2
@@ -234,17 +393,17 @@ if(levelx==2)
     if(sum(l1==a)>0)
     {b<-(1:length(l1))[l1==a]
      tt<-one2two(m[,a],level,weight)
-     d<-as.matrix(x2fx(tt[,1],f02ky[[i]]))
+     d<-as.matrix(x2fx(tt[,1],f02ky[[i]])$values)
      d.der<-as.matrix(x2fdx(tt[,1],f02ky[[i]]))
-     colnames(d)<-paste(mnames[a],1:length(f02ky[[i]]),sep=".")
-     colnames(d.der)<-paste(mnames[a],1:length(f02ky[[i]]),sep=".")
+     colnames(d)<-paste(mnames[a],1:ncol(d),sep=".")
+     colnames(d.der)<-paste(mnames[a],1:ncol(d),sep=".")
      if(dim(as.matrix(d))[2]==1)
      {m12y[,b]<-d
       m12y.der[,b]<-d.der}
     else {
       m12y[,b]<-d[,1]
       m12y.der[,b]<-d.der[,1]
-      m12[[b+1]]<-c(m12[[b+1]],(dim(as.matrix(m12y))[2]+1):(dim(as.matrix(m12y))[2]+length(f02ky[[i]])-1))
+      m12[[b+1]]<-c(m12[[b+1]],(dim(as.matrix(m12y))[2]+1):(dim(as.matrix(m12y))[2]+ncol(d)-1))
       temp.m12<-c(colnames(m12y),colnames(d)[-1])
       m12y<-cbind(m12y,d[,-1])
       colnames(m12y)<-temp.m12
@@ -258,10 +417,10 @@ if(levelx==2)
     {a<-f20ky[[1]][i-1]
      b<-(1:length(l1))[l1==a]
      tt<-one2two(m[,a],level,weight)
-     d<-as.matrix(x2fx(tt[,2],f20ky[[i]]))
+     d<-as.matrix(x2fx(tt[,2],f20ky[[i]])$values)
      d.der<-as.matrix(x2fdx(tt[,2],f20ky[[i]]))
-     colnames(d)<-paste(mnames[a],1:length(f20ky[[i]]),sep=".")
-     colnames(d.der)<-paste(mnames[a],1:length(f20ky[[i]]),sep=".")
+     colnames(d)<-paste(mnames[a],1:ncol(d),sep=".")
+     colnames(d.der)<-paste(mnames[a],1:ncol(d),sep=".")
      if(ncol(d)==1)
      {m1y[,b]<-d
       m1y.der[,b]<-d.der
@@ -270,7 +429,7 @@ if(levelx==2)
        temp.namem1y<-c(colnames(m1y),colnames(d)[-1])
        m1y[,b]<-d[,1]
        m1y.der[,b]<-d.der[,1]
-       m1[[b+1]]<-c(m1[[b+1]],(dim(as.matrix(m1y))[2]+1):(dim(as.matrix(m1y))[2]+length(f20ky[[i]])-1))
+       m1[[b+1]]<-c(m1[[b+1]],(dim(as.matrix(m1y))[2]+1):(dim(as.matrix(m1y))[2]+ncol(d)-1))
        m1y<-cbind(m1y,d[,-1])
        m1y.der<-cbind(m1y.der,d.der[,-1])
        colnames(m1y)<-temp.namem1y
@@ -319,13 +478,21 @@ if(levelx==2)
    unifun<-unique(allfun)
    unifun1<-unifun[unifun!="x"]
    unifun2<-c("x",unifun1)
-   temp.xm2<-c(colnames(xm2),paste("x.2",1:length(unifun1),sep="."))
-   xm2.der<-cbind(xm2.der,x2fdx(xm2,unifun1))
-   xm2<-cbind(xm2,x2fx(xm2,unifun1))
+   d_d<-x2fx(xm2,unifun1)
+   d.der<-as.matrix(x2fdx(xm2,unifun1))
+   d<-as.matrix(d_d$values)
+   temp.xm2<-c(colnames(xm2),paste("x.2",1:ncol(d),sep="."))
+   xm2.der<-cbind(xm2.der,d.der)
+   xm2<-cbind(xm2,d)
    colnames(xm2)<-temp.xm2
    colnames(xm2.der)<-temp.xm2
+   col_fun<-cbind(c(1,1),d_d$col_fun+1)
    for(i in 2:length(f01km2))
-     fm22[[(1:length(lc2))[fm22[[1]]==f01km2[[1]][i-1]]+1]]<-order_char(unifun2,f01km2[[i]])
+    {ttemp<-order_char(unifun2,f01km2[[i]])
+     ttemp1<-NULL
+     for (j in 1:length(ttemp))
+       ttemp1<-c(ttemp1,col_fun[1,ttemp[j]]:col_fun[2,ttemp[j]])
+     fm22[[(1:length(lc2))[fm22[[1]]==f01km2[[1]][i-1]]+1]]<-ttemp1}
   }}
  else
  {m.2<-NULL
@@ -348,12 +515,19 @@ if(levelx==2)
    unifun<-unique(allfun)
    unifun1<-unifun[unifun!="x"]
    unifun2<-c("x",unifun1)
-   xm1<-cbind(x,x2fx(x,unifun1))
+   d_d<-x2fx(x,unifun1)
+   xm1<-cbind(x,d_d$values)
+   d<-as.matrix(d_d$values)
    xm1.der<-cbind(xm1.der,x2fdx(x,unifun1))
-   colnames(xm1)<-paste("x2",1:length(unifun2),sep=".")
-   colnames(xm1.der)<-paste("x2",1:length(unifun2),sep=".")
+   colnames(xm1)<-paste("x2",1:(1+ncol(d)),sep=".")
+   colnames(xm1.der)<-paste("x2",1:(1+ncol(d)),sep=".")
+   col_fun<-cbind(c(1,1),d_d$col_fun)
    for(i in 2:length(f01km1))
-     fm12[[(1:length(lc1))[fm12[[1]]==f01km1[[1]][i-1]]+1]]<-order_char(unifun2,f01km1[[i]])
+    {ttemp<-order_char(unifun2,f01km1[[i]])
+     ttemp1<-NULL
+     for (j in 1:length(ttemp))
+       ttemp1<-c(ttemp1,col_fun[1,ttemp[j]]:col_fun[2,ttemp[j]])
+     fm12[[(1:length(lc1))[fm12[[1]]==f01km1[[1]][i-1]]+1]]<-ttemp1}
   }}
  else
  {xm1<-NULL
@@ -363,11 +537,11 @@ if(levelx==2)
 else                          # to deal with level 1 x
 {x2<-one2two(x,level,weight)               #create level 1 and level 2 x variables that are used to predict y
  if(!is.null(f01y))
- {x1<-x2fx(x2[,1],f01y)
+ {x1<-as.matrix(x2fx(x2[,1],f01y)$values)
   x1.der<-x2fdx(x2[,1],f01y)
-  l2x<-1:length(f01y)
-  colnames(x1)<-paste("x.j",1:length(f01y),sep=".")
-  colnames(x1.der)<-paste("x.j",1:length(f01y),sep=".")}
+  l2x<-1:ncol(x1)
+  colnames(x1)<-paste("x.j",1:ncol(x1),sep=".")
+  colnames(x1.der)<-paste("x.j",1:ncol(x1),sep=".")}
  else
  {x1<-as.matrix(x2[,1])
   x1.der<-matrix(1,n,1)
@@ -375,10 +549,10 @@ else                          # to deal with level 1 x
   colnames(x1.der)<-"x.j"
   l2x<-1}
  if(!is.null(f10y))
- {x3<-x2fx(x2[,2],f10y)
+ {x3<-as.matrix(x2fx(x2[,2],f10y)$values)
   x3.der<-x2fdx(x2[,2],f10y)
-  l1x<-(length(l2x)+1):(length(l2x)+length(f10y))
-  temp.name<-c(colnames(x1),paste("xij",1:length(f10y),sep="."))
+  l1x<-(length(l2x)+1):(length(l2x)+ncol(x3))
+  temp.name<-c(colnames(x1),paste("xij",1:ncol(x3),sep="."))
   x1<-cbind(x1,x3)
   x1.der<-cbind(x1.der,x3.der)
   colnames(x1)<-temp.name
@@ -406,17 +580,18 @@ if(!is.null(l2))        #create level 2 m variables to explain y
   {a<-f02ky[[1]][i-1]
    if(sum(l2==a)>0)
    {b<-(1:length(l2))[l2==a]
-    d<-as.matrix(x2fx(m[,a],f02ky[[i]]))
+    d_d<-x2fx(m[,a],f02ky[[i]])
+    d<-as.matrix(d_d$values)
     d.der<-as.matrix(x2fdx(m[,a],f02ky[[i]]))
-    colnames(d)<-paste(mnames[a],1:length(f02ky[[i]]),sep=".")
-    colnames(d.der)<-paste(mnames[a],1:length(f02ky[[i]]),sep=".")
+    colnames(d)<-paste(mnames[a],1:ncol(d),sep=".")
+    colnames(d.der)<-paste(mnames[a],1:ncol(d),sep=".")
     if(dim(as.matrix(d))[2]==1)
      {m2y[,b]<-d
       m2y.der[,b]<-d.der}
    else {
     m2y[,b]<-d[,1]
     m2y.der[,b]<-d.der[,1]
-    m2[[b+1]]<-c(m2[[b+1]],(dim(as.matrix(m2y))[2]+1):(dim(as.matrix(m2y))[2]+length(f02ky[[i]])-1))
+    m2[[b+1]]<-c(m2[[b+1]],(dim(as.matrix(m2y))[2]+1):(dim(as.matrix(m2y))[2]+ncol(d)-1))
     temp.m2<-c(colnames(m2y),colnames(d)[-1])
     m2y<-cbind(m2y,d[,-1])
     colnames(m2y)<-temp.m2
@@ -465,17 +640,18 @@ if(!is.null(c2))        #binarize level 2 categorical variables to exaplain y
     if(sum(l1==a)>0)
     {b<-(1:length(l1))[l1==a]
      tt<-one2two(m[,a],level,weight)
-     d<-as.matrix(x2fx(tt[,1],f02ky[[i]]))
+     d_d<-x2fx(tt[,1],f02ky[[i]])
+     d<-as.matrix(d_d$vaules)
      d.der<-as.matrix(x2fdx(tt[,1],f02ky[[i]]))
-     colnames(d)<-paste(mnames[a],1:length(f02ky[[i]]),sep=".")
-     colnames(d.der)<-paste(mnames[a],1:length(f02ky[[i]]),sep=".")
+     colnames(d)<-paste(mnames[a],1:ncol(d),sep=".")
+     colnames(d.der)<-paste(mnames[a],1:ncol(d),sep=".")
     if(dim(as.matrix(d))[2]==1)
     {m2y[,m2yd+b]<-d
      m2y.der[,m2yd+b]<-d.der}
     else {
       m2y[,m2yd+b]<-d[,1]
       m2y.der[,m2yd+b]<-d.der[,1]
-      m12[[b+1]]<-c(m12[[b+1]],(dim(as.matrix(m2y))[2]+1):(dim(as.matrix(m2y))[2]+length(f02ky[[i]])-1))
+      m12[[b+1]]<-c(m12[[b+1]],(dim(as.matrix(m2y))[2]+1):(dim(as.matrix(m2y))[2]+ncol(d)-1))
       temp.m2<-c(colnames(m2y),colnames(d)[-1])
       m2y<-cbind(m2y,d[,-1])
       colnames(m2y)<-temp.m2
@@ -490,10 +666,11 @@ if(!is.null(c2))        #binarize level 2 categorical variables to exaplain y
     {a<-f20ky[[1]][i-1]
      b<-(1:length(l1))[l1==a]
      tt<-one2two(m[,a],level,weight)
-     d<-x2fx(tt[,2],f20ky[[i]])
+     d_d<-x2fx(tt[,2],f20ky[[i]])
+     d<-as.matrix(d_d$values)
      d.der<-x2fdx(tt[,2],f20ky[[i]])
-     colnames(d)<-paste(mnames[a],1:length(f20ky[[i]]),sep=".")
-     colnames(d.der)<-paste(mnames[a],1:length(f20ky[[i]]),sep=".")
+     colnames(d)<-paste(mnames[a],1:ncol(d),sep=".")
+     colnames(d.der)<-paste(mnames[a],1:ncol(d),sep=".")
      if(ncol(d)==1)
      {m1y[,b]<-d
       m1y.der[,b]<-d.der
@@ -502,7 +679,7 @@ if(!is.null(c2))        #binarize level 2 categorical variables to exaplain y
        m1y[,b]<-d[,1]
        m1y.der[,b]<-d.der[,1]
        tempname.m1y<-c(colnames(m1y),colnames(d)[-1])
-       m1[[b+1]]<-c(m1[[b+1]],(dim(as.matrix(m1y))[2]+1):(dim(as.matrix(m1y))[2]+length(f20ky[[i]])-1))
+       m1[[b+1]]<-c(m1[[b+1]],(dim(as.matrix(m1y))[2]+1):(dim(as.matrix(m1y))[2]+ncol(d)-1))
        m1y<-cbind(m1y,d[,-1])
        m1y.der<-cbind(m1y.der,d.der[,-1])
        colnames(m1y)<-tempname.m1y
@@ -556,13 +733,20 @@ if(!is.null(lc2))                  #create x variables to explain level 2 mediat
   unifun<-unique(allfun)
   unifun1<-unifun[unifun!="x"]
   unifun2<-c("x",unifun1)
-  temp.xm2<-c(colnames(xm2),paste("x.2",1:length(unifun1),sep="."))
   xm2.der<-cbind(xm2.der,x2fdx(xm2,unifun1))
-  xm2<-cbind(xm2,x2fx(xm2,unifun1))
+  d_d<-x2fx(xm2,unifun1)
+  d<-as.matrix(d_d$values)
+  temp.xm2<-c(colnames(xm2),paste("x.2",1:ncol(d),sep="."))
+  xm2<-cbind(xm2,d)
   colnames(xm2)<-temp.xm2
   colnames(xm2.der)<-temp.xm2
+  col_fun<-cbind(c(1,1),d_d$col_fun+1)
   for(i in 2:length(f01km2))
-    fm22[[(1:length(lc2))[fm22[[1]]==f01km2[[1]][i-1]]+1]]<-order_char(unifun2,f01km2[[i]])
+   {ttemp<-order_char(unifun2,f01km2[[i]])
+    ttemp1<-NULL
+    for (j in 1:length(ttemp))
+      ttemp1<-c(ttemp1,col_fun[1,ttemp[j]]:col_fun[2,ttemp[j]])
+    fm22[[(1:length(lc2))[fm22[[1]]==f01km2[[1]][i-1]]+1]]<-ttemp1}
 }}
 else
 {m.2<-NULL
@@ -585,12 +769,19 @@ else
    unifun<-unique(allfun)
    unifun1<-unifun[unifun!="x"]
    unifun2<-c("x",unifun1)
-   xm1<-cbind(x2[,1],x2fx(x2[,1],unifun1))
+   d_d<-x2fx(x2[,1],unifun1)
+   d<-as.matrix(d_d$values)
+   xm1<-cbind(x2[,1],d)
    xm1.der<-cbind(rep(1,n),x2fdx(x2[,1],unifun1))
-   colnames(xm1)<-c("x.2",paste("x.2",1:length(unifun1),sep="."))
-   colnames(xm1.der)<-c("x.2",paste("x.2",1:length(unifun1),sep="."))
+   colnames(xm1)<-c("x.2",paste("x.2",1:ncol(d),sep="."))
+   colnames(xm1.der)<-c("x.2",paste("x.2",1:ncol(d),sep="."))
+   col_fun<-cbind(c(1,1),d_d$col_fun+1)
    for(i in 2:length(f01km1))
-     fm12[[(1:length(lc1))[fm12[[1]]==f01km1[[1]][i-1]]+1]]<-order_char(unifun2,f01km1[[i]])
+    {ttemp<-order_char(unifun2,f01km1[[i]])
+     ttemp1<-NULL
+     for (j in 1:length(ttemp))
+      ttemp1<-c(ttemp1,col_fun[1,ttemp[j]]:col_fun[2,ttemp[j]])
+     fm12[[(1:length(lc1))[fm12[[1]]==f01km1[[1]][i-1]]+1]]<-ttemp1}
   }
   else
   {xm1<-as.matrix(x2[,1])
@@ -608,7 +799,8 @@ else
    unifun<-unique(allfun)
    unifun1<-unifun[unifun!="x"]
    unifun2<-c("x",unifun1)
-   temp2<-x2fx(x2[,2],unifun1)
+   d_d<-x2fx(x2[,2],unifun1)
+   temp2<-as.matrix(d_d$values)
    #temp3<-apply(temp2,2,one2two,level,weight)
    temp2.der<-x2fdx(x2[,2],unifun1)
    #temp3.der<-apply(temp2.der,2,one2two,level,weight)
@@ -616,9 +808,14 @@ else
    #   fm12[[(1:length(lc1))[fm12[[1]]==f10km[[1]][i-1]]+1]]<-c(fm12[[(1:length(lc1))[fm12[[1]]==f10km[[1]][i-1]]+1]],
    #                                                           order_char(unifun2,f10km[[i]])+dimxm1[2])
    #dimxm1<-c(dimxm1[1],dimxm1[2]+dim(temp3)[2])
+   col_fun<-cbind(c(1,1),d_d$col_fun+1)
    for(i in 2:length(f10km))
-     fm11[[(1:length(lc1))[fm11[[1]]==f10km[[1]][i-1]]+1]]<-order_char(unifun2,f10km[[i]])+dimxm1[2]
-   temp.xm1<-c(colnames(xm1),"x1",paste("x1",1:length(unifun1),sep="."))
+    {ttemp<-order_char(unifun2,f10km[[i]])
+     ttemp1<-NULL
+     for (j in 1:length(ttemp))
+      ttemp1<-c(ttemp1,col_fun[1,ttemp[j]]:col_fun[2,ttemp[j]])
+     fm11[[(1:length(lc1))[fm11[[1]]==f10km[[1]][i-1]]+1]]<-ttemp1+dimxm1[2]}
+   temp.xm1<-c(colnames(xm1),"x1",paste("x1",1:ncol(temp2),sep="."))
    xm1<-cbind(xm1,x2[,2],temp2)
    xm1.der<-cbind(xm1.der,rep(1,n),temp2.der)
    colnames(xm1)<-temp.xm1
@@ -657,14 +854,19 @@ colnames(xm2.der)<-colnames(xm2)}
 
 list(x1=x1, x1.der=x1.der, l1x=l1x, l2x=l2x, m1y=m1y, m1y.der=m1y.der,
      m1=m1, m2y=m2y, m2y.der=m2y.der, m2=m2, m12=m12, xm1=xm1, xm1.der=xm1.der,
-     fm11=fm11, fm12=fm12, m.2=m.2, xm2=xm2, xm2.der=xm2.der, fm22=fm22)
+     fm11=fm11, fm12=fm12, m.2=m.2, xm2=xm2, xm2.der=xm2.der, fm22=fm22,
+     parameter=list(levelx=levelx, levely=levely, mnames=mnames,l1 = l1, l2 = l2,  
+                    c1 = c1, c1r = c1r, c2 = c2, c2r = c2r, f01y = f01y, level=level,
+                    f10y = f10y, f02ky = f02ky, f20ky = f20ky, f01km1 = f01km1, 
+                    f01km2 = f01km2, f10km = f10km, level, weight = weight))
 }
 
 #multilevel mediation analysis
-mlma<-function(y, biny=FALSE, data1, x, levelx=1, levely=1, m, l1=NULL,l2=NULL, c1=NULL, #levelx is the level of x
+mlma<-function(y, biny=FALSE, data1=NULL, x, levelx=1, levely=1, m, l1=NULL,l2=NULL, c1=NULL, #levelx is the level of x
                c1r=rep(1,length(c1)), c2=NULL, c2r=rep(1,length(c2)), level,  
                weight=rep(1,length(x)), random="(1|level)", random.m1=NULL,intercept=TRUE, 
-               covariates=NULL,cy1=NULL, cy2=NULL, cm=NULL,joint=NULL)                               
+               covariates=NULL,cy1=NULL, cy2=NULL, cm=NULL,joint=NULL,org.data=FALSE,
+               f01y=NULL, f10y=NULL, f02ky=NULL, f20ky=NULL, f01km1=NULL, f01km2=NULL, f10km=NULL)                               
   
 {two<-function(x, level, weight=rep(1,nrow(as.matrix(x))))
 {x<-as.matrix(x)
@@ -711,6 +913,11 @@ if(is.character(l2))
 if(is.character(c2))
   c2<-unlist(sapply(c2,grep,mnames))
 
+#organize the data if it has not been done
+if(org.data)
+  data1<-data.org(x, levelx, levely, m, l1,l2, c1, c1r,c2, c2r, f01y, f10y,
+                  f02ky, f20ky, f01km1, f01km2, f10km, level, weight)
+      
 if(!is.null(data1$l1x))  #l1x could be NULL when x is level 2
  {tt2<-as.matrix(data1$x1[,data1$l1x])
   colnames(tt2)<-colnames(data1$x1)[data1$l1x]}
@@ -984,8 +1191,8 @@ if(levelx==2)    #analysis when x is a level 2 variable
     else temp.5<-rep(T,length(unique(level)))
     for (k in data1$m2[[temp+1]])
     {temp.6<-(temp.5 | (two(data1$m2y[,k],level)==1))
-     temp.data<-cbind(y=two(data1$m2y[temp.6,k],level=level[temp.6]),expl.m[temp.6,])
-     colnames(temp.data)<-c("y","level",colnames(expl.m))
+     temp.data<-cbind(y=two(data1$m2y[temp.6,k],level=level[temp.6]),expl.m[temp.6,]) #
+     colnames(temp.data)<-c("y",colnames(expl.m)) #"level",
      model<-glm(frml.m,data=data.frame(temp.data),
                 family=binomial(link="logit"))
      temp.data<-expl.m
@@ -1254,10 +1461,9 @@ else
   iej_list<-NULL
 a<-list(de1=DE1,de2=two(DE2,level),ie1=ie1,ie2=ie2,ie12=ie12,
         f1=f1,fm1=fm1,fm2=fm2, ie1_list=ie1_list, ie2_list=ie2_list,
-        iej2_list=iej_list,
-        ie12_1=ie12_1, ie12_2=ie12_2, ie1_1=ie1_1,ie1_2=ie1_2,
-        ie2_1=ie2_1,ie2_2=ie2_2,x=x, x.j=two(x,level), m=m, 
-        level=level, levelx=levelx, weight=weight)
+        iej2_list=iej_list,ie12_1=ie12_1, ie12_2=ie12_2, ie1_1=ie1_1,
+        ie1_2=ie1_2,ie2_1=ie2_1,ie2_2=ie2_2,x=x, x.j=two(x,level), 
+        m=m, covariates=covariates, intercept=intercept, cm=cm,data1=data1)
 class(a)<-"mlma"
 return(a)
 }
@@ -1301,7 +1507,7 @@ colnames(x2)<-colnames(x)
 x2
 }
 
-levelx<-object$levelx
+levelx<-object$data1$parameter$levelx
 de2<-weighted.mean(object$de2,w2)
 if(!is.null(object$ie2))
 {ie2<-apply(object$ie2,2,weighted.mean,w2)
@@ -1337,10 +1543,10 @@ else
 
 te2<-sum(c(de2,ie2,ie12))
 if(levelx==1)
-{de1<-two(object$de1,object$level,object$weight)
+{de1<-two(object$de1,object$data1$parameter$level,object$data1$parameter$weight)
 de1<-weighted.mean(de1,w2)
 if(!is.null(object$ie1))
-{ie1<-two(object$ie1,object$level,object$weight)
+{ie1<-two(object$ie1,object$data1$parameter$level,object$data1$parameter$weight)
 ie1<-apply(ie1,2,weighted.mean,w2)
 ie1_show<-NULL
 for (i in 1:(length(object$ie1_list)-1))
@@ -1373,7 +1579,8 @@ if(is.character(c2))
 data1<-data.org(x, levelx, levely, m, l1, l2, c1, c1r, c2, c2r, f01y, f10y, f02ky, f20ky,
                 f01km1, f01km2, f10km, level, weight)
 full<-mlma(y, biny, data1, x, levelx, levely, m, l1,l2, c1, c1r, 
-           c2, c2r, level, weight, random, random.m1,intercept, covariates, cy1, cy2, cm, joint)                               
+           c2, c2r, level, weight, random, random.m1,intercept, 
+           covariates, cy1, cy2, cm, joint)                               
 de1<-NULL
 de2<-NULL
 ie1<-NULL
@@ -1450,7 +1657,7 @@ print.mlma<-function(x,...,w2=rep(1,length(object$de2)))
  x2
 }
 
-levelx<-object$levelx
+levelx<-object$data1$parameter$levelx
 de2<-weighted.mean(object$de2,w2)
 cat("Level 2 Direct Effect:")
 print(de2)
@@ -1486,12 +1693,12 @@ if(!is.null(object$iej2_list)) #added 3/2/2016 to show level 2 joint effects
 cat("\nLevel 2 total effect is:")
 print(sum(c(de2,ie2,ie12)))
 if(levelx==1)
-{de1<-two(object$de1,object$level,object$weight)
+{de1<-two(object$de1,object$data1$parameter$level,object$data1$parameter$weight)
  de1<-weighted.mean(de1,w2)
  cat("\nLevel 1 Direct Effect:")
  print(de1)
  if(!is.null(object$ie1))
- {ie1<-two(object$ie1,object$level,object$weight)
+ {ie1<-two(object$ie1,object$data1$parameter$level,object$data1$parameter$weight)
   ie1<-apply(ie1,2,weighted.mean,w2)
   ie1_show<-NULL
   for (i in 1:(length(object$ie1_list)-1))
@@ -1504,6 +1711,39 @@ if(levelx==1)
  cat("\nLevel 1 total effect is:")
  print(sum(c(de1,ie1)))
 } 
+}
+
+summary.mlma<-function(object,...,type="III")
+{f1<-Anova(object$f1,type=type)
+ mnames<-colnames(object$m)
+ if(!is.null(object$fm1[[1]]))
+  {temp<-object$fm1
+   temp[[1]]<-NULL
+   fm1<-lapply(temp,Anova,type="III")
+   fm1<-append(list(mnames[object$fm1[[1]]]),fm1)
+  }
+ else fm1<-NULL
+ if(!is.null(object$fm2[[1]]))
+ {temp<-object$fm2
+  temp[[1]]<-NULL
+  fm2<-lapply(temp,Anova,type="III")
+  fm2<-append(list(mnames[object$fm2[[1]]]),fm2)
+ }
+ else fm2<-NULL
+a<-list(f1=f1,fm1=fm1,fm2=fm2)
+class(a)<-"summary.mlma"
+return(a)
+}
+
+print.summary.mlma<-function(x,...)
+{cat("1. Anova on the Full Model:\n")
+ print(x$f1)
+ if(!is.null(x$fm1))
+ {cat("\n\n2. Anova on models for Level 1 mediators:\n")
+   print(x$fm1)}
+ if(!is.null(x$fm2))
+ {cat("\n\n3. Anova on models for Level 2 mediators:\n")
+   print(x$fm2)}
 }
 
 
@@ -1527,7 +1767,7 @@ plot.mlma<-function(x,..., var=NULL, cate=FALSE, w2=rep(1,length(object$de2)))
 op <- par(no.readonly = TRUE) # the whole list of settable par's.
 if(is.null(var))
 {par(mfrow=c(1,1))
- levelx<-object$levelx
+ levelx<-object$data1$parameter$levelx
  de2<-weighted.mean(object$de2,w2)
  if(!is.null(object$ie2))
  {ie2<-apply(object$ie2,2,weighted.mean,w2)
@@ -1554,12 +1794,12 @@ if(is.null(var))
  barplot(re[d],horiz=TRUE,xlab="Relative Effects of Level 2 Mediation Effects",
          names=name1[d], cex.names=0.9,beside=FALSE,cex.axis=0.9,las=1,xlim=range(re),
          col = rainbow(length(d), start = 3/6, end = 4/6))
- if(object$levelx==1)
+ if(object$data1$parameter$levelx==1)
  {readline("Press <return> to continue") 
-  de1<-two(object$de1,object$level,object$weight)
+  de1<-two(object$de1,object$data1$parameter$level,object$data1$parameter$weight)
   de1<-weighted.mean(de1,w2)
   if(!is.null(object$ie1))
-  {ie1<-two(object$ie1,object$level,object$weight)
+  {ie1<-two(object$ie1,object$data1$parameter$level,object$data1$parameter$weight)
    ie1<-apply(ie1,2,weighted.mean,w2)
    ie1_show<-NULL
    for (i in 1:(length(object$ie1_list)-1))
@@ -1584,7 +1824,7 @@ else{
   a2<-(1:length(object$ie2_list[[1]]))[object$ie2_list[[1]]==var]
   l1<-2
   if(length(a1)>0)
-  {if(object$levelx==1)
+  {if(object$data1$parameter$levelx==1)
   {x.ord<-order(object$x)
    m.ord<-order(m)
    par(mfcol=c(3,length(object$ie1_list[[a1+1]])))
@@ -1624,8 +1864,8 @@ else{
         colnames(ie2)<-colnames(object$ie2_1)[object$ie2_list[[a2+1]]]
   }
   x.j.ord<-order(object$x.j)
-  m.j<-two(m,object$level)
-  y.j<-two(y,object$level)
+  m.j<-two(m,object$data1$parameter$level)
+  y.j<-two(y,object$data1$parameter$level)
   par(mfcol=c(3,ncol(ie2)))
   for(i in 1:ncol(ie2))
   {plot(object$x.j[x.j.ord],ie2[x.j.ord,i],xlab="x.j",ylab=paste("IE of",
@@ -1651,7 +1891,7 @@ par(op)
 }
 
 
-summary.mlma.boot<-function(object,...,alpha=0.05)
+summary.mlma.boot<-function(object,...,alpha=0.05, RE=FALSE)
 {summarize.boot<-function(vector,n,a1,a2,b1,b2)  #vector is stacked results from bootstrap samples
   #n is the number of elements from each bootstrap sample
 {mat<-matrix(vector,n,length(vector)/n)
@@ -1706,26 +1946,41 @@ if(!is.null(object$de2))
                   summarize.boot(te2,n,a1,a2,b1,b2))   
 }
 if(!is.null(object$sum.boot1))
-  combine.effect1<- apply(object$sum.boot1,2,summarize.boot,1,a1,a2,b1,b2)
+  {combine.effect1<- apply(object$sum.boot1,2,summarize.boot,1,a1,a2,b1,b2)
+   temp.re1<-object$sum.boot1[,-ncol(object$sum.boot1)]/object$sum.boot1[,ncol(object$sum.boot1)]
+   combine.re1<-apply(temp.re1,2,summarize.boot,1,a1,a2,b1,b2)*100}
 else
-  combine.effect1<-NULL
+   {combine.effect1<-NULL
+    combine.re1<-NULL}
 combine.effect2<- apply(object$sum.boot2,2,summarize.boot,1,a1,a2,b1,b2)
+temp.re2<-object$sum.boot2[,-ncol(object$sum.boot2)]/object$sum.boot2[,ncol(object$sum.boot2)]
+combine.re2<-apply(temp.re2,2,summarize.boot,1,a1,a2,b1,b2)*100
+
 a<-list(total.effect1=total.effect1, total.effect2=total.effect2,
             direct.effect1=direct.effect1,direct.effect2=direct.effect2,
             indirect.effect1=indirect.effect1,indirect.effect2=indirect.effect2,
             indirect.effect12=indirect.effect12, 
-            combine.effect=list(level1=combine.effect1,level2=combine.effect2),
-            levelx=object$levelx)
+        combine.effect=list(level1=combine.effect1,level2=combine.effect2),
+        combine.re=list(level1=combine.re1,level2=combine.re2),
+        levelx=object$levelx,RE=RE)
 class(a)<-"summary.mlma.boot"
 return(a)
 }
 
 print.summary.mlma.boot<-function(x,...)
+{if(x$RE)
 {if(x$levelx==1)
+{cat("MLMA Analysis: Estimated Relative Effects at level 1 (%):\n")
+  print(x$combine.re$level1)}
+  cat("MLMA Analysis: Estimated Relative Effects at level 2 (%):\n")
+  print(x$combine.re$level2)
+}
+  else
+  {if(x$levelx==1)
  {cat("MLMA Analysis: Estimated Mediation Effects at level 1:\n")
   print(x$combine.effect$level1)}
  cat("MLMA Analysis: Estimated Mediation Effects at level 2:\n")
- print(x$combine.effect$level2)
+ print(x$combine.effect$level2)}
 }
 
 plot.mlma.boot<-function(x,..., var=NULL, alpha=0.05)
