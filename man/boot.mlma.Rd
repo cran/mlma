@@ -14,7 +14,9 @@ boot.mlma(y, biny = FALSE, x, levelx, levely, m, l1 = NULL, l2 = NULL, c1 = NULL
           f01km2 = NULL, f10km = NULL, level, weight = rep(1, length(x)), 
           random = "(1|level)", random.m1 = NULL, intercept = TRUE,
           w2=rep(1,length(unique(level[!is.na(level)]))),
-          boot = 100, seed = 1, covariates=NULL,cy1=NULL,cy2=NULL,cm=NULL,joint=NULL)
+          boot = 100, seed = 1, covariates=NULL,cy1=NULL,cy2=NULL,cm=NULL,
+          joint=NULL,x.new=x, m.new=m, level.new=level,weight.new=weight,
+          covariates.new=covariates)
 }
 %- maybe also 'usage' for other objects documented here.
 \details{
@@ -125,10 +127,13 @@ the column numbers of covariates that are level 1 and used to explain y.
 the column numbers of covariates that are level 2 and used to explain y.
 }
   \item{cm}{
-the column numbers of covariates that are used to explain m. cm[[1]] gives the mediators (in l1, cl, l2, or c2) that can be partially explained by covariates. Each of the rest items of the cm list shows the column number(s) in covariates that should be used to explain each mediator listed in cm[[1]] and by that order.
+the column numbers of covariates that are used to explain m. cm[[1]] gives the mediators (in l1, cl, l2, or c2) that can be partially explained by covariates. Each of the rest items of the cm list shows the column number(s) in covariates that should be used to explain each mediator listed in cm[[1]] and by that order.For example, joint=list(1,c("m.2","m.4")) means find the joint effects of level 1 mediators m.2 and m.4.
 }
   \item{joint}{
 the list of group(s) of mediators whose joint mediation effect is of interests. joint[[1]] list the levels of mediators in each group and by the order of the list. Note that if any mediator in the group is of level 2, the level of the group should be 2.
+}
+  \item{x.new, covariates.new, m.new, level.new, weight.new}{
+the settings that we want to make inferences on the mediation effects. If m.new=NULL, generate new mediators from x.new.
 }
 }
 \value{
