@@ -11,7 +11,7 @@ Bootstrap samples are selected from the original data set. The bootstrap sample 
 boot.mlma(y, biny = FALSE, x, levelx, levely, m, l1 = NULL, l2 = NULL, c1 = NULL, 
           c1r = rep(1, length(c1)), c2 = NULL, c2r = rep(1, length(c2)), 
           f01y = NULL, f10y = NULL, f02ky = NULL, f20ky = NULL, f01km1 = NULL, 
-          f01km2 = NULL, f10km = NULL, level, weight = rep(1, length(x)), 
+          f01km2 = NULL, f10km = NULL, level=1:length(y), weight = rep(1, length(x)), 
           random = "(1|level)", random.m1 = NULL, intercept = TRUE,
           w2=rep(1,length(unique(level[!is.na(level)]))),
           boot = 100, seed = 1, covariates=NULL,cy1=NULL,cy2=NULL,cm=NULL,
@@ -21,18 +21,13 @@ boot.mlma(y, biny = FALSE, x, levelx, levely, m, l1 = NULL, l2 = NULL, c1 = NULL
 %- maybe also 'usage' for other objects documented here.
 \details{
 The multilevel mediation is based on the following linear multilevel additive models:
-\deqn{Y_{ij} = u_{0j}^Y(X_{.j}, \mathbf{M}_{.j}, \mathbf{Z}_{.j})+u_{1j}^Y(X_{ij}-X_{.j})+\sum_{k=1}^Ku_{2jk}^Y(M_{ijk}-M_{.jk})+u_{3j}^Y(\mathbf{Z}_{ij}-\mathbf{Z}_{.j})+r_{ij}^Y}
-
-where \deqn{u_{0j}^Y(X_{.j}, \mathbf{M}_{.j}, \mathbf{Z}_{.j}) = c_{00}^Y + {\boldsymbol{\beta}_{01}^Y}^T\mathbf{f}_{01}^Y(X_{.j}) + \sum_{k=1}^K{\boldsymbol{\beta}_{02k}^Y}^T\mathbf{f}_{02k}^Y(M_{.jk}) + {\boldsymbol{\beta}_{03}^Y}^T\mathbf{Z}_{.j} + r_{0j}^Y}
-\deqn{u_{1j}^Y(X_{ij}-X_{.j}) = {\boldsymbol{\beta}_{10}^Y}^T\mathbf{f}_{10}^Y(X_{ij}-X_{.j}) + r_{1j}^Y}
-\deqn{u_{2jk}^Y(M_{ijk}-M_{.jk}) = {\boldsymbol{\beta}_{20k}^Y}^T\mathbf{f}_{20k}^Y(M_{ijk}-M_{.jk}) + r_{2jk}^Y, \mbox{~~~~~~}k=1,\ldots,K}
-\deqn{u_{3j}^Y(\mathbf{Z}_{ij}-\mathbf{Z}_{.j}) = {\boldsymbol{\beta}_{30}^Y}^T(\mathbf{Z}_{ij}-\mathbf{Z}_{.j}) + r_{3j}^Y}
+\deqn{Y_{ij} = u_{0j}^Y(X_{.j}, \mathbf{M}_{.j}, \mathbf{Z}_{.j})+{\boldsymbol{\beta}_{10}^Y}^T\mathbf{f}_{10}^Y(X_{ij}-X_{.j})+\sum_{k=1}^K{\boldsymbol{\beta}_{20k}^Y}^T\mathbf{f}_{20k}^Y(M_{ijk}-M_{.jk})+{\boldsymbol{\beta}_{30}^Y}^T(\mathbf{Z}_{ij}-\mathbf{Z}_{.j})+r_{ij}^Y,}
+where \deqn{u_{0j}^Y(X_{.j}, \mathbf{M}_{.j}, \mathbf{Z}_{.j}) = c_{00}^Y + {\boldsymbol{\beta}_{01}^Y}^T\mathbf{f}_{01}^Y(X_{.j}) + \sum_{k=1}^K{\boldsymbol{\beta}_{02k}^Y}^T\mathbf{f}_{02k}^Y(M_{.jk}) + {\boldsymbol{\beta}_{03}^Y}^T\mathbf{Z}_{.j} + r_{0j}^Y.}
 For \eqn{k=1,\ldots,K,}
-\deqn{M_{.jk} = c_{00k}^M+u_{1jk}^M(X_{ij}-X_{.j})+r_{ijk}^M}
-\deqn{u_{0jk}^M(X_{.j}) = c_{00k}^M + {\boldsymbol{\beta}_{01k}^M}^T\mathbf{f}_{01k}^{M1}(X_{.j}) + r_{0jk}^M}
-\deqn{u_{1jk}^M(X_{ij}-X_{.j}) = {\boldsymbol{\beta}_{10k}^M}^T\mathbf{f}_{10k}^M(X_{ij}-X_{.j}) + r_{1jk}^M}
+\deqn{M_{.jk} = u_{0jk}^M(X_{.j})+{\boldsymbol{\beta}_{10k}^M}^T\mathbf{f}_{10k}^M(X_{ij}-X_{.j})+r_{ijk}^M,}
+\deqn{u_{0jk}^M(X_{.j}) = c_{00k}^M + {\boldsymbol{\beta}_{01k}^M}^T\mathbf{f}_{01k}^{M1}(X_{.j}) + r_{0jk}^M.}
 If for some k, \eqn{M_k} is level 2 variable,
-\deqn{M_{.jk} = c_{00k}^M + {\boldsymbol{\beta}_{01k}^M}^T\mathbf{f}_{01k}^{M2}(X_{.j}) + r_{0jk}^M} 
+\deqn{M_{.jk} = c_{00k}^M + {\boldsymbol{\beta}_{01k}^M}^T\mathbf{f}_{01k}^{M2}(X_{.j}) + r_{0jk}^M.} 
 
 Note that in the models, \eqn{\mathbf{f}(\cdot)=(f_1(\cdot), f_2(\cdot), \cdots, f_l(\cdot))^T} is a set of l transformation functions on \eqn{\cdot}, with the corresponding linear coefficients vector \eqn{\boldsymbol{\beta}=(\beta_1, \beta_2, \cdots, \beta_l)^T}. \eqn{\mathbf{f}} and l are known for model fitting. l may be different with \eqn{\mathbf{f}} of different sub- and super-scripts.}
 \arguments{

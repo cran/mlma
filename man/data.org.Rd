@@ -11,7 +11,7 @@ To transform variables and generate data sets for mediation analysis.
 data.org(x, levelx=1, levely=1, m, l1 = NULL, l2 = NULL, c1 = NULL, 
          c1r = rep(1, length(c1)), c2 = NULL, c2r = rep(1, length(c2)), 
          f01y = NULL, f10y = NULL, f02ky = NULL, f20ky = NULL, f01km1 = NULL, 
-         f01km2 = NULL, f10km = NULL, level, weight = rep(1, length(x)))
+         f01km2 = NULL, f10km = NULL, level=1:length(x), weight = rep(1, length(x)))
 }
 %- maybe also 'usage' for other objects documented here.
 \arguments{
@@ -76,18 +76,14 @@ the weight of cases in groups.
 
 \details{
 The arguments starting with "f" are used to specify the transformation functions of the predictor or mediators in explaining y, or the transformation functions of the predictor in explaining the mediators. If the name of the argument includes a "k", the transformation is on the mediators.  If the names of the arguments end with "y", the transformation is to explain the outcome. Otherwise, the transformation is on x to predict mediators (the argument ends with "m1" or "m" (for level 1 mediator), or "m2" (for level 2 mediator)). The functions corresponds to the functions in the following multilevel additive models, reading as f+subscript+superscript.  For example, f01y specifies \eqn{{f}_{01}^Y}.
-\deqn{Y_{ij} = u_{0j}^Y(X_{.j}, \mathbf{M}_{.j}, \mathbf{Z}_{.j})+u_{1j}^Y(X_{ij}-X_{.j})+\sum_{k=1}^Ku_{2jk}^Y(M_{ijk}-M_{.jk})+u_{3j}^Y(\mathbf{Z}_{ij}-\mathbf{Z}_{.j})+r_{ij}^Y}
+\deqn{Y_{ij} = u_{0j}^Y(X_{.j}, \mathbf{M}_{.j}, \mathbf{Z}_{.j})+{\boldsymbol{\beta}_{10}^Y}^T\mathbf{f}_{10}^Y(X_{ij}-X_{.j})+\sum_{k=1}^K{\boldsymbol{\beta}_{20k}^Y}^T\mathbf{f}_{20k}^Y(M_{ijk}-M_{.jk})+{\boldsymbol{\beta}_{30}^Y}^T(\mathbf{Z}_{ij}-\mathbf{Z}_{.j})+r_{ij}^Y,}
 
-where \deqn{u_{0j}^Y(X_{.j}, \mathbf{M}_{.j}, \mathbf{Z}_{.j}) = c_{00}^Y + {\boldsymbol{\beta}_{01}^Y}^T\mathbf{f}_{01}^Y(X_{.j}) + \sum_{k=1}^K{\boldsymbol{\beta}_{02k}^Y}^T\mathbf{f}_{02k}^Y(M_{.jk}) + {\boldsymbol{\beta}_{03}^Y}^T\mathbf{Z}_{.j} + r_{0j}^Y}
-\deqn{u_{1j}^Y(X_{ij}-X_{.j}) = {\boldsymbol{\beta}_{10}^Y}^T\mathbf{f}_{10}^Y(X_{ij}-X_{.j}) + r_{1j}^Y}
-\deqn{u_{2jk}^Y(M_{ijk}-M_{.jk}) = {\boldsymbol{\beta}_{20k}^Y}^T\mathbf{f}_{20k}^Y(M_{ijk}-M_{.jk}) + r_{2jk}^Y, \mbox{~~~~~~}k=1,\ldots,K}
-\deqn{u_{3j}^Y(\mathbf{Z}_{ij}-\mathbf{Z}_{.j}) = {\boldsymbol{\beta}_{30}^Y}^T(\mathbf{Z}_{ij}-\mathbf{Z}_{.j}) + r_{3j}^Y}
+where \deqn{u_{0j}^Y(X_{.j}, \mathbf{M}_{.j}, \mathbf{Z}_{.j}) = c_{00}^Y + {\boldsymbol{\beta}_{01}^Y}^T\mathbf{f}_{01}^Y(X_{.j}) + \sum_{k=1}^K{\boldsymbol{\beta}_{02k}^Y}^T\mathbf{f}_{02k}^Y(M_{.jk}) + {\boldsymbol{\beta}_{03}^Y}^T\mathbf{Z}_{.j} + r_{0j}^Y.}
 For \eqn{k=1,\ldots,K,}
-\deqn{M_{.jk} = c_{00k}^M+u_{1jk}^M(X_{ij}-X_{.j})+r_{ijk}^M}
-\deqn{u_{0jk}^M(X_{.j}) = c_{00k}^M + {\boldsymbol{\beta}_{01k}^M}^T\mathbf{f}_{01k}^{M1}(X_{.j}) + r_{0jk}^M}
-\deqn{u_{1jk}^M(X_{ij}-X_{.j}) = {\boldsymbol{\beta}_{10k}^M}^T\mathbf{f}_{10k}^M(X_{ij}-X_{.j}) + r_{1jk}^M}
+\deqn{M_{.jk} = u_{0jk}^M(X_{.j})+{\boldsymbol{\beta}_{10k}^M}^T\mathbf{f}_{10k}^M(X_{ij}-X_{.j})+r_{ijk}^M,}
+\deqn{u_{0jk}^M(X_{.j}) = c_{00k}^M + {\boldsymbol{\beta}_{01k}^M}^T\mathbf{f}_{01k}^{M1}(X_{.j}) + r_{0jk}^M.}
 If for some k, \eqn{M_k} is level 2 variable,
-\deqn{M_{.jk} = c_{00k}^M + {\boldsymbol{\beta}_{01k}^M}^T\mathbf{f}_{01k}^{M2}(X_{.j}) + r_{0jk}^M} 
+\deqn{M_{.jk} = c_{00k}^M + {\boldsymbol{\beta}_{01k}^M}^T\mathbf{f}_{01k}^{M2}(X_{.j}) + r_{0jk}^M.} 
 
 The transformation function can be any function that is differentiable by the function deriv(), or the ifelse function with those functions. The transformation function can also be the ns() and bs() functions for natural and b spline basis.
 }

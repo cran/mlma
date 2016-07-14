@@ -2,8 +2,8 @@
 data.org<-function(x, levelx=1, levely=1, m, l1=NULL,l2=NULL, c1=NULL, c1r=rep(1,length(c1)), #levelx is the level of x
                    c2=NULL, c2r=rep(1,length(c2)), f01y=NULL, f10y=NULL,                  #level is the level of observations
                    f02ky=NULL, f20ky=NULL, f01km1=NULL, f01km2=NULL, f10km=NULL,          #weight is the level 1 weight of cases
-                   level, weight=rep(1,length(x)))                                        #weight2 is the level 2 weight of cases, weight2=rep(1,length(unique(level[!is.na(level)])))   
-{ns.dev<-function (x, df = NULL, knots = NULL, intercept = FALSE, Boundary.knots = range(x),derivs1=0) 
+                   level=1:length(x), weight=rep(1,length(x)))                                        #weight2 is the level 2 weight of cases, weight2=rep(1,length(unique(level[!is.na(level)])))   
+{ns.dev<-function (x, df = NULL, knots = NULL, qnots=NULL,intercept = FALSE, Boundary.knots = range(x),derivs1=0) 
 {
   nx <- names(x)
   x <- as.vector(x)
@@ -29,7 +29,9 @@ data.org<-function(x, levelx=1, levely=1, m, l1=NULL,l2=NULL, c1=NULL, c1r=rep(1
       stats::quantile(x[!outside], knots)
     }
   }
-  else nIknots <- length(knots)
+  else {if(is.null(df) && is.null(knots) && !is.null(qnots))
+    knots<-quantile(x[!outside], qnots)
+  nIknots <- length(knots)}
   Aknots <- sort(c(rep(Boundary.knots, 4L), knots))
   if (any(outside)) {
     basis <- array(0, c(length(x), nIknots + 4L))
@@ -72,6 +74,7 @@ data.org<-function(x, levelx=1, levely=1, m, l1=NULL,l2=NULL, c1=NULL, c1r=rep(1
   class(basis) <- c("ns", "basis", "matrix")
   basis
 }
+
 
 
 bs.dev<-function (x, df = NULL, knots = NULL, degree = 3, intercept = FALSE, 
@@ -182,18 +185,24 @@ one2two<-function(x,l1,weight=rep(1,length(x))) #l1 is a vector that distribute 
  cbind(x1,x-x1)
 }
 
-two<-function(x, level, weight=rep(1,nrow(as.matrix(x))))
-{x<-as.matrix(x)
- levels<-unique(level[!is.na(level)])
- x2<-matrix(NA,length(levels),dim(x)[2])
- for(i in 1:length(levels))
- {cho<-(level==levels[i])
-  if(sum(cho)>0)
-  {temp<-as.matrix(x[level==levels[i],])
-   weight1<-weight[level==levels[i]]
-   x2[i,]<-apply(temp,2,weighted.mean,weight1,na.rm=TRUE)}}
- colnames(x2)<-colnames(x)
- x2
+two <- function(x, level, weight = rep(1, nrow(as.matrix(x)))) {
+  x <- as.matrix(x)
+  levels <- unique(level[!is.na(level)])
+  x2 <- matrix(NA, length(levels), dim(x)[2])
+  for (i in 1:length(levels)) {
+    cho <- (level == levels[i])
+    if (sum(cho) > 0) {
+      if(sum(cho)==1)
+        x2[i, ] <- x[level == levels[i], ]
+      else {
+        temp <- as.matrix(x[level == levels[i], ])
+        weight1 <- weight[level == levels[i]]
+        x2[i, ] <- apply(temp, 2, weighted.mean, weight1, 
+                         na.rm = TRUE)}
+    }
+  }
+  colnames(x2) <- colnames(x)
+  x2
 }
 
 x2fdx<-function(x,func)  #x is the list of original numerical vector, func is a vector of character functions. 
@@ -311,7 +320,6 @@ if(is.character(f01km2[[1]]))
 if(is.character(f10km[[1]]))
   f10km[[1]]<-unlist(sapply(f10km[[1]],grep,mnames))
 
-
 if(levelx==2)
 {l1x<-NULL               #create level 1 and level 2 x variables that are used to predict y
  if(is.null(f01y))
@@ -326,7 +334,7 @@ if(levelx==2)
   colnames(x1)<-paste("x",1:ncol(x1),sep=".")
   x1.der<-as.matrix(x1.der)
   colnames(x1.der)<-paste("x",1:ncol(x1),sep=".")}
- 
+
  if(!is.null(l2))        #create level 2 m variables to explain y
  {m2y<-as.matrix(m[,l2])
   colnames(m2y)<-colnames(m)[l2]
@@ -368,7 +376,7 @@ if(levelx==2)
  if(!is.null(c2))        #binarize level 2 categorical variables to exaplain y
  {temp<-cattobin(m2y,m2y.der,m2,m,c2,c2r)
   m2y<-temp$m1y
-  m2y.der<-temp$m2y.der
+  m2y.der<-temp$m1y.der
   m2<-temp$m1
   m2yd<-dim(as.matrix(m2y))[2]}
  
@@ -457,7 +465,7 @@ if(levelx==2)
     m12<-append(m12,list(temp$m12[[i]]+dim2y))
   m12[[1]]<-c(m12[[1]],temp$m12[[1]])  
  }
- 
+
  lc2<-c(l2,c2)
  if(!is.null(lc2))                  #create x variables to explain level 2 mediatiors
  {temp<-cbind(x,m[,lc2])
@@ -610,7 +618,7 @@ else
 if(!is.null(c2))        #binarize level 2 categorical variables to exaplain y
 {temp<-cattobin(m2y,m2y.der,m2,m,c2,c2r)
  m2y<-temp$m1y
- m2y.der<-temp$m2y.der
+ m2y.der<-temp$m1y.der
  m2<-temp$m1
  m2yd<-dim(as.matrix(m2y))[2]}
 
@@ -857,23 +865,26 @@ list(x1=x1, x1.der=x1.der, l1x=l1x, l2x=l2x, m1y=m1y, m1y.der=m1y.der,
 
 #multilevel mediation analysis
 mlma<-function(y, biny=FALSE, data1=NULL, x, levelx=1, levely=1, m, l1=NULL,l2=NULL, c1=NULL, #levelx is the level of x
-               c1r=rep(1,length(c1)), c2=NULL, c2r=rep(1,length(c2)), level,  
+               c1r=rep(1,length(c1)), c2=NULL, c2r=rep(1,length(c2)), level=1:length(y),  
                weight=rep(1,length(x)), random="(1|level)", random.m1=NULL,intercept=TRUE, 
                covariates=NULL,cy1=NULL, cy2=NULL, cm=NULL,joint=NULL,org.data=FALSE,
                f01y=NULL, f10y=NULL, f02ky=NULL, f20ky=NULL, f01km1=NULL, f01km2=NULL, f10km=NULL)                               
   
 {two<-function(x, level, weight=rep(1,nrow(as.matrix(x))))
 {x<-as.matrix(x)
- levels<-unique(level[!is.na(level)])
- x2<-matrix(NA,length(levels),dim(x)[2])
- for(i in 1:length(levels))
- {cho<-(level==levels[i])
-  if(sum(cho)>0)
-  {temp<-as.matrix(x[level==levels[i],])
-   weight1<-weight[level==levels[i]]
-   x2[i,]<-apply(temp,2,weighted.mean,weight1,na.rm=TRUE)}}
- colnames(x2)<-colnames(x)
- x2
+levels<-unique(level[!is.na(level)])
+x2<-matrix(NA,length(levels),dim(x)[2])
+for(i in 1:length(levels))
+{cho<-(level==levels[i])
+if(sum(cho)>0)
+{if(sum(cho)==1)
+  x2[i,]<-x[level==levels[i],]
+else
+{temp<-as.matrix(x[level==levels[i],])
+weight1<-weight[level==levels[i]]
+x2[i,]<-apply(temp,2,weighted.mean,weight1,na.rm=TRUE)}}}
+colnames(x2)<-colnames(x)
+x2
 }
 
 getformula<-function(expl,random="(1|level)",intercept=TRUE)
@@ -980,8 +991,14 @@ else
    for (i in 1:length(c2)) 
    {temp.name<-colnames(ie2_1)
     temp<-(1:length(data1$m2[[1]]))[data1$m2[[1]]==c2[i]]
-    for (k in 1:length(data1$m2[[temp+1]]))
-      ie2_1<-cbind(ie2_1,data1$m2y.der[,data1$m2[[temp+1]]][,k]*coef.f1[len[1]+data1$m2[[temp+1]][k]])
+    if (length(data1$m2[[temp + 1]])==1)
+        ie2_1 <- cbind(ie2_1, data1$m2y.der[, data1$m2[[temp + 1]]] * 
+                         coef.f1[len[1] + data1$m2[[temp + 1]]])
+    else
+       for (k in 1:length(data1$m2[[temp + 1]])) 
+        ie2_1 <- cbind(ie2_1, data1$m2y.der[, data1$m2[[temp + 1]]][, k] * 
+                         coef.f1[len[1] + data1$m2[[temp + 1]][k]])
+    k<-length(data1$m2[[temp + 1]])
     colnames(ie2_1)<-c(temp.name,paste(colnames(m)[c2[i]],1:k,sep="."))
     ie2_list[[1]]<-c(ie2_list[[1]],colnames(m)[c2[i]])
     ie2_list<-append(ie2_list,list((z+1):(z+k)))
@@ -999,8 +1016,12 @@ else
     for (i in 1:length(c1)) 
     {temp.name<-colnames(ie12_1)
      temp<-(1:length(data1$m12[[1]]))[data1$m12[[1]]==c1[i]]
-     for (k in 1:length(data1$m12[[temp+1]]))
-       ie12_1<-cbind(ie12_1,data1$m2y.der[,data1$m12[[temp+1]]][,k]*coef.f1[len[1]+data1$m12[[temp+1]][k]])
+     if(length(data1$m12[[temp + 1]])==1)
+       ie12_1 <- cbind(ie12_1,data1$m2y.der[, data1$m12[[temp + 1]]] * coef.f1[len[1] + data1$m12[[temp +1]]])
+     else
+       for (k in 1:length(data1$m12[[temp + 1]])) 
+         ie12_1 <- cbind(ie12_1,data1$m2y.der[, data1$m12[[temp+1]]][,k]*coef.f1[len[1]+data1$m12[[temp +1]][k]])
+     k<-length(data1$m12[[temp + 1]])
      colnames(ie12_1)<-c(temp.name,paste(colnames(m)[c1[i]],"12",1:k,sep="."))
     }          
  }
@@ -1034,8 +1055,14 @@ else
    for (i in 1:length(c1)) 
    {temp<-(1:length(data1$m1[[1]]))[data1$m1[[1]]==c1[i]]
     temp.name<-colnames(ie1_1)
-    for (k in 1:length(data1$m1[[temp+1]]))
-      ie1_1<-cbind(ie1_1,data1$m1y.der[,data1$m1[[temp+1]]][,k]*coef.f1[len[1]+len[2]+len[3]+data1$m1[[temp+1]][k]])
+    if (length(data1$m1[[temp + 1]])==1)
+      ie1_1 <- cbind(ie1_1,data1$m1y.der[, data1$m1[[temp + 1]]] * 
+                       coef.f1[len[1] + len[2] + len[3] + data1$m1[[temp + 1]]])
+    else
+      for (k in 1:length(data1$m1[[temp + 1]])) 
+        ie1_1 <- cbind(ie1_1,data1$m1y.der[, data1$m1[[temp + 1]]][, k] * 
+                         coef.f1[len[1] + len[2] + len[3] + data1$m1[[temp + 1]][k]])
+    k<-length(data1$m1[[temp + 1]])
     colnames(ie1_1)<-c(temp.name,paste(colnames(m)[c1[i]],1:k,sep="."))
     ie1_list[[1]]<-c(ie1_list[[1]],colnames(m)[c1[i]])
     ie1_list<-append(ie1_list,list((z+1):(z+k)))
@@ -1108,7 +1135,7 @@ if(levelx==2)    #analysis when x is a level 2 variable
                   family=binomial(link="logit"))
      temp.data<-cbind(level=level,expl.m) #temp.6
      colnames(temp.data)<-c("level",colnames(expl.m))
-     p.temp<-predict(model,type="response",newdata=data.frame(temp.data))  ####################
+     p.temp<-predict(model,type="response",newdata=data.frame(temp.data),allow.new.levels=T)  ####################
      fm1<-append(fm1,model)
      fm1[[1]]<-c(fm1[[1]],c1[i])
      coef.temp<-summary(model)$coefficient[,1]   #find the second part of IE2
@@ -1294,7 +1321,7 @@ if(!is.null(l1))
      fm1[[1]]<-c(fm1[[1]],c1[i])
      temp.data<-cbind(level=level,expl.m)  #[temp.6]
      colnames(temp.data)<-c("level",colnames(expl.m))
-     p.temp<-predict(model,type="response",newdata=data.frame(temp.data))
+     p.temp<-predict(model,type="response",newdata=data.frame(temp.data),allow.new.levels=T)
      coef.temp<-summary(model)$coefficient[,1]   #find the second part of IE2
      if(intercept)
         coef.temp<-coef.temp[-1]
@@ -1418,14 +1445,15 @@ if(!is.null(ie2_1) & !is.null(ie2_2))
  ie2<-ie2_1*ie2_2
 }
 else ie2<-NULL
-
 if(!is.null(joint))  #3/2/2016, add the potential joint effect
 {joint1<-(1:length(joint[[1]]))[joint[[1]]==1]
  joint2<-(1:length(joint[[1]]))[joint[[1]]==2]
  if(length(joint1)!=0)
  {temp.name<-ie1_list[[1]]
   for (i in joint1)
-  {joint.col<-sapply(joint[[i+1]],grep,temp.name)+1
+  {if(!is.character(joint[[i+1]]))
+    joint[[i+1]]<-mnames[joint[[i+1]]]
+    joint.col<-sapply(joint[[i+1]],grep,temp.name)+1
    joint.col1<-NULL
    for (j in 1:length(joint.col))
      joint.col1<-c(joint.col1,ie1_list[[joint.col[j]]])
@@ -1439,7 +1467,9 @@ if(!is.null(joint))  #3/2/2016, add the potential joint effect
   temp.l1<-ifelse(is.null(ie12),0,ncol(ie12))
   iej_list<-list(paste("joint",joint2,sep="."))
   for(i in joint2)
-   {joint.col1<-unlist(sapply(joint[[i+1]],grep,temp.name))+1
+   {if(!is.character(joint[[i+1]]))
+     joint[[i+1]]<-mnames[joint[[i+1]]]
+    joint.col1<-unlist(sapply(joint[[i+1]],grep,temp.name))+1
     joint.col2<-unlist(sapply(joint[[i+1]],grep,temp.name2))+1
     joint.col<-NULL
     if(length(joint.col1)!=0)
@@ -1469,25 +1499,32 @@ boot.mlma<-function(y, biny=FALSE, x, levelx=1,levely=1, m, l1=NULL,l2=NULL, c1=
                     c1r=rep(1,length(c1)), #levelx is the level of x
                     c2=NULL, c2r=rep(1,length(c2)), f01y=NULL, f10y=NULL,                  #level is the level of observations
                     f02ky=NULL, f20ky=NULL, f01km1=NULL, f01km2=NULL, f10km=NULL,          #weight is the level 1 weight of cases
-                    level, weight=rep(1,length(x)), random="(1|level)",
+                    level=1:length(y), weight=rep(1,length(x)), random="(1|level)",
                     random.m1=NULL, intercept=TRUE, 
                     w2=rep(1,length(unique(level[!is.na(level)]))),
                     boot=100,seed=1,covariates=NULL,cy1=NULL, cy2=NULL, cm=NULL, 
                     joint=NULL, x.new=x, m.new=m, level.new=level,weight.new=weight,
                     covariates.new=covariates)
-{two<-function(x, level, weight=rep(1,nrow(as.matrix(x))))
-{x<-as.matrix(x)
- levels<-unique(level[!is.na(level)])
- x2<-matrix(NA,length(levels),dim(x)[2])
- for(i in 1:length(levels))
- {cho<-(level==levels[i])
-  if(sum(cho)>0)
-  {temp<-as.matrix(x[level==levels[i],])
-   weight1<-weight[level==levels[i]]
-   x2[i,]<-apply(temp,2,weighted.mean,weight1,na.rm=TRUE)}}
- colnames(x2)<-colnames(x)
- x2
+{    two <- function(x, level, weight = rep(1, nrow(as.matrix(x)))) {
+  x <- as.matrix(x)
+  levels <- unique(level[!is.na(level)])
+  x2 <- matrix(NA, length(levels), dim(x)[2])
+  for (i in 1:length(levels)) {
+    cho <- (level == levels[i])
+    if (sum(cho) > 0) {
+      if(sum(cho)==1)
+        x2[i, ] <- x[level == levels[i], ]
+      else {
+        temp <- as.matrix(x[level == levels[i], ])
+        weight1 <- weight[level == levels[i]]
+        x2[i, ] <- apply(temp, 2, weighted.mean, weight1, 
+                         na.rm = TRUE)}
+    }
+  }
+  colnames(x2) <- colnames(x)
+  x2
 }
+
 
 sum.mlma<-function(object,levelx,de2,ie2,de1,ie1,ie12,level,weight,w2)
 {two<-function(x, level, weight=rep(1,nrow(as.matrix(x))))
@@ -1497,12 +1534,16 @@ x2<-matrix(NA,length(levels),dim(x)[2])
 for(i in 1:length(levels))
 {cho<-(level==levels[i])
 if(sum(cho)>0)
+{if(sum(cho)==1)
+  x2[i,]<-x[level==levels[i],]
+else
 {temp<-as.matrix(x[level==levels[i],])
 weight1<-weight[level==levels[i]]
-x2[i,]<-apply(temp,2,weighted.mean,weight1,na.rm=TRUE)}}
+x2[i,]<-apply(temp,2,weighted.mean,weight1,na.rm=TRUE)}}}
 colnames(x2)<-colnames(x)
 x2
 }
+
 
 de2<-weighted.mean(de2,w2)
 ie2_temp<-ie2
@@ -1577,7 +1618,7 @@ if (!is.null(random))
 formula
 }
 
-ns.dev<-function (x, df = NULL, knots = NULL, intercept = FALSE, Boundary.knots = range(x),derivs1=0) 
+ns.dev<-function (x, df = NULL, knots = NULL, qnots=NULL,intercept = FALSE, Boundary.knots = range(x),derivs1=0) 
 {
   nx <- names(x)
   x <- as.vector(x)
@@ -1603,7 +1644,9 @@ ns.dev<-function (x, df = NULL, knots = NULL, intercept = FALSE, Boundary.knots 
       stats::quantile(x[!outside], knots)
     }
   }
-  else nIknots <- length(knots)
+  else {if(is.null(df) && is.null(knots) && !is.null(qnots))
+    knots<-quantile(x[!outside], qnots)
+    nIknots <- length(knots)}
   Aknots <- sort(c(rep(Boundary.knots, 4L), knots))
   if (any(outside)) {
     basis <- array(0, c(length(x), nIknots + 4L))
@@ -1677,7 +1720,8 @@ bs.dev<-function (x, df = NULL, knots = NULL, degree = 3, intercept = FALSE,
                          2L)[-c(1L, nIknots + 2L)]
       stats::quantile(x[!outside], knots)
     }
-  }
+  }  
+
   Aknots <- sort(c(rep(Boundary.knots, ord), knots))
   if (any(outside)) {
     warning("some 'x' values beyond boundary knots may cause ill-conditioned bases")
@@ -1924,8 +1968,35 @@ m<-as.matrix(m)
 t1<-table(level)
 t2<-sort(unique(level))
 level.boot<-rep(t2,t1)
+n1<-length(y)
 for(l in 1:boot)
 {set.seed(seed+l)
+ if(length(unique(level))==n1)
+   {s1<-sample(1:n1,replace=TRUE,prob=weight)
+    x.boot<-x[s1]
+    y.boot<-y[s1]
+    m.boot<-as.matrix(as.matrix(m)[s1,])
+    x1.boot<-as.matrix(as.matrix(data1$x1)[s1,])
+    if(!is.null(data1$m1y))
+      m1y.boot<-as.matrix(as.matrix(data1$m1y)[s1,])
+    else
+      m1y.boot<-NULL
+    if(!is.null(data1$m2y))
+      m2y.boot<-as.matrix(as.matrix(data1$m2y)[s1,])
+    else
+      m2y.boot<-NULL
+    if(!is.null(data1$xm1))
+      xm1.boot<-as.matrix(as.matrix(data1$xm1)[s1,])
+    else
+      xm1.boot<-NULL
+    if(!is.null(covariates))
+      covariates.boot<-as.matrix(as.matrix(covariates)[s1,])
+    else
+      covariates.boot<-NULL
+    xm2.boot<-NULL
+    m.2.boot<-NULL
+    }
+ else{
  x.boot<-NULL
  y.boot<-NULL
  m.boot<-NULL
@@ -1944,32 +2015,48 @@ for(l in 1:boot)
   y.boot<-c(y.boot,y[temp][temp.2]) 
   if(ncol(m)==1)
     m.boot<-c(m.boot,m[temp][temp.2])
+  else if(t1[j]==1)                       #if there is only one observation in a level
+    m.boot<-rbind(m.boot,m[temp,]) 
   else
     m.boot<-rbind(m.boot,m[temp,][temp.2,]) 
   if(ncol(data1$x1)==1)
     x1.boot<-c(x1.boot,data1$x1[temp][temp.2])
+  else if(t1[j]==1)
+    x1.boot<-rbind(x1.boot,data1$x1[temp,]) 
   else
     x1.boot<-rbind(x1.boot,data1$x1[temp,][temp.2,]) 
   if(!is.null(data1$m1y))
   {if(ncol(data1$m1y)==1)
     m1y.boot<-c(m1y.boot,data1$m1y[temp][temp.2])
+  else if(t1[j]==1)
+    m1y.boot<-rbind(m1y.boot,data1$m1y[temp,]) 
   else
-    m1y.boot<-rbind(m1y.boot,data1$m1y[temp,][temp.2,]) }
+    m1y.boot<-rbind(m1y.boot,data1$m1y[temp,][temp.2,]) 
+  }
   if(!is.null(data1$m2y))
   {if(ncol(data1$m2y)==1)
     m2y.boot<-c(m2y.boot,data1$m2y[temp][temp.2])
+  else if(t1[j]==1)
+    m2y.boot<-rbind(m2y.boot,data1$m2y[temp,]) 
   else
-    m2y.boot<-rbind(m2y.boot,data1$m2y[temp,][temp.2,]) }
+    m2y.boot<-rbind(m2y.boot,data1$m2y[temp,][temp.2,]) 
+  }
   if(!is.null(data1$xm1))
   {if(ncol(data1$xm1)==1)
     xm1.boot<-c(xm1.boot,data1$xm1[temp][temp.2])
+  else if(t1[j]==1)
+    xm1.boot<-rbind(xm1.boot,data1$xm1[temp,]) 
   else
-    xm1.boot<-rbind(xm1.boot,data1$xm1[temp,][temp.2,]) }
+    xm1.boot<-rbind(xm1.boot,data1$xm1[temp,][temp.2,]) 
+  }
   if(!is.null(covariates))
   {if(ncol(covariates)==1)
     covariates.boot<-c(covariates.boot,covariates[temp][temp.2])
+  else if(t1[j]==1)
+    covariates.boot<-rbind(covariates.boot,covariates[temp,]) 
   else
-    covariates.boot<-rbind(covariates.boot,covariates[temp,][temp.2,]) }
+    covariates.boot<-rbind(covariates.boot,covariates[temp,][temp.2,]) 
+  }
   weight.boot<-c(weight.boot,weight[temp][temp.2])
  }
  if(!is.null(dim(m.boot)))
@@ -1995,7 +2082,7 @@ for(l in 1:boot)
  if(!is.null(dim(xm1.boot)))
  {xm1.boot<-as.matrix(xm1.boot)
  colnames(xm1.boot)<-colnames(data1$xm1)
- }
+ }}
 
 #b. create xm2 and m.2
  lc2<-c(l2,c2)
@@ -2053,7 +2140,7 @@ for(l in 1:boot)
    j<-(1:length(fm1[[1]]))[fm1[[1]]==l1[i]]+1
    sd.m<-rnorm(n,mean=0,sd=as.data.frame(VarCorr(fm1[[j]]))[2,5])+         #add the randomn effects
      one(rnorm(n2,mean=0,sd=as.data.frame(VarCorr(fm1[[j]]))[1,5]),level)
-   m.new[,l1[i]]<-predict(fm1[[j]],newdata=data.frame(temp.data))+sd.m
+   m.new[,l1[i]]<-predict(fm1[[j]],newdata=data.frame(temp.data),allow.new.levels=T)+sd.m
  }
  }
  if(!is.null(c1))      #generate level 1 categorical mediators
@@ -2075,7 +2162,7 @@ for(l in 1:boot)
      colnames(temp.data)<-c("level",colnames(expl.m))
      j<-(1:length(fm1[[1]]))[fm1[[1]]==c1[i]]+1
      if(length(j)==1)   #binary
-     {tmp.logit<-predict(fm1[[j]],newdata=data.frame(temp.data))+
+     {tmp.logit<-predict(fm1[[j]],newdata=data.frame(temp.data),allow.new.levels=T)+
        one(rnorm(n2,mean=0,sd=as.data.frame(VarCorr(fm1[[j]]))[,5]),level)  #add the random effect
      tmp.p<-exp(tmp.logit)/(exp(tmp.logit)+1)
      tmp.m<-rbinom(n,1,prob=tmp.p)
@@ -2083,7 +2170,7 @@ for(l in 1:boot)
      else               #multi-categorical
      {tmp.logit<-rep(1,n)
      for (k in 1:length(j))
-       tmp.logit<-cbind(tmp.logit,exp(predict(fm1[[j[k]]],newdata=data.frame(temp.data))+
+       tmp.logit<-cbind(tmp.logit,exp(predict(fm1[[j[k]]],newdata=data.frame(temp.data),allow.new.levels=T)+
                                         one(rnorm(n2,mean=0,sd=as.data.frame(VarCorr(fm1[[j[k]]]))[,5]),level))) #add the random effect
      tmp.m<-apply(tmp.logit,1,rmultinom,n=1,size=1)
      m.new[,c1[i]]<-(1:nrow(tmp.m))%*%tmp.m   #the reference group is always 1
@@ -2158,7 +2245,7 @@ for(l in 1:boot)
    m2y.der<-NULL
  if(!is.null(c2))        #binarize level 2 categorical variables to exaplain y
  {temp<-cattobin(m1y=NULL,m2y.der,m1=NULL,m.new,c2,c2r=rep(1,length(c2)))
- m2y.der<-temp$m2y.der
+  m2y.der<-temp$m1y.der
  }
  if(!is.null(l1))         #create level 1 and corresponding level 2 m variables to explain y
  {temp<-apply(as.matrix(m.new[,l1]), 2, one2two, level, weight)
@@ -2285,8 +2372,13 @@ for(l in 1:boot)
    if(!is.null(c2))
      for (i in 1:length(c2)) 
      {temp<-(1:length(data1$m2[[1]]))[data1$m2[[1]]==c2[i]]
-     for (k in 1:length(data1$m2[[temp+1]]))
-       ie2_1<-cbind(ie2_1,m2y.der[,data1$m2[[temp+1]]][,k]*coef.f1[len[1]+data1$m2[[temp+1]][k]])
+     if (length(data1$m2[[temp + 1]])==1)
+       ie2_1 <- cbind(ie2_1, m2y.der[, data1$m2[[temp + 1]]] * 
+                        coef.f1[len[1] + data1$m2[[temp + 1]]])
+     else
+       for (k in 1:length(data1$m2[[temp + 1]])) 
+         ie2_1 <- cbind(ie2_1, m2y.der[, data1$m2[[temp + 1]]][, k] * 
+                          coef.f1[len[1] + data1$m2[[temp + 1]][k]])
      }  }        
  if (!is.null(data1$m12))
  {if(!is.null(l1))
@@ -2299,8 +2391,11 @@ for(l in 1:boot)
    if(!is.null(c1))
      for (i in 1:length(c1)) 
      {temp<-(1:length(data1$m12[[1]]))[data1$m12[[1]]==c1[i]]
-     for (k in 1:length(data1$m12[[temp+1]]))
-       ie12_1<-cbind(ie12_1,m2y.der[,data1$m12[[temp+1]]][,k]*coef.f1[len[1]+data1$m12[[temp+1]][k]])
+     if(length(data1$m12[[temp + 1]])==1)
+       ie12_1 <- cbind(ie12_1,m2y.der[, data1$m12[[temp + 1]]] * coef.f1[len[1] + data1$m12[[temp + 1]]])
+     else
+       for (k in 1:length(data1$m12[[temp + 1]])) 
+         ie12_1 <- cbind(ie12_1,m2y.der[, data1$m12[[temp + 1]]][,k] * coef.f1[len[1] + data1$m12[[temp + 1]][k]])
      }          
  }
  }
@@ -2325,12 +2420,17 @@ for(l in 1:boot)
    if(!is.null(c1))
      for (i in 1:length(c1)) 
      {temp<-(1:length(data1$m1[[1]]))[data1$m1[[1]]==c1[i]]
-     for (k in 1:length(data1$m1[[temp+1]]))
-       ie1_1<-cbind(ie1_1,m1y.der[,data1$m1[[temp+1]]][,k]*coef.f1[len[1]+len[2]+len[3]+data1$m1[[temp+1]][k]])
+     if (length(data1$m1[[temp + 1]])==1)
+       ie1_1 <- cbind(ie1_1,m1y.der[, data1$m1[[temp + 1]]] * 
+                        coef.f1[len[1] + len[2] + len[3] + data1$m1[[temp + 1]]])
+     else
+       for (k in 1:length(data1$m1[[temp + 1]])) 
+         ie1_1 <- cbind(ie1_1,m1y.der[, data1$m1[[temp + 1]]][, k] * 
+                          coef.f1[len[1] + len[2] + len[3] + data1$m1[[temp + 1]][k]])
      }  } }
  
- 
- if(levelx==2)    #analysis when x is a level 2 variable
+
+if(levelx==2)    #analysis when x is a level 2 variable
  {ie12_2<-NULL
  if(!is.null(l1))
    for (i in 1:length(l1))
@@ -2392,7 +2492,7 @@ for(l in 1:boot)
                   family=binomial(link="logit"))
      temp.data<-cbind(level=level.new,expl.m.new) #temp.6
      colnames(temp.data)<-c("level",colnames(expl.m))
-     p.temp<-predict(model,type="response",newdata=data.frame(temp.data))  ####################
+     p.temp<-predict(model,type="response",newdata=data.frame(temp.data),allow.new.levels=T)  ####################
      coef.temp<-summary(model)$coefficient[,1]   #find the second part of IE2
      if(intercept)
        coef.temp<-coef.temp[-1]
@@ -2451,7 +2551,7 @@ for(l in 1:boot)
      else
      {temp.cov<-NULL
      temp.cov.new<-NULL}
-     k2<-(1:data1$fm22[[1]])[data1$fm22[[1]]==c2[i]]
+     k2<-(1:length(data1$fm22[[1]]))[data1$fm22[[1]]==c2[i]]
      expl.m<-as.matrix(xm2.boot[,data1$fm22[[k2+1]]])
      colnames(expl.m)<-colnames(data1$xm2)[data1$fm22[[k2+1]]]
      expl.m.new<-as.matrix(xm2[,data1$fm22[[k2+1]]])
@@ -2569,7 +2669,7 @@ for(l in 1:boot)
                  family=binomial(link="logit"))
      temp.data<-cbind(level=level.new,expl.m.new)  #[temp.6]
      colnames(temp.data)<-c("level",colnames(expl.m))
-     p.temp<-predict(model,type="response",newdata=data.frame(temp.data))
+     p.temp<-predict(model,type="response",newdata=data.frame(temp.data),allow.new.levels=T)
      coef.temp<-summary(model)$coefficient[,1]   #find the second part of IE2
      if(intercept)
        coef.temp<-coef.temp[-1]
@@ -2631,7 +2731,7 @@ for(l in 1:boot)
      else
      {temp.cov<-NULL
      temp.cov.new<-NULL}
-     k2<-(1:data1$fm22[[1]])[data1$fm22[[1]]==c2[i]]
+     k2<-(1:length(data1$fm22[[1]]))[data1$fm22[[1]]==c2[i]]
      expl.m<-as.matrix(xm2.boot[,data1$fm22[[k2+1]]])
      colnames(expl.m)<-colnames(data1$xm2)[data1$fm22[[k2+1]]]
      expl.m.new<-as.matrix(xm2[,data1$fm22[[k2+1]]])
@@ -2670,7 +2770,7 @@ for(l in 1:boot)
  if(!is.null(ie12_1) & !is.null(ie12_2))
  {ie12_1<-apply(as.matrix(ie12_1),2,two,level)
  ie12_2<-apply(as.matrix(ie12_2),2,two,level)
- ie12<-ie12_1*ie12_2
+ ie12<-as.matrix(ie12_1*ie12_2)
  }
  else ie12<-NULL
  if(!is.null(ie1_1) & !is.null(ie1_2))
@@ -2691,7 +2791,7 @@ for(l in 1:boot)
  if(!is.null(full$ie12))
    ie12.boot<-rbind(ie12.boot,ie12)
 
- sum.boot<-sum.mlma(object=full,levelx,de2=two(DE2,level.boot),ie2,de1=DE1,ie1,as.matrix(ie12),level.boot, weight.boot,w2)
+ sum.boot<-sum.mlma(object=full,levelx,de2=two(DE2,level.boot),ie2,de1=DE1,ie1,ie12,level.boot, weight.boot,w2)
  sum.boot1<-rbind(sum.boot1,sum.boot$level1)
  sum.boot2<-rbind(sum.boot2,sum.boot$level2)
  print(l)
@@ -2704,19 +2804,23 @@ return(a)
 
 print.mlma<-function(x,...,w2=rep(1,length(object$de2)))
 {object<-x
-  two<-function(x, level, weight=rep(1,nrow(as.matrix(x))))
+two<-function(x, level, weight=rep(1,nrow(as.matrix(x))))
 {x<-as.matrix(x)
- levels<-unique(level[!is.na(level)])
- x2<-matrix(NA,length(levels),dim(x)[2])
- for(i in 1:length(levels))
- {cho<-(level==levels[i])
-  if(sum(cho)>0)
-  {temp<-as.matrix(x[level==levels[i],])
-   weight1<-weight[level==levels[i]]
-   x2[i,]<-apply(temp,2,weighted.mean,weight1,na.rm=TRUE)}}
- colnames(x2)<-colnames(x)
- x2
+levels<-unique(level[!is.na(level)])
+x2<-matrix(NA,length(levels),dim(x)[2])
+for(i in 1:length(levels))
+{cho<-(level==levels[i])
+if(sum(cho)>0)
+{if(sum(cho)==1)
+  x2[i,]<-x[level==levels[i],]
+else
+{temp<-as.matrix(x[level==levels[i],])
+weight1<-weight[level==levels[i]]
+x2[i,]<-apply(temp,2,weighted.mean,weight1,na.rm=TRUE)}}}
+colnames(x2)<-colnames(x)
+x2
 }
+
 
 levelx<-object$data1$parameter$levelx
 de2<-weighted.mean(object$de2,w2)
@@ -2811,18 +2915,21 @@ print.summary.mlma<-function(x,...)
 #other functions
 plot.mlma<-function(x,..., var=NULL, cate=FALSE, w2=rep(1,length(object$de2)))
 {object<-x
-  two<-function(x, level, weight=rep(1,nrow(as.matrix(x))))
+two<-function(x, level, weight=rep(1,nrow(as.matrix(x))))
 {x<-as.matrix(x)
- levels<-unique(level[!is.na(level)])
- x2<-matrix(NA,length(levels),dim(x)[2])
- for(i in 1:length(levels))
- {cho<-(level==levels[i])
-  if(sum(cho)>0)
-  {temp<-as.matrix(x[level==levels[i],])
-   weight1<-weight[level==levels[i]]
-   x2[i,]<-apply(temp,2,weighted.mean,weight1,na.rm=TRUE)}}
- colnames(x2)<-colnames(x)
- x2
+levels<-unique(level[!is.na(level)])
+x2<-matrix(NA,length(levels),dim(x)[2])
+for(i in 1:length(levels))
+{cho<-(level==levels[i])
+if(sum(cho)>0)
+{if(sum(cho)==1)
+  x2[i,]<-x[level==levels[i],]
+else
+{temp<-as.matrix(x[level==levels[i],])
+weight1<-weight[level==levels[i]]
+x2[i,]<-apply(temp,2,weighted.mean,weight1,na.rm=TRUE)}}}
+colnames(x2)<-colnames(x)
+x2
 }
 
 op <- par(no.readonly = TRUE) # the whole list of settable par's.
@@ -3047,19 +3154,23 @@ print.summary.mlma.boot<-function(x,...)
 plot.mlma.boot<-function(x,..., var=NULL, alpha=0.05,quant=FALSE) #quantile=True to use quantile CIS
 {object<-x
 
- two<-function(x, level, weight=rep(1,nrow(as.matrix(x))))
+two<-function(x, level, weight=rep(1,nrow(as.matrix(x))))
 {x<-as.matrix(x)
 levels<-unique(level[!is.na(level)])
 x2<-matrix(NA,length(levels),dim(x)[2])
 for(i in 1:length(levels))
 {cho<-(level==levels[i])
 if(sum(cho)>0)
+{if(sum(cho)==1)
+  x2[i,]<-x[level==levels[i],]
+else
 {temp<-as.matrix(x[level==levels[i],])
 weight1<-weight[level==levels[i]]
-x2[i,]<-apply(temp,2,weighted.mean,weight1,na.rm=TRUE)}}
+x2[i,]<-apply(temp,2,weighted.mean,weight1,na.rm=TRUE)}}}
 colnames(x2)<-colnames(x)
 x2
 }
+
 
   boot.ci<-function(x,mat,cri_val) #the mat is the booted results with row be different x, and columns diff boot
                                  #cri_val is the critical value
