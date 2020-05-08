@@ -32,12 +32,12 @@ Qingzhao Yu (qyu@lsuhsc.edu), Bin Li (bli@lsu.edu).
 }
 \examples{
 data(sim.111)
-temp<-mlma(y=sim.111$y, biny=FALSE, data1=data1, x=sim.111$x, levelx=1, m=sim.111$m, 
-                l1=1:2,c1=3, c1r=1,level=sim.111$level,org.data=TRUE,
-                f01y=c("x","log(x^2)"), f10y=c("x^2","sqrt(x+6)"), 
-                f20ky=list(2,c("x","x^3")), f01km1=list(2,"sqrt(x)+3"), 
-                f10km=list(2,"log(x+2)"))
-summary(temp)
+data2<-data.org(ifelse(sim.111$x>1.9,1,0), m=sim.111$m, 
+                f10y=list(1,c("x^2","sqrt(x+6)")), 
+                f20ky=list(2,c("x","x^3")), 
+                f10km=list(matrix(c(2,1),1),"log(x+2)"), level=sim.111$level)
+temp2<-mlma(y=sim.111$y, data1=data2)
+summary(temp2)
 }
 % Add one or more standard keywords, see file 'KEYWORDS' in the
 % R documentation directory.

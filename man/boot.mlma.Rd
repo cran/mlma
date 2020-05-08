@@ -8,15 +8,22 @@ Bootstrap Method for Inference on Multilevel Mediation Analysis
 Bootstrap samples are selected from the original data set. The bootstrap sample has the same number of groups and in each group, the same number of observations as in the original data set. Based on each bootstrap sample, a multilevel mediation analysis is done and the results saved to make inferences on the total, direct and indirect effects.
 }
 \usage{
-boot.mlma(y, biny = FALSE, x, levelx, levely, m, l1 = NULL, l2 = NULL, c1 = NULL, 
-          c1r = rep(1, length(c1)), c2 = NULL, c2r = rep(1, length(c2)), 
-          f01y = NULL, f10y = NULL, f02ky = NULL, f20ky = NULL, f01km1 = NULL, 
-          f01km2 = NULL, f10km = NULL, level=1:length(y), weight = rep(1, length(x)), 
-          random = "(1|level)", random.m1 = NULL, intercept = TRUE,
-          w2=rep(1,length(unique(level[!is.na(level)]))),
-          boot = 100, seed = 1, covariates=NULL,cy1=NULL,cy2=NULL,cm=NULL,
-          joint=NULL,x.new=x, m.new=m, level.new=level,weight.new=weight,
-          covariates.new=covariates)
+boot.mlma(y, data1=NULL,x=data1$parameter$x, m=data1$parameter$m, 
+          levelx=data1$parameter$levelx, xref=NULL, yref=NULL, 
+          l1=data1$parameter$l1,l2=data1$parameter$l2, 
+          c1=data1$parameter$c1, #levelx is the level of x
+          c1r=data1$parameter$c1r, c2=data1$parameter$c2, 
+          c2r=data1$parameter$c2r,level=data1$parameter$level,  
+          weight=rep(1,nrow(as.matrix(x))), 
+          random="(1|level)", random.m1=NULL,intercept=TRUE, 
+          family1=NULL, familym=vector("list",ncol(m)),
+          covariates=NULL, cy1=NULL, cy2=NULL, cm=NULL,
+          joint=NULL,f01y=data1$parameter$f01y,
+          f10y=data1$parameter$f10y, f02ky=data1$parameter$f02ky, 
+          f20ky=data1$parameter$f20ky, f01km1=data1$parameter$f01km1, 
+          f01km2=data1$parameter$f01km2, f10km=data1$parameter$f10km,
+          data2=NULL, x.new=NULL, m.new=m, level.new=level, 
+          weight.new=NULL,covariates.new=covariates,boot=100,echo=TRUE)
 }
 %- maybe also 'usage' for other objects documented here.
 \details{
@@ -34,20 +41,23 @@ Note that in the models, \eqn{\mathbf{f}(\cdot)=(f_1(\cdot), f_2(\cdot), \cdots,
   \item{y}{
 the vector of the outcome variable.
 }
-  \item{biny}{
-True if the outcome is binary, otherwise False. Default is False.
-}
+  \item{data1}{
+the results from data.org. If data1=NULL, needs to set up x, m, levelx, xref, l1, l2, c1,c2, c2r, f01y, f10y, f02ky, f20ky, f01km1, f01km2, f10km ...
+}  
   \item{x}{
 the vector of the predictive variable.
 }
-  \item{levelx}{
-the level of x (1 or 2), 1 by default.
-}
-  \item{levely}{
-the level of y (1 or 2), 1 by default.
-}
   \item{m}{
-the matrix or vector of mediators.
+the mediators. The program will identify the levels and types of each mediator if not specified by l1, l2, c1, or c2. A mediator is identified as categorical if the mediator is a factor, a character, or has only two unque values.
+}
+  \item{levelx}{
+the level of x (1 or 2). If it is not given, levelx will be decided by x.
+}
+  \item{xref}{
+the reference group of x if it is binary. By default it will be the first level of x.
+}
+  \item{yref}{
+the reference group of y if it is binary. By default it will be the first level of y.
 }
   \item{l1}{
 the column numbers of level 1 continuous mediators in m.
@@ -67,27 +77,9 @@ the column numbers of level 2 categorical mediators in m.
   \item{c2r}{
 the reference groups of categorical mediators specified by c2.
 }
-  \item{f01y}{
-the transformation function expressions on level 2 predictive variable (x.j) in explaining y (eg, c("x^2","log(x)")).
-}
-  \item{f10y}{
-the transformation function expressions on level 1 predictive variable (xij-x.j) in explaining y.
-}
-  \item{f02ky}{
-the transformation-function-expression list on level 2 mediators (m.jk) in explaining y (eg, list(2:3,c("log(x)","sqrt(x)"), "2*x")). The first item lists column numbers of the level 2 mediators in m, which needs to be transformed. By that order, each of the rest items of f01ky list the transformation functional expressions for each mediator. The mediators not specified in the list will not be transformed in any way.
-}
-  \item{f20ky}{
-the transformation-function-expression list on level 1 mediators (mijk-m.jk) in explaining y.The first item lists column numbers of the level 1 mediators in m, which needs to be transformed. By that order, each of the rest items of f02ky list the transformation functional expressions for each mediator. The mediators not specified in the list will not be transformed in any way.
-}
-  \item{f01km1}{
-the transformation-function-expression list on level 2 predictor (x.j) in explaining the level 1 mediators. The first item lists column numbers of the level 1 mediators in m, which should be explained by the transformed predictor(s). By that order, each of the rest items of f01km1 lists the transformation functional expressions for the (aggregated) level 2 predictor in explaining each mediator. The mediators not specified in the list will be explained by the original format of the level 2 predictor only.
-}
-  \item{f01km2}{
-the transformation-function-expression list on level 2 predictor (x.j) in explaining the level 2 mediators. The first item lists column numbers of the level 2 mediators in m, which should be explained by the transformed level 2 predictor(s). By that order, each of the rest items of f01km2 lists the transformation functional expressions for the predictor in explaining each mediator. The mediators not specified in the list will be explained by the original format of the (aggregated) level 2 predictor only.
-}
-  \item{f10km}{
-the transformation-function-expression list on level 1 predictor (xij-x.j) in explaining the level 1 mediators. The first item lists column numbers of the level 1 mediators in m, which should be explained by the transformed level 1 predictor(s). By that order, each of the rest items of f10km lists the transformation functional expressions for the level 1 predictor in explaining each mediator. The mediators not specified in the list will be explained by the original format of the level 1 predictor only.
-}
+  \item{f01y, f10y, f02ky, f20ky, f01km1, f01km2, f10km}{
+the transformation functions as describe in the function \code{"\link[=data.org]{data.org}"}.  Need these arguments only when org.data=T.
+  }
   \item{level}{
 a vector that record the group number for each observation.
 }
@@ -103,14 +95,17 @@ the random effect part for model explaining the mediators. All other random effe
   \item{intercept}{
 True if fit an intercept to models, by default.
 }
-  \item{w2}{
-the weight for observations at level 2, which should be the same order as unique(level[!is.na(level)]). 
+  \item{family1}{
+the glm family for the response variable y. If it is null, will be binomial with logic link for binary y and gaussian with identity link for continuous y.
 }
+  \item{familym}{
+a list of length ncol(m), each item gives the glm family for the corresponding column of m. If an item is null, the family will be binomial with logic link for binary m and gaussian with identity link for continuous m.
+}
+%  \item{w2}{
+%the weight for observations at level 2, which should be the same order as unique(level[!is.na(level)]). 
+%}
   \item{boot}{
 the number of bootstrapping samples.
-}
-  \item{seed}{
-set seed, default is 1.
 }
   \item{covariates}{
 the covariates matrix to explain the outcome, y, and/or the mediators, m.
@@ -127,24 +122,43 @@ the column numbers of covariates that are used to explain m. cm[[1]] gives the m
   \item{joint}{
 the list of group(s) of mediators whose joint mediation effect is of interests. joint[[1]] list the levels of mediators in each group and by the order of the list. Note that if any mediator in the group is of level 2, the level of the group should be 2.
 }
+  \item{data2}{
+the results from data.org on x.new, covariates.new, m.new, level.new, and weight.new. If data1=NULL, needs to rerun data.org on the new data. If x.new is also NULL, set data2=data1. The new data is the same as the old data.
+}  
   \item{x.new, covariates.new, m.new, level.new, weight.new}{
 the settings that we want to make inferences on the mediation effects. If m.new=NULL, generate new mediators from x.new.
+}
+  \item{echo}{
+print a i when finish the ith bootstrap estimation if echo=T.
 }
 }
 \value{
 Return a "mlma.boot" mode list, which include the following items:
-  \item{de1}{an n by boot matrix, where each column is the level 1 direct effects from one bootstrap sampling. n is the number of observations in the original data.}
-  \item{de2}{an g by boot matrix, where each column is the level 2 direct effects from one bootstrap sampling. g is the number of groups in the original data.}  
-  \item{ie1}{an v1 by n*boot matrix, where each column is the level 1 indirect effects from the boot bootstrap samples for one level 1 mediator. v1 is the number of level 1 mediators.}
-  \item{ie1}{an v2 by g*boot matrix, where each column is the level 2 indirect effects from the boot bootstrap samples for one level 2 mediator. v2 is the number of level 2 mediators.}
-    \item{ie12}{an v1 by g*boot matrix, where each column is the aggregated level 2 indirect effects from the boot bootstrap samples for one level 1 mediator. v1 is the number of level 1 mediators.}
-    \item{sum.boot1}{summary results of level 1 mediation effects from bootstrap sample.}
-    \item{sum.boot2}{summary results of level 2 mediation effects from bootstrap sample.}
-    \item{full}{an "mlma" results using the original data set.}
-    \item{xboot}{a n*boot vector of the level 1 predictors in all boot bootstrap samples.}
-    \item{xjboot}{a g*boot vector of the (aggregated) level 2 predictors in all boot bootstrap samples.}
-    \item{levelx}{inherited from the same argument.}
-    \item{level}{inherited from the same argument.}
+  \item{de1}{direct effect(s) of level 1 exposure(s). de1 is a matrix of dimension n times boot by nx1, where n is the number of observations, and nx1 is the number of level 1 exposures. boot is the number of bootstrap samples.}
+  \item{de2}{direct effect(s) of level 2 exposure(s). de2 is a matrix of dimension n2 times boot by nx2, where n2 is the number of unique levels, and nx2 is the number of level 2 exposures.}
+  \item{ade1}{average direct effect(s) of level 1 exposure(s). ade1 is a matrix of dimension boot by nx1.}
+  \item{ade2}{average direct effect(s) of level 2 exposure(s). ade2 is a matric of dimension boot by nx2.}
+  \item{te1}{total effect of each level 1 exposure. te1 is a matrix of dimension n times boot by nx1, where n is the number of observations, and nx1 is the number of level 1 exposures.}
+  \item{te2}{total effect of each level 2 exposure. te2 is a matrix of dimension n2 times boot by nx2, where n2 is the number of unique levels, and nx2 is the number of level 2 exposures.}
+  \item{ate1}{average total effect(s) of level 1 exposure(s). ate1 is a matrix of dimension boot by nx1.}
+  \item{ate2}{average total effect(s) of level 2 exposure(s). ate2 is a matrix of dimension boot by nx2.}
+  \item{ie1}{level 1 indirect effect from level 1 exposure(s) to level 1 mediator(s) on the outcome. ie1 is an array of dimension (n*boot,nm1,nx1), where nm1 is the number of level 1 mediators.}
+  \item{ie2}{level 2 indirect effect from level 2 exposure(s) to level 2 mediator(s) on the outcome. ie2 is an array of dimension (n2*boot,nm2,nx2), where nm2 is the number of level 2 mediators.}
+  \item{ie12}{level 2 indirect effect from level 2 exposure(s) to level 1 mediator(s) on the outcome. ie12 is an array of dimension (n2*boot,nm1,nx2).}
+  \item{aie1}{level 1 average indirect effect from level 1 exposure(s) to level 1 mediator(s) on the outcome. aie1 is a matrix of dimension (nm1*boot,nx1).}
+  \item{aie2}{level 2 average indirect effect from level 2 exposure(s) to level 2 mediator(s) on the outcome. aie2 is a matrix of dimension (nm2*boot,nx2).}
+  \item{aie12}{level 2 average indirect effect from level 2 exposure(s) to level 1 mediator(s) on the outcome. aie12 is a matrix of dimension (nm1*boot,nx2).}
+  \item{je1}{joint level 1 indirect effect from level 1 exposure(s) to joint level 1 mediators on the outcome. je1 is an array of dimension (n*boot,nj1,nx1), where nj1 is the number of groups of level 1 mediators.}
+  \item{je2}{joint level 2 indirect effect from level 2 exposure(s) to joint level 2 mediators on the outcome. je2 is an array of dimension (n2*boot,nj2,nx2), where nj2 is the number of groups oflevel 2 mediators.}
+  \item{je12}{joint level 2 indirect effect from level 2 exposure(s) to joint level 1 mediators on the outcome. je12 is an array of dimension (n2*boot,nj1,nx2).}
+  \item{aje1}{average joint level 1 indirect effect from level 1 exposure(s) to joint level 1 mediators on the outcome. aje1 is a matrix of dimension (nj1*boot,nx1).}
+  \item{aje2}{average joint level 2 indirect effect from level 2 exposure(s) to joint level 2 mediators on the outcome. je2 is a matrix of dimension (nj2*boot,nx2), where nj2 is the number of groups oflevel 2 mediators.}
+  \item{aje12}{average joint level 2 indirect effect from level 2 exposure(s) to joint level 1 mediators on the outcome. je12 is a matrix of dimension (nj1*boot,nx2).}
+  \item{full}{an "mlma" results using the original data set.}
+  \item{xboot}{a n*boot vector of the level 1 predictors in all boot bootstrap samples.}
+  \item{xjboot}{a g*boot vector of the (aggregated) level 2 predictors in all boot bootstrap samples.}
+  \item{levelx}{inherited from the same argument.}
+  \item{level}{inherited from the same argument.}
 }
 \author{
 Qingzhao Yu (qyu@lsuhsc.edu), Bin Li (bli@lsu.edu).
@@ -157,18 +171,33 @@ Qingzhao Yu (qyu@lsuhsc.edu), Bin Li (bli@lsu.edu).
 
 \examples{
 data(sim.111)
-temp111<-boot.mlma(y=sim.111$y, biny=FALSE, sim.111$x, levelx=1, 
-                   m=sim.111$m, l1=1:2, c1=3,c1r=1,
-                   f01y=c("x","log(x^2)"), f10y=c("x^2","sqrt(x+6)"), 
-                   f20ky=list(2,c("x","x^3")), f01km1=list(2,"sqrt(x)+3"), 
-                   f10km=list(2,"log(x+2)"), level=sim.111$level, boot=2)
-  
+sim.111$m[,3]=as.factor(sim.111$m[,3])
+data2<-data.org(ifelse(sim.111$x>1.9,1,0), m=sim.111$m, 
+                f10y=list(1,c("x^2","sqrt(x+6)")), 
+                f20ky=list(2,c("x","x^3")), 
+                f10km=list(matrix(c(2,1),1),"log(x+2)"), level=sim.111$level)
+temp2.boot<-boot.mlma(y=sim.111$y, data1=data2,boot=2)
+
+\donttest{
+#can also do the above analysis using the following code
+temp2.boot<-boot.mlma(y=ifelse(sim.111$y>4.5,1,0), x=sim.111$x, m=sim.111$m, 
+            f10y=list(1,c("x^2","sqrt(x+6)")), 
+            f20ky=list(2,c("x","x^3")), 
+            f10km=list(matrix(c(2,1),1),"log(x+2)"), level=sim.111$level,boot=2)
+
+#with a level 2 exposure
 data(sim.211)
-temp211<-boot.mlma(y=sim.211$y, biny=FALSE, x=sim.211$x, levelx=2, m=sim.211$m, 
-                   l1=2,l2=1, c1=3,c1r=1, f01y=c("x","log(x^2)"), 
-                   f02ky=list(1,c("x","x^2")), f20ky=list(2,c("x","x^3")),
-                   f01km1=list(2,"sqrt(x)+3"), f01km2=list(1,c("x^1.2","x^2.3")), 
-                   level=sim.211$level, boot=2)
+data1<-data.org(x=ifelse(sim.211$x>2.2,1,0), m=sim.211$m, 
+                f02ky=list(1,c("x","x^2")),  
+                f20ky=list(2,c("x","x^3")), f01km2=list(matrix(c(1,1),1),c("x^1.2","x^2.3")),
+                f01km1=list(matrix(c(2,1),1),"sqrt(x)+3"),level=sim.211$level) 
+temp1.boot<-boot.mlma(y=sim.211$y, data1=data1,boot=2) 
+
+#with both level 1 and 2 exposure
+data3<-data.org(x=cbind(sim.211$x,sim.111$x), m=sim.211$m, 
+                f20ky=list(2,c("x","x^3")), f01km1=list(matrix(c(2,1),1),"sqrt(x)+3"), 
+                f01km2=list(matrix(c(1,1),1),c("x^1.2","x^2.3")), level=sim.211$level)
+temp3.boot<-boot.mlma(y=sim.211$y, data1=data3,boot=2) }
 }
 % Add one or more standard keywords, see file 'KEYWORDS' in the
 % R documentation directory.
