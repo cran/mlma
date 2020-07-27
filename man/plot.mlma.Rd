@@ -54,7 +54,7 @@ data2<-data.org(sim.111$x, m=sim.111$m,
                    f10km=list(matrix(c(2,1),1),"log(x+2)"), level=sim.111$level)
 temp2<-mlma(y=sim.111$y, data1=data2)
 plot(temp2)
-plot(temp2,var="m.2")
+#plot(temp2,var="m.2")
 #plot(temp2,var="m.4")
 plot(temp2,var="m.3")
 

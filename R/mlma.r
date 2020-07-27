@@ -283,7 +283,7 @@ for (i in cat1)
  f[is.na(d),]<-NA
  z<-apply(f,2,one2two,level,weight)
  m1y<-cbind(m1y,f)
- m1y.der<-cbind(m1y.der,f)
+ m1y.der<-cbind(m1y.der,matrix(1,nrow(f),ncol(f)))
  m1<-append(m1,list((g+1):(g+l-1)))
  temp3<-as.matrix(z[1:dim1[1],])
  colnames(temp3)<-paste(ntemp[j],"12",b,sep=".")  ##
@@ -1241,7 +1241,6 @@ if(!is.null(m.2))    #analysis for level 2 mediators
    if(intercept)
      coef.temp<-coef.temp[-1]
    coef.temp<-coef.temp[1:numx]
-   
    temp.trans=NULL
    if(!is.null(data1$f01km2.2))
     temp.trans=(1:nrow(data1$f01km2.2[[1]]))[data1$f01km2.2[[1]][,1]==l2[i]]
@@ -1329,6 +1328,7 @@ if(!is.null(m.2))    #analysis for level 2 mediators
      temp.trans=match(c2[i],data1$f01km2.2[[1]][,1]) 
      n2x=(1:nx)[levelx==2]
      tmp.ie2_2<-NULL
+     
      for (z in 1:length(n2x)){    
        if(!data1$binx[n2x[z]]){
          if(is.na(temp.trans))
@@ -1341,16 +1341,16 @@ if(!is.null(m.2))    #analysis for level 2 mediators
                            c(dim(cbind(ie2_2[,,z],coef.temp[z])),z)) #if there is no transformation of the exposure variable
          else{temp.row=temp.trans[temp.trans2]
          if(length(data1$f01km2.2[[temp.trans2+1]])==1)
-           tmp.ie2_2<-array(c(tmp.ie2_2,cbind(ie2_2[,,z],coef.temp[data1$f01km2.2[[temp.trans2+1]]]*
-                       data2$xm2.der[,data1$f01km2.2[[temp.trans2+1]]])),
-                       c(dim(cbind(ie2_2[,,z],coef.temp[data1$f01km2.2[[temp.trans2+1]]]*
-                                     data2$xm2.der[,data1$f01km2.2[[temp.trans2+1]]])),z))
-         else
-           itmp.e2_2<-array(c(tmp.ie2_2,cbind(ie2_2[,,z],data2$xm2.der[,data1$f01km2.2[[temp.trans2+1]]]%*%
-                       coef.temp[data1$f01km2.2[[temp.trans2+1]]])),
-                       c(dim(cbind(ie2_2[,,z],data2$xm2.der[,data1$f01km2.2[[temp.trans2+1]]]%*%
-                                     coef.temp[data1$f01km2.2[[temp.trans2+1]]])),z))
-     }}
+           tmp.ie2_2<-array(c(tmp.ie2_2,cbind(ie2_2[,,z],coef.temp[match(data1$f01km2.2[[temp.row+1]],data1$fm22[[i+1]])]*
+                                                data2$xm2.der[,data1$f01km2.2[[temp.row+1]]])),
+                            c(dim(cbind(ie2_2[,,z],coef.temp[match(data1$f01km2.2[[temp.row+1]],data1$fm22[[i+1]])]*
+                                          data2$xm2.der[,data1$f01km2.2[[temp.row+1]]])),z))
+          else
+            itmp.ie2_2<-array(c(tmp.ie2_2,cbind(ie2_2[,,z],data2$xm2.der[,data1$f01km2.2[[temp.row+1]]]%*%
+                                             coef.temp[match(data1$f01km2.2[[temp.row+1]],data1$fm22[[i+1]])])),
+                         c(dim(cbind(ie2_2[,,z],data2$xm2.der[,data1$f01km2.2[[temp.row+1]]]%*%
+                                       coef.temp[match(data1$f01km2.2[[temp.row+1]],data1$fm22[[i+1]])])),z))
+         }}
        }
       else { #for binary x, use ie2_2 only, not that the mean is weighted by sample size
         if (length(data1$m2[[j+i+1]])==1)
@@ -2459,10 +2459,10 @@ else
  aje12.boot<-rbind(aje12.boot,full.boot$aje12)
  
  ie1_2.boot<-abind(ie1_2.boot,full.boot$ie1_2,along=1)
- ie2_1.boot<-abind(ie2_1.boot,full.boot$ie2_1,along=1)
+ ie2_1.boot<-rbind(ie2_1.boot,full.boot$ie2_1)
  ie1_1.boot<-rbind(ie1_1.boot,full.boot$ie1_1)
  ie1_3.boot<-rbind(ie1_3.boot,full.boot$ie1_3)
- ie2_2.boot<-rbind(ie2_2.boot,full.boot$ie2_2)
+ ie2_2.boot<-abind(ie2_2.boot,full.boot$ie2_2,along=1)
  ie2_3.boot<-rbind(ie2_3.boot,full.boot$ie2_3)
 
 if(echo) 
@@ -2589,11 +2589,15 @@ else{
   m<-object$m[,var]
   y<-predict(object$f1)
   cate=F
-  if(!is.factor(m) & !is.character(m))
+  if(!is.factor(m) & !is.character(m) & nlevels(as.factor(m))>2)
     m.j<-two(m,object$data2$parameter$level)
   else
     {cate=T
-     m.j<-two(object$data2$m1y[,grep(var,colnames(object$data2$m1y))],object$data2$parameter$level)}
+     if(length(grep(var,colnames(object$data2$m1y)))!=0)
+       m.j<-two(object$data2$m1y[,grep(var,colnames(object$data2$m1y))],object$data2$parameter$level)
+     else
+       m.j<-two(object$data2$m2y[,grep(var,colnames(object$data2$m2y))],object$data2$parameter$level)
+    }
   y.j<-two(y,object$data2$parameter$level)
   a1<-unique(c(grep(var,colnames(object$aie1)),grep(var,colnames(object$aie12))))
   a2<-grep(var,colnames(object$aie2))
@@ -3141,11 +3145,15 @@ x2
    m<-object1$m[,var]
    y<-predict(object1$f1)
    cate=F
-   if(!is.factor(m) & !is.character(m))
+   if(!is.factor(m) & !is.character(m) & nlevels(as.factor(m))>2)
      m.j<-two(m,object1$data2$parameter$level)
    else
    {cate=T
-    m.j<-two(object1$data2$m1y[,grep(var,colnames(object1$data2$m1y))],object1$data2$parameter$level)}
+    if(length(grep(var,colnames(object1$data2$m1y)))!=0)
+      m.j<-two(object1$data2$m1y[,grep(var,colnames(object1$data2$m1y))],object1$data2$parameter$level)
+    else
+      m.j<-two(object1$data2$m2y[,grep(var,colnames(object1$data2$m2y))],object1$data2$parameter$level)
+   }
     y.j<-two(y,object1$data2$parameter$level)   #what if y is binary?---get the linear part
    a1<-unique(c(grep(var,colnames(object1$aie1)),grep(var,colnames(object1$aie12))))
    a2<-grep(var,colnames(object1$aie2))
@@ -3255,22 +3263,22 @@ x2
        {par(mfcol=c(3,length(a2)))
          for(i in 1:length(a2))
          {ie2<-boot.ci(object1$x.j[,j2],matrix(object$ie2[,a2[i],j],ncol=object$boot),cri_val)
-         plot_ci(ie2,xlab=x.names.2[j2],ylab=paste("Level 2 IE of", colnames(object1$aie2)[a2[i]],sep=" "),
+          plot_ci(ie2,xlab=x.names.2[j2],ylab=paste("Level 2 IE of", colnames(object1$aie2)[a2[i]],sep=" "),
                  main=paste("IE with exposure variable", rownames(object1$aie2)[j],sep=" "))
-         ie2_2<-boot.ci(object1$x[,j1],matrix(object$ie2_2[,a2[i]],ncol=object$boot),cri_val)
+         ie2_2<-boot.ci(object1$x.j[,j2],matrix(object$ie2_2[,a2[i],j],ncol=object$boot),cri_val)
          suppressWarnings(plot_ci(ie2_2,xlab=x.names.2[j2],ylab=colnames(object$aie2)[a2[i]],
                                   main=paste("Differential effect of", rownames(object$aie2)[j], "and",
                                              colnames(object$ie2)[a2[i]],sep=" ")))
-         temp.matrix=apply(matrix(object$ie2_1[,a2[i],j2],ncol=object$boot),2,two,object$level)
+         temp.matrix=apply(matrix(object$ie2_1[,a2[i]],ncol=object$boot),2,two,object$level)
          if(!cate)
          {
           ie2_1<-boot.ci(m,temp.matrix,cri_val)
           plot_ci(ie2_1,xlab=var,ylab="y",main=paste("Predicted relationship between y and",var,sep=" "))
          }
-         else
-           boxplot(temp.matrix[1,], ylab="y",
+         else 
+           boxplot(temp.matrix[1,], ylab="Fitted Coeficients",
                    xlab=dimnames(object$ie2)[[2]][a2[i]], 
-                   main=paste("Predicted relationship \n between y and",colnames(object$aie2)[a2[i]],sep=" ")) 
+                   main=paste("Predicted coefficients for \n",colnames(object$aie2)[a2[i]], "to predict y", sep=" ")) 
          }}
        else
        {par(mfcol=c(2,1))

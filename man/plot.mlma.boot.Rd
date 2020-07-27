@@ -41,7 +41,7 @@ temp1.boot<-boot.mlma(y=sim.211$y, data1=data1,boot=2)
 plot(temp1.boot)
 plot(temp1.boot,var="m.1")
 plot(temp1.boot,var="m.3")
-plot(temp1.boot,var="m.4")
+#plot(temp1.boot,var="m.4")
 }
 % Add one or more standard keywords, see file 'KEYWORDS' in the
 % R documentation directory.
