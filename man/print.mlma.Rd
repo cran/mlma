@@ -8,7 +8,7 @@ Print "mlma" Object
 print the level 1 and level 2 mediation effecs from the object.
 }
 \usage{
-\method{print}{mlma}(x, ..., w2 = rep(1, length(object$de2)),digits=2)
+\method{print}{mlma}(x,...,w2=rep(1,nrow(as.matrix(object$de2))),digits=2)
 }
 %- maybe also 'usage' for other objects documented here.
 \arguments{

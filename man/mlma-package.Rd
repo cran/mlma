@@ -32,3 +32,6 @@ Qingzhao Yu  \email{qyu@lsuhsc.edu}, Bin Li \email{bli@lsu.edu}
 
 Maintainer: Qingzhao Yu  \email{qyu@lsuhsc.edu}
 }
+\references{
+Yu, Q. and Li, B., (2020). <doi:10.1371/journal.pone.0241072>. "Third-Variable Effect Analysis with Multilevel AdditiveModels," PLoS ONE 15(10): e0241072. 
+}

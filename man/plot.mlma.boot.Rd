@@ -8,7 +8,7 @@ Plot the "mlma.boot" Object
 For the mediator identified by var, the function draws the level 1 and/or (aggregated) level 2 indirect effects versus the predictor and the confidence bands at alpha significance level. If var is NULL, draw the relative mediation effects with confidence intervals.
 }
 \usage{
-\method{plot}{mlma.boot}(x, ..., var = NULL, alpha = 0.05, quant=FALSE)
+\method{plot}{mlma.boot}(x,..., var=NULL, alpha=0.05,quant=FALSE, plot.it=x$plot.it)
 }
 %- maybe also 'usage' for other objects documented here.
 \arguments{
@@ -26,6 +26,9 @@ the significance level at which to draw the confidence bands.
 }
   \item{quant}{
 if true, confidence interval is calculated using quantil when plot the relative effects. By default, the CIs are calculated using normal approximation.  This argument does nothing for the CIs calculated when var is not null.
+}
+  \item{plot.it}{
+If true, will plot confidence intervals.
 }
 }
 \author{

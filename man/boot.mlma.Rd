@@ -9,7 +9,8 @@ Bootstrap samples are selected from the original data set. The bootstrap sample 
 }
 \usage{
 boot.mlma(y, data1=NULL,x=data1$parameter$x, m=data1$parameter$m, 
-          levelx=data1$parameter$levelx, xref=NULL, yref=NULL, 
+          levelx=data1$parameter$levelx, levely=data1$parameter$levely,
+          xref=NULL, yref=NULL, 
           l1=data1$parameter$l1,l2=data1$parameter$l2, 
           c1=data1$parameter$c1, #levelx is the level of x
           c1r=data1$parameter$c1r, c2=data1$parameter$c2, 
@@ -23,7 +24,8 @@ boot.mlma(y, data1=NULL,x=data1$parameter$x, m=data1$parameter$m,
           f20ky=data1$parameter$f20ky, f01km1=data1$parameter$f01km1, 
           f01km2=data1$parameter$f01km2, f10km=data1$parameter$f10km,
           data2=NULL, x.new=NULL, m.new=m, level.new=level, 
-          weight.new=NULL,covariates.new=covariates,boot=100,echo=TRUE)
+          weight.new=NULL,covariates.new=covariates,boot=100,echo=TRUE, 
+          plot.it=TRUE, cov.mat=FALSE)
 }
 %- maybe also 'usage' for other objects documented here.
 \details{
@@ -52,6 +54,9 @@ the mediators. The program will identify the levels and types of each mediator i
 }
   \item{levelx}{
 the level of x (1 or 2). If it is not given, levelx will be decided by x.
+}
+  \item{levely}{
+the level of y (1 or 2). If it is not given, levely will be decided by y.
 }
   \item{xref}{
 the reference group of x if it is binary. By default it will be the first level of x.
@@ -130,6 +135,12 @@ the settings that we want to make inferences on the mediation effects. If m.new=
 }
   \item{echo}{
 print a i when finish the ith bootstrap estimation if echo=T.
+}
+  \item{plot.it}{
+If true, middle results will be stored for future use to plot confidence intervals.
+}
+  \item{cov.mat}{
+If true, the result on full dataset include the estimation of variances through normal approximation.
 }
 }
 \value{

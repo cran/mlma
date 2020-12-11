@@ -72,17 +72,19 @@ y<-u0+beta_1*x1+beta_2*x2+beta_3*ifelse(x2<=0,0,log(1+x2))+beta_4*m1+beta_5*m2+e
 ```
 
 ## Data Transformation and Organization
-The \textit{data.org} function is used to do the transformation before the mediation analysis. In the function, the exposure variable(s) ($x$) and the mediator(s) ($m$) are required to input. The response variable ($y$) is required only when its level ($levely$) is not given. The argument $levelx$ is to identify the levels of the exposure variable. $levelx$ does not need to be provided. The function can automatically decide the level of the exposure variable(s). If any of the exposure variable is binary or categorical, $xref$ is used to identify the reference group of the exposure variable. 
+The $data.org$ function is used to do the transformation before the mediation analysis. In the function, the exposure variable(s) ($x$) and the mediator(s) ($m$) are required to input. The response variable ($y$) is required only when its level ($levely$) is not given. The argument $levelx$ is to identify the levels of the exposure variable. $levelx$ does not need to be provided. The function can automatically decide the level of the exposure variable(s). If any of the exposure variable is binary or categorical, $xref$ is used to identify the reference group of the exposure variable. 
 
-The arguments $l1$ and $l2$ specify the column numbers in $m$ the continuous mediators at level one or level two respectively. $c1$ and $c2$ refers to the categorical mediators where $c1r$ and $c2r$ specify the reference group respectively. $l1, l2, c1$, and $c2$ does not have to be provided. If not provided, the function \textit{data.org} checks each column of $m$ and decide whether each variable belongs to level 1 or 2, and be continuous or categorical.
+Note that the name for one mediator in $m$ should **not** be the subset of the name of another mediator.
+
+The arguments $l1$ and $l2$ specify the column numbers in $m$ the continuous mediators at level one or level two respectively. $c1$ and $c2$ refers to the categorical mediators where $c1r$ and $c2r$ specify the reference group respectively. $l1, l2, c1$, and $c2$ does not have to be provided. If not provided, the function $data.org$ checks each column of $m$ and decide whether each variable belongs to level 1 or 2, and be continuous or categorical.
 
 $level$ is a vector that record the group number for each observation. $weight$ defines the weight of each observation.
 
-$f01y$ and $f10y$ specify the desired transformation of exposures at level two or level one respectively in explaining the response variable. $f01y$ and $f10y$ are lists with the first item identify the column number of the exposure variable in $x$ that needs to be transformed, and then in that order, each of the rest items list the transformation functional expressions for each exposure. For example, \textit{f10y=list(1,c("x^2","log(x)"))} means that column 1 of $x$ is a level 1 exposure. It needs to be transformed to its square form and natural log form to predict the response variable. If not specified in $f01y$ or $f10y$, the exposure will keep its original format without transformation. In our simulation data, the level two exposure is transformed to itself, $x_{.j}$ and $I(x_{.j}>0)\times log(x_{.j}+1)$. Therefore, we define \textit{f01y=list(2,c("x","ifelse(x>0,log(x+1),0)"))}. Similarly, $f02ky$ and $f20ky$ defines the transformation of level two and level one mediators respectively in explaining $y$.
+$f01y$ and $f10y$ specify the desired transformation of exposures at level two or level one respectively in explaining the response variable. $f01y$ and $f10y$ are lists with the first item identify the column number of the exposure variable in $x$ that needs to be transformed, and then in that order, each of the rest items list the transformation functional expressions for each exposure. For example, `f10y=list(1,c("x^2","log(x)"))` means that column 1 of $x$ is a level 1 exposure. It needs to be transformed to its square form and natural log form to predict the response variable. If not specified in $f01y$ or $f10y$, the exposure will keep its original format without transformation. In our simulation data, the level two exposure is transformed to itself, $x_{.j}$ and $I(x_{.j}>0)\times log(x_{.j}+1)$. Therefore, we define `f01y=list(2,c("x","ifelse(x>0,log(x+1),0)"))`. Similarly, $f02ky$ and $f20ky$ defines the transformation of level two and level one mediators respectively in explaining $y$.
 
-$f01km1$ and $f01km2$ are arguments that defines transformation of level two exposures in explaining level one or level two mediator(s) respectively. Since only higher or equivalent level variables can be used as predictors, level one exposures can only be predictors for level one mediators. $f10km$ defines the transformation of level one exposure(s) in explaining level one mediator(s). In addition, when there are level two mediators but not level two exposure variable, the level one exposure variable(s) will be aggregated at level two to form the level two exposure variable(s). The first item of the the $f01km1$, $f01km2$ and $f10km$ is a matrix of two columns, where the first column indicates the column number of the mediator in $m$. The second column indicates the column number of the exposure in $x$. By the order of the rows of the first item, each of the rest items of $f01km1, f01km2$ and $f10km$ list the transformation functional expressions for the exposure (identified by column 2) in explaining each mediator (identified by column 1). In our example, level two mediator $m2$ is explained by the level two exposure $x2$ in the form of $x2^2$. Therefore, we set the argument \textit{f01km2=list(matrix(c(2,2),1,2),"x^2")}.
+$f01km1$ and $f01km2$ are arguments that define transformation of level two exposures in explaining level one or level two mediator(s) respectively. Since only higher or equivalent level variables can be used as predictors, level one exposures can only be predictors for level one mediators. $f10km$ defines the transformation of level one exposure(s) in explaining level one mediator(s). In addition, when there are level two mediators but not level two exposure variable, the level one exposure variable(s) will be aggregated at level two to form the level two exposure variable(s). The first item of the the $f01km1$, $f01km2$ and $f10km$ is a matrix of two columns, where the first column indicates the column number of the mediator in $m$. The second column indicates the column number of the exposure in $x$. By the order of the rows of the first item, each of the rest items of $f01km1, f01km2$ and $f10km$ list the transformation functional expressions for the exposure (identified by column 2) in explaining each mediator (identified by column 1). In our example, level two mediator $m2$ is explained by the level two exposure $x2$ in the form of $x2^2$. Therefore, we set the argument `f01km2=list(matrix(c(2,2),1,2),"x^2")`.
 
-The following codes prepare for the data and perform the transformations. Note that the transformation functions can be set in different ways. Besides those in the example, we can also use the natural spline bases (e.g. \textit{ns(x,df=5)}) and piecewise functions (e.g. \textit{ifelse(x>0,0,sqrt(x))}).
+The following codes prepare for the data and perform the transformations. Note that the transformation functions can be set in different ways. Besides those in the example, we can also use the natural spline bases (e.g. `ns(x,df=5)`) and piecewise functions (e.g. `ifelse(x>0,0,sqrt(x))`).
 
 ```{r}
 example1<-data.org(x=cbind(x1=x1,x2=x2), m=cbind(m1=m1,m2=m2), 
@@ -91,9 +93,9 @@ example1<-data.org(x=cbind(x1=x1,x2=x2), m=cbind(m1=m1,m2=m2),
                    f01km2=list(matrix(c(2,2),1,2),"x^2")) 
 ```
 
-## The function \text{mlma} for multilevel mediation analysis
+## The function $mlma$ for multilevel mediation analysis
 
-The function \textit{mlma} can be executed based on the results from \textit{data.org} or on the original arguments of \textit{data.org}. In addition, the response variable needs to be set up by $y$. If the response variable is categorical, $yref$ is used to specify the reference group. The $random$ argument is to set up the random effect part for the response variable and $random.m1$ is for the mediators. 
+The function $mlma$ can be executed based on the results from $data.org$ or on the original arguments of $data.org$. In addition, the response variable needs to be set up by $y$. If the response variable is categorical, $yref$ is used to specify the reference group. The $random$ argument is to set up the random effect part for the response variable and $random.m1$ is for the mediators. 
 
 The argument $covariates$ includes the data frame of all covariates for the response variable and/or mediators. For the response variable, covariates are defined as those variables used to explain $y$, but are not related or caused by the exposure variable(s). Arguments $cy1$ and $cy2$ specify the column numbers of level one and two covariates respectively in $covariates$. $cm$ specifies the covariates for mediators.
 
@@ -106,38 +108,38 @@ mlma.e1
 
 The result of mediation effect analysis shows the mediation effect from different levels. The direct effect, indirect effects and total effect are shown for each exposure-response pair of variables. For the above example, the level 1 total effect from $x1$ to $y$ is $1.04$, of which direct effect is $0.5$, indirect effect from $m1$ is $0.54$. The level 2 total effect between $x2$ and $y$ is $1.05$, in which the direct effect is $0.62$, the indirect effect from $m2$ is $0.01$, and from $m1$ is $0.43$.
 
-### The \textit{summary} function for multilevel mediaiton analysis
-The \textit{summary} function provides the ANOVA tests of the exposure variables and mediators in the full model to estimate the response variable. It also provides the ANOVA tests of the exposure variable(s) in predicting each mediator. Using the results, users can decide which variables should be included as mediators and which ones should be used as covariates and rerun the multilevel mediation analysis.
+### The $summary$ function for multilevel mediaiton analysis
+The $summary$ function provides the ANOVA tests of the exposure variables and mediators in the full model to estimate the response variable. It also provides the ANOVA tests of the exposure variable(s) in predicting each mediator. Using the results, users can decide which variables should be included as mediators and which ones should be used as covariates and rerun the multilevel mediation analysis.
 
 ```{r}
 summary(mlma.e1)
 ```
-To check the actual coefficients for each variable in the full model or in the model to predict level one or level two mediators, we can check the results from \textit{mlma} directly.
+To check the actual coefficients for each variable in the full model or in the model to predict level one or level two mediators, we can check the results from $mlma$ directly.
 ```{r}
 mlma.e1$f1   #the full model
 mlma.e1$fm1  #models for level 1 mediators
 mlma.e1$fm2  #models for level 2 mediators
 ```
 ### The plot function for the mlma object 
-The \textit{plot} function help depict the directions of mediaiton effects. Without specifying the mediator (by $var$), the \textit{plot} function plots the overall medation effects.
+The $plot$ function help depict the directions of mediaiton effects. Without specifying the mediator (by $var$), the $plot$ function plots the overall medation effects.
 
 ```{r}
 plot(mlma.e1)
 ```
-By specifying the mediator, the \textit{plot} function shows the indirect effect of the mediator, and its marginal relationship with the response variable and with the exposure variable at each level.
+By specifying the mediator, the $plot$ function shows the indirect effect of the mediator, and its marginal relationship with the response variable and with the exposure variable at each level.
 ```{r}
 plot(mlma.e1,var="m1")
 plot(mlma.e1,var="m2")
 ```
 ## Make Inferences on Multilevel Mediation effect
-Finally, the \textit{boot.mlma} function uses the bootstrap method to estimate mediation effects and the estimated variances and confidence intervals. Again, the analysis can be built on the results from \textit{data.org}. The default number of bootstrap samples is $100$, which can be changed to other desired numbers. The \textit{summary} function for the output of \textit{boot.mlma} gives the inference results for all mediation effects. Two confidence intervals are built up for the estiamted mediation effects. (lwbd, upbd) is based on the normal approximation and (lwbd_quan, upbd.quan) is built by the quantiles of the bootstrap results.
+Finally, the $boot.mlma$ function uses the bootstrap method to estimate mediation effects and the estimated variances and confidence intervals. Again, the analysis can be built on the results from $data.org$. The default number of bootstrap samples is $100$, which can be changed to other desired numbers. The $summary$ function for the output of $boot.mlma$ gives the inference results for all mediation effects. Two confidence intervals are built up for the estimated mediation effects. (lwbd, upbd) is based on the normal approximation and (lwbd_quan, upbd.quan) is built by the quantiles of the bootstrap results.
 
 ```{r}
 boot.e1<-boot.mlma(y=y,data1=example1,echo=F,intercept = F)
 summary(boot.e1)
 ```
 
-The \textit{plot} function for the $boot.mlma$ objects works similarly for the $mlma$ objects but confidence intervals for estimations are added.
+The $plot$ function for the $boot.mlma$ objects works similarly for the $mlma$ objects but confidence intervals for estimations are added.
 
 ```{r}
 plot(boot.e1)

@@ -8,8 +8,8 @@ Plot "mlma" Object
 Plot the overall mediation effect or decomposed indirect effect from the selected mediator.
 }
 \usage{
-\method{plot}{mlma}(x, ..., var = NULL, cate = FALSE, w2 = rep(1,
-                   length(object$de2)))
+\method{plot}{mlma}(x,..., var=NULL, cate=FALSE, 
+                    w2=rep(1,nrow(as.matrix(object$de2))))
 }
 %- maybe also 'usage' for other objects documented here.
 \arguments{

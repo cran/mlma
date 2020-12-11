@@ -12,7 +12,7 @@
 
 <meta name="author" content="Qingzhao Yu and Bin Li" />
 
-<meta name="date" content="2020-07-22" />
+<meta name="date" content="2020-12-10" />
 
 <title>Examples for Multilevel Mediation Analysis</title>
 
@@ -95,7 +95,7 @@ code > span.in { color: #60a0b0; font-weight: bold; font-style: italic; } /* Inf
 
 <h1 class="title toc-ignore">Examples for Multilevel Mediation Analysis</h1>
 <h4 class="author">Qingzhao Yu and Bin Li</h4>
-<h4 class="date">2020-07-22</h4>
+<h4 class="date">2020-12-10</h4>
 
 
 
@@ -139,20 +139,21 @@ y&lt;-u0<span class="op">+</span>beta_<span class="dv">1</span><span class="op">
 </div>
 <div id="data-transformation-and-organization" class="section level2">
 <h2>Data Transformation and Organization</h2>
-<p>The  function is used to do the transformation before the mediation analysis. In the function, the exposure variable(s) (<span class="math inline">\(x\)</span>) and the mediator(s) (<span class="math inline">\(m\)</span>) are required to input. The response variable (<span class="math inline">\(y\)</span>) is required only when its level (<span class="math inline">\(levely\)</span>) is not given. The argument <span class="math inline">\(levelx\)</span> is to identify the levels of the exposure variable. <span class="math inline">\(levelx\)</span> does not need to be provided. The function can automatically decide the level of the exposure variable(s). If any of the exposure variable is binary or categorical, <span class="math inline">\(xref\)</span> is used to identify the reference group of the exposure variable.</p>
-<p>The arguments <span class="math inline">\(l1\)</span> and <span class="math inline">\(l2\)</span> specify the column numbers in <span class="math inline">\(m\)</span> the continuous mediators at level one or level two respectively. <span class="math inline">\(c1\)</span> and <span class="math inline">\(c2\)</span> refers to the categorical mediators where <span class="math inline">\(c1r\)</span> and <span class="math inline">\(c2r\)</span> specify the reference group respectively. <span class="math inline">\(l1, l2, c1\)</span>, and <span class="math inline">\(c2\)</span> does not have to be provided. If not provided, the function  checks each column of <span class="math inline">\(m\)</span> and decide whether each variable belongs to level 1 or 2, and be continuous or categorical.</p>
+<p>The <span class="math inline">\(data.org\)</span> function is used to do the transformation before the mediation analysis. In the function, the exposure variable(s) (<span class="math inline">\(x\)</span>) and the mediator(s) (<span class="math inline">\(m\)</span>) are required to input. The response variable (<span class="math inline">\(y\)</span>) is required only when its level (<span class="math inline">\(levely\)</span>) is not given. The argument <span class="math inline">\(levelx\)</span> is to identify the levels of the exposure variable. <span class="math inline">\(levelx\)</span> does not need to be provided. The function can automatically decide the level of the exposure variable(s). If any of the exposure variable is binary or categorical, <span class="math inline">\(xref\)</span> is used to identify the reference group of the exposure variable.</p>
+<p>Note that the name for one mediator in <span class="math inline">\(m\)</span> should <strong>not</strong> be the subset of the name of another mediator.</p>
+<p>The arguments <span class="math inline">\(l1\)</span> and <span class="math inline">\(l2\)</span> specify the column numbers in <span class="math inline">\(m\)</span> the continuous mediators at level one or level two respectively. <span class="math inline">\(c1\)</span> and <span class="math inline">\(c2\)</span> refers to the categorical mediators where <span class="math inline">\(c1r\)</span> and <span class="math inline">\(c2r\)</span> specify the reference group respectively. <span class="math inline">\(l1, l2, c1\)</span>, and <span class="math inline">\(c2\)</span> does not have to be provided. If not provided, the function <span class="math inline">\(data.org\)</span> checks each column of <span class="math inline">\(m\)</span> and decide whether each variable belongs to level 1 or 2, and be continuous or categorical.</p>
 <p><span class="math inline">\(level\)</span> is a vector that record the group number for each observation. <span class="math inline">\(weight\)</span> defines the weight of each observation.</p>
-<p><span class="math inline">\(f01y\)</span> and <span class="math inline">\(f10y\)</span> specify the desired transformation of exposures at level two or level one respectively in explaining the response variable. <span class="math inline">\(f01y\)</span> and <span class="math inline">\(f10y\)</span> are lists with the first item identify the column number of the exposure variable in <span class="math inline">\(x\)</span> that needs to be transformed, and then in that order, each of the rest items list the transformation functional expressions for each exposure. For example,  means that column 1 of <span class="math inline">\(x\)</span> is a level 1 exposure. It needs to be transformed to its square form and natural log form to predict the response variable. If not specified in <span class="math inline">\(f01y\)</span> or <span class="math inline">\(f10y\)</span>, the exposure will keep its original format without transformation. In our simulation data, the level two exposure is transformed to itself, <span class="math inline">\(x_{.j}\)</span> and <span class="math inline">\(I(x_{.j}&gt;0)\times log(x_{.j}+1)\)</span>. Therefore, we define . Similarly, <span class="math inline">\(f02ky\)</span> and <span class="math inline">\(f20ky\)</span> defines the transformation of level two and level one mediators respectively in explaining <span class="math inline">\(y\)</span>.</p>
-<p><span class="math inline">\(f01km1\)</span> and <span class="math inline">\(f01km2\)</span> are arguments that defines transformation of level two exposures in explaining level one or level two mediator(s) respectively. Since only higher or equivalent level variables can be used as predictors, level one exposures can only be predictors for level one mediators. <span class="math inline">\(f10km\)</span> defines the transformation of level one exposure(s) in explaining level one mediator(s). In addition, when there are level two mediators but not level two exposure variable, the level one exposure variable(s) will be aggregated at level two to form the level two exposure variable(s). The first item of the the <span class="math inline">\(f01km1\)</span>, <span class="math inline">\(f01km2\)</span> and <span class="math inline">\(f10km\)</span> is a matrix of two columns, where the first column indicates the column number of the mediator in <span class="math inline">\(m\)</span>. The second column indicates the column number of the exposure in <span class="math inline">\(x\)</span>. By the order of the rows of the first item, each of the rest items of <span class="math inline">\(f01km1, f01km2\)</span> and <span class="math inline">\(f10km\)</span> list the transformation functional expressions for the exposure (identified by column 2) in explaining each mediator (identified by column 1). In our example, level two mediator <span class="math inline">\(m2\)</span> is explained by the level two exposure <span class="math inline">\(x2\)</span> in the form of <span class="math inline">\(x2^2\)</span>. Therefore, we set the argument .</p>
-<p>The following codes prepare for the data and perform the transformations. Note that the transformation functions can be set in different ways. Besides those in the example, we can also use the natural spline bases (e.g. ) and piecewise functions (e.g. ).</p>
+<p><span class="math inline">\(f01y\)</span> and <span class="math inline">\(f10y\)</span> specify the desired transformation of exposures at level two or level one respectively in explaining the response variable. <span class="math inline">\(f01y\)</span> and <span class="math inline">\(f10y\)</span> are lists with the first item identify the column number of the exposure variable in <span class="math inline">\(x\)</span> that needs to be transformed, and then in that order, each of the rest items list the transformation functional expressions for each exposure. For example, <code>f10y=list(1,c(&quot;x^2&quot;,&quot;log(x)&quot;))</code> means that column 1 of <span class="math inline">\(x\)</span> is a level 1 exposure. It needs to be transformed to its square form and natural log form to predict the response variable. If not specified in <span class="math inline">\(f01y\)</span> or <span class="math inline">\(f10y\)</span>, the exposure will keep its original format without transformation. In our simulation data, the level two exposure is transformed to itself, <span class="math inline">\(x_{.j}\)</span> and <span class="math inline">\(I(x_{.j}&gt;0)\times log(x_{.j}+1)\)</span>. Therefore, we define <code>f01y=list(2,c(&quot;x&quot;,&quot;ifelse(x&gt;0,log(x+1),0)&quot;))</code>. Similarly, <span class="math inline">\(f02ky\)</span> and <span class="math inline">\(f20ky\)</span> defines the transformation of level two and level one mediators respectively in explaining <span class="math inline">\(y\)</span>.</p>
+<p><span class="math inline">\(f01km1\)</span> and <span class="math inline">\(f01km2\)</span> are arguments that define transformation of level two exposures in explaining level one or level two mediator(s) respectively. Since only higher or equivalent level variables can be used as predictors, level one exposures can only be predictors for level one mediators. <span class="math inline">\(f10km\)</span> defines the transformation of level one exposure(s) in explaining level one mediator(s). In addition, when there are level two mediators but not level two exposure variable, the level one exposure variable(s) will be aggregated at level two to form the level two exposure variable(s). The first item of the the <span class="math inline">\(f01km1\)</span>, <span class="math inline">\(f01km2\)</span> and <span class="math inline">\(f10km\)</span> is a matrix of two columns, where the first column indicates the column number of the mediator in <span class="math inline">\(m\)</span>. The second column indicates the column number of the exposure in <span class="math inline">\(x\)</span>. By the order of the rows of the first item, each of the rest items of <span class="math inline">\(f01km1, f01km2\)</span> and <span class="math inline">\(f10km\)</span> list the transformation functional expressions for the exposure (identified by column 2) in explaining each mediator (identified by column 1). In our example, level two mediator <span class="math inline">\(m2\)</span> is explained by the level two exposure <span class="math inline">\(x2\)</span> in the form of <span class="math inline">\(x2^2\)</span>. Therefore, we set the argument <code>f01km2=list(matrix(c(2,2),1,2),&quot;x^2&quot;)</code>.</p>
+<p>The following codes prepare for the data and perform the transformations. Note that the transformation functions can be set in different ways. Besides those in the example, we can also use the natural spline bases (e.g. <code>ns(x,df=5)</code>) and piecewise functions (e.g. <code>ifelse(x&gt;0,0,sqrt(x))</code>).</p>
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">example1&lt;-<span class="kw">data.org</span>(<span class="dt">x=</span><span class="kw">cbind</span>(<span class="dt">x1=</span>x1,<span class="dt">x2=</span>x2), <span class="dt">m=</span><span class="kw">cbind</span>(<span class="dt">m1=</span>m1,<span class="dt">m2=</span>m2), 
                    <span class="dt">f01y=</span><span class="kw">list</span>(<span class="dv">2</span>,<span class="kw">c</span>(<span class="st">&quot;x&quot;</span>,<span class="st">&quot;ifelse(x&gt;0,log(x+1),0)&quot;</span>)),
                    <span class="dt">level=</span>level,
                    <span class="dt">f01km2=</span><span class="kw">list</span>(<span class="kw">matrix</span>(<span class="kw">c</span>(<span class="dv">2</span>,<span class="dv">2</span>),<span class="dv">1</span>,<span class="dv">2</span>),<span class="st">&quot;x^2&quot;</span>)) </code></pre></div>
 </div>
-<div id="the-function-for-multilevel-mediation-analysis" class="section level2">
-<h2>The function  for multilevel mediation analysis</h2>
-<p>The function  can be executed based on the results from  or on the original arguments of . In addition, the response variable needs to be set up by <span class="math inline">\(y\)</span>. If the response variable is categorical, <span class="math inline">\(yref\)</span> is used to specify the reference group. The <span class="math inline">\(random\)</span> argument is to set up the random effect part for the response variable and <span class="math inline">\(random.m1\)</span> is for the mediators.</p>
+<div id="the-function-mlma-for-multilevel-mediation-analysis" class="section level2">
+<h2>The function <span class="math inline">\(mlma\)</span> for multilevel mediation analysis</h2>
+<p>The function <span class="math inline">\(mlma\)</span> can be executed based on the results from <span class="math inline">\(data.org\)</span> or on the original arguments of <span class="math inline">\(data.org\)</span>. In addition, the response variable needs to be set up by <span class="math inline">\(y\)</span>. If the response variable is categorical, <span class="math inline">\(yref\)</span> is used to specify the reference group. The <span class="math inline">\(random\)</span> argument is to set up the random effect part for the response variable and <span class="math inline">\(random.m1\)</span> is for the mediators.</p>
 <p>The argument <span class="math inline">\(covariates\)</span> includes the data frame of all covariates for the response variable and/or mediators. For the response variable, covariates are defined as those variables used to explain <span class="math inline">\(y\)</span>, but are not related or caused by the exposure variable(s). Arguments <span class="math inline">\(cy1\)</span> and <span class="math inline">\(cy2\)</span> specify the column numbers of level one and two covariates respectively in <span class="math inline">\(covariates\)</span>. <span class="math inline">\(cm\)</span> specifies the covariates for mediators.</p>
 <p>If the joint effect of a group of mediators are of interest, the group can be set up with the <span class="math inline">\(joint\)</span> argument. Finally, if users are interested in the medation effects on a new set of exposure and mediators. The new sets can also be set. Please read the menu of the package.</p>
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">mlma.e1&lt;-<span class="kw">mlma</span>(<span class="dt">y=</span>y,<span class="dt">data1=</span>example1,<span class="dt">intercept=</span>F)
@@ -164,9 +165,9 @@ mlma.e1
 <span class="co">#&gt;      TE  DE   m1</span>
 <span class="co">#&gt; x1 1.04 0.5 0.54</span></code></pre></div>
 <p>The result of mediation effect analysis shows the mediation effect from different levels. The direct effect, indirect effects and total effect are shown for each exposure-response pair of variables. For the above example, the level 1 total effect from <span class="math inline">\(x1\)</span> to <span class="math inline">\(y\)</span> is <span class="math inline">\(1.04\)</span>, of which direct effect is <span class="math inline">\(0.5\)</span>, indirect effect from <span class="math inline">\(m1\)</span> is <span class="math inline">\(0.54\)</span>. The level 2 total effect between <span class="math inline">\(x2\)</span> and <span class="math inline">\(y\)</span> is <span class="math inline">\(1.05\)</span>, in which the direct effect is <span class="math inline">\(0.62\)</span>, the indirect effect from <span class="math inline">\(m2\)</span> is <span class="math inline">\(0.01\)</span>, and from <span class="math inline">\(m1\)</span> is <span class="math inline">\(0.43\)</span>.</p>
-<div id="the-function-for-multilevel-mediaiton-analysis" class="section level3">
-<h3>The  function for multilevel mediaiton analysis</h3>
-<p>The  function provides the ANOVA tests of the exposure variables and mediators in the full model to estimate the response variable. It also provides the ANOVA tests of the exposure variable(s) in predicting each mediator. Using the results, users can decide which variables should be included as mediators and which ones should be used as covariates and rerun the multilevel mediation analysis.</p>
+<div id="the-summary-function-for-multilevel-mediaiton-analysis" class="section level3">
+<h3>The <span class="math inline">\(summary\)</span> function for multilevel mediaiton analysis</h3>
+<p>The <span class="math inline">\(summary\)</span> function provides the ANOVA tests of the exposure variables and mediators in the full model to estimate the response variable. It also provides the ANOVA tests of the exposure variable(s) in predicting each mediator. Using the results, users can decide which variables should be included as mediators and which ones should be used as covariates and rerun the multilevel mediation analysis.</p>
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw">summary</span>(mlma.e1)
 <span class="co">#&gt; 1. Anova on the Full Model:</span>
 <span class="co">#&gt; Analysis of Deviance Table (Type III Wald chisquare tests)</span>
@@ -204,7 +205,7 @@ mlma.e1
 <span class="co">#&gt; x2.2.1   9.5608  1   0.001988 **</span>
 <span class="co">#&gt; ---</span>
 <span class="co">#&gt; Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1</span></code></pre></div>
-<p>To check the actual coefficients for each variable in the full model or in the model to predict level one or level two mediators, we can check the results from  directly.</p>
+<p>To check the actual coefficients for each variable in the full model or in the model to predict level one or level two mediators, we can check the results from <span class="math inline">\(mlma\)</span> directly.</p>
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">mlma.e1<span class="op">$</span>f1   <span class="co">#the full model</span>
 <span class="co">#&gt; Linear mixed model fit by REML ['lmerMod']</span>
 <span class="co">#&gt; Formula: y ~ x1 + x2.1 + x2.2 + m2.2 + m1 - 1 + (1 | level)</span>
@@ -253,10 +254,10 @@ mlma.e1<span class="op">$</span>fm2  <span class="co">#models for level 2 mediat
 </div>
 <div id="the-plot-function-for-the-mlma-object" class="section level3">
 <h3>The plot function for the mlma object</h3>
-<p>The  function help depict the directions of mediaiton effects. Without specifying the mediator (by <span class="math inline">\(var\)</span>), the  function plots the overall medation effects.</p>
+<p>The <span class="math inline">\(plot\)</span> function help depict the directions of mediaiton effects. Without specifying the mediator (by <span class="math inline">\(var\)</span>), the <span class="math inline">\(plot\)</span> function plots the overall medation effects.</p>
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw">plot</span>(mlma.e1)
 <span class="co">#&gt; Error in plot.new(): figure margins too large</span></code></pre></div>
-<p>By specifying the mediator, the  function shows the indirect effect of the mediator, and its marginal relationship with the response variable and with the exposure variable at each level.</p>
+<p>By specifying the mediator, the <span class="math inline">\(plot\)</span> function shows the indirect effect of the mediator, and its marginal relationship with the response variable and with the exposure variable at each level.</p>
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw">plot</span>(mlma.e1,<span class="dt">var=</span><span class="st">&quot;m1&quot;</span>)
 <span class="co">#&gt; Error in plot.new(): figure margins too large</span>
 <span class="kw">plot</span>(mlma.e1,<span class="dt">var=</span><span class="st">&quot;m2&quot;</span>)
@@ -265,28 +266,31 @@ mlma.e1<span class="op">$</span>fm2  <span class="co">#models for level 2 mediat
 </div>
 <div id="make-inferences-on-multilevel-mediation-effect" class="section level2">
 <h2>Make Inferences on Multilevel Mediation effect</h2>
-<p>Finally, the  function uses the bootstrap method to estimate mediation effects and the estimated variances and confidence intervals. Again, the analysis can be built on the results from . The default number of bootstrap samples is <span class="math inline">\(100\)</span>, which can be changed to other desired numbers. The  function for the output of  gives the inference results for all mediation effects. Two confidence intervals are built up for the estiamted mediation effects. (lwbd, upbd) is based on the normal approximation and (lwbd_quan, upbd.quan) is built by the quantiles of the bootstrap results.</p>
+<p>Finally, the <span class="math inline">\(boot.mlma\)</span> function uses the bootstrap method to estimate mediation effects and the estimated variances and confidence intervals. Again, the analysis can be built on the results from <span class="math inline">\(data.org\)</span>. The default number of bootstrap samples is <span class="math inline">\(100\)</span>, which can be changed to other desired numbers. The <span class="math inline">\(summary\)</span> function for the output of <span class="math inline">\(boot.mlma\)</span> gives the inference results for all mediation effects. Two confidence intervals are built up for the estimated mediation effects. (lwbd, upbd) is based on the normal approximation and (lwbd_quan, upbd.quan) is built by the quantiles of the bootstrap results.</p>
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">boot.e1&lt;-<span class="kw">boot.mlma</span>(<span class="dt">y=</span>y,<span class="dt">data1=</span>example1,<span class="dt">echo=</span>F,<span class="dt">intercept =</span> F)
 <span class="kw">summary</span>(boot.e1)
 <span class="co">#&gt; MLMA Analysis: Estimated Effects at level 1:</span>
-<span class="co">#&gt;                te      de      m1</span>
-<span class="co">#&gt; est        1.0447  0.5021  0.5426</span>
-<span class="co">#&gt; mean       0.5937  0.4909  0.1029</span>
-<span class="co">#&gt; sd         0.3709  0.3782  0.0899</span>
-<span class="co">#&gt; upbd       1.3207  1.2322  0.2792</span>
-<span class="co">#&gt; lwbd      -0.1332 -0.2505 -0.0734</span>
-<span class="co">#&gt; upbd.quan  1.2681  1.1508  0.2791</span>
-<span class="co">#&gt; lwbd.quan -0.1997 -0.2705 -0.0258</span>
+<span class="co">#&gt; $x1</span>
+<span class="co">#&gt;               te     de      m1</span>
+<span class="co">#&gt; est       1.0447 0.5021  0.5426</span>
+<span class="co">#&gt; mean      0.5395 0.5562 -0.0167</span>
+<span class="co">#&gt; sd        0.0000 0.0000  0.0000</span>
+<span class="co">#&gt; upbd      0.5395 0.5562 -0.0167</span>
+<span class="co">#&gt; lwbd      0.5395 0.5562 -0.0167</span>
+<span class="co">#&gt; upbd.quan 0.5395 0.5562 -0.0167</span>
+<span class="co">#&gt; lwbd.quan 0.5395 0.5562 -0.0167</span>
+<span class="co">#&gt; </span>
 <span class="co">#&gt; MLMA Analysis: Estimated Effects at level 2:</span>
-<span class="co">#&gt;               te     de    m2.1     m1</span>
-<span class="co">#&gt; est       1.0496 0.6183  0.0063 0.4250</span>
-<span class="co">#&gt; mean      1.0871 0.6574  0.0045 0.4253</span>
-<span class="co">#&gt; sd        0.2091 0.2847  0.0202 0.1518</span>
-<span class="co">#&gt; upbd      1.4970 1.2155  0.0441 0.7228</span>
-<span class="co">#&gt; lwbd      0.6773 0.0993 -0.0352 0.1277</span>
-<span class="co">#&gt; upbd.quan 1.4675 1.2840  0.0431 0.6923</span>
-<span class="co">#&gt; lwbd.quan 0.6869 0.1685 -0.0368 0.1585</span></code></pre></div>
-<p>The  function for the <span class="math inline">\(boot.mlma\)</span> objects works similarly for the <span class="math inline">\(mlma\)</span> objects but confidence intervals for estimations are added.</p>
+<span class="co">#&gt; $x2</span>
+<span class="co">#&gt;               te     de   m2.1     m1</span>
+<span class="co">#&gt; est       1.0496 0.6183 0.0063 0.4250</span>
+<span class="co">#&gt; mean      1.0518 0.6495 0.0045 0.3979</span>
+<span class="co">#&gt; sd        0.0000 0.0000 0.0000 0.0000</span>
+<span class="co">#&gt; upbd      1.0518 0.6495 0.0045 0.3979</span>
+<span class="co">#&gt; lwbd      1.0518 0.6495 0.0045 0.3979</span>
+<span class="co">#&gt; upbd.quan 1.0518 0.6495 0.0045 0.3979</span>
+<span class="co">#&gt; lwbd.quan 1.0518 0.6495 0.0045 0.3979</span></code></pre></div>
+<p>The <span class="math inline">\(plot\)</span> function for the <span class="math inline">\(boot.mlma\)</span> objects works similarly for the <span class="math inline">\(mlma\)</span> objects but confidence intervals for estimations are added.</p>
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw">plot</span>(boot.e1)
 <span class="co">#&gt; Error in plot.new(): figure margins too large</span>
 <span class="kw">plot</span>(boot.e1,<span class="dt">var=</span><span class="st">&quot;m1&quot;</span>)

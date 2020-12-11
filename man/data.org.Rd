@@ -22,7 +22,7 @@ data.org(x, m, levely=1,  y=NULL, levelx=NULL, xref=NULL,
 the data frame of exposure variable(s). If there are multiple exposures, a categorical exposure should be binarized with the reference group coded as 0. 
 }
   \item{m}{
-the data frame of all mediators. The program will identify the levels and types of each mediator if not specified by l1, l2, c1, or c2. A mediator is identified as categorical if the mediator is a factor, a character, or has only two unque values.
+the data frame of all mediators. The program will identify the levels and types of each mediator if not specified by l1, l2, c1, or c2. A mediator is identified as categorical if the mediator is a factor, a character, or has only two unque values. Note: the name for one mediator should NOT be the subset of the name of another mediator.
 }
   \item{levely}{
 the level of y (1 or 2), 1 by default. If it is NULL, levely will be decided automatically by y.
@@ -61,10 +61,10 @@ the transformation function expressions on level 2 exposures (x.jm) in explainin
 the transformation function expressions on level 1 exposure (xijm) in explaining y. (eg, list(2,c("x^2","log(x)"))). The first item lists column numbers/variable names of the level 1 exposures in x, which needs to be transformed. By that order, each of the rest items of f10y list the transformation functional expressions for each exposure. The exposures not specified in the list will not be transformed in any way.
 }
   \item{f02ky}{
-the transformation-function-expression list on level 2 mediators (m.jk) in explaining y (eg, list(2:3,c("log(x)","sqrt(x)"), "2*x")). The first item lists column numbers/variable names of the level 2 mediators in m, which needs to be transformed. By that order, each of the rest items of f01ky list the transformation functional expressions for each mediator. The mediators not specified in the list will not be transformed in any way.
+the transformation-function-expression list on level 2 mediators (m.jk) in explaining y (eg, list(2:3,c("log(x)","sqrt(x)"), "2*x")). The first item lists column numbers/variable names of the level 2 mediators in m, which needs to be transformed. By that order, each of the rest items of f02ky list the transformation functional expressions for each mediator. The mediators not specified in the list will not be transformed in any way.
 }
   \item{f20ky}{
-the transformation-function-expression list on level 1 mediators (mijk-m.jk) in explaining y.The first item lists column numbers/variable names of the level 1 mediators in m, which needs to be transformed. By that order, each of the rest items of f02ky list the transformation functional expressions for each mediator. The mediators not specified in the list will not be transformed in any way.
+the transformation-function-expression list on level 1 mediators (mijk-m.jk) in explaining y.The first item lists column numbers/variable names of the level 1 mediators in m, which needs to be transformed. By that order, each of the rest items of f20ky list the transformation functional expressions for each mediator. The mediators not specified in the list will not be transformed in any way.
 }
   \item{f01km1}{
 the transformation-function-expression list on level 2 predictor (x.jm) in explaining the level 1 mediators. The first item is a matrix with two columns, the first column is the column numbers of the level 1 mediators in m, which should be explained by the transformed predictor(s). The second column indicates the column number of the exposure in x that will be transformed to explain the mediator identified by the 1st column of the same row. By the order of the rows of the first item, each of the rest items of f01km1 lists the transformation functional expressions for the level 2 exposure (identified by column 2) in explaining each mediator (identified by column 1). The mediators not specified in the list will be explained by the original format of the level 2 exposures. e.g.list(matrix(c(1,2,1,1),2,2), "x^2","x^2") means x[,1]^2 is used to explain both m[,1] and m[,2].

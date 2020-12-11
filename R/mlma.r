@@ -186,25 +186,25 @@ one2two<-function(x,l1,weight=rep(1,length(x))) #l1 is a vector that distribute 
  cbind(x1,x)
 }
 
-two <- function(x, level, weight = rep(1, nrow(as.matrix(x)))) {
-  x <- as.matrix(x)
-  levels <- unique(level[!is.na(level)])
-  x2 <- matrix(NA, length(levels), dim(x)[2])
-  for (i in 1:length(levels)) {
-    cho <- (level == levels[i])
-    if (sum(cho) > 0) {
-      if(sum(cho)==1)
-        x2[i, ] <- x[level == levels[i], ]
-      else {
-        temp <- as.matrix(x[level == levels[i], ])
-        weight1 <- weight[level == levels[i]]
-        x2[i, ] <- apply(temp, 2, weighted.mean, weight1, 
-                         na.rm = TRUE)}
-    }
-  }
-  colnames(x2) <- colnames(x)
+
+
+two<-function(x, level, weight=rep(1,nrow(as.matrix(x))))
+{x2<-NULL
+if(is.null(dim(x)))
+  x2=cbind(x2,(aggregate(as.numeric(x)~level, na.action=na.pass, 
+                         FUN=function(x) c(mean=weighted.mean(x,weight=weight,na.rm=T))))[,2])
+else
+  for(i in 1:ncol(x))
+    x2<-cbind(x2,(aggregate(as.numeric(x[,i])~level, na.action=na.pass,
+                            FUN=function(x) c(mean=weighted.mean(x,weight=weight,na.rm=T))))[,2])
+  colnames(x2)<-colnames(x)
   x2
 }
+
+
+
+
+
 
 x2fdx<-function(x,func)  #x is the list of original numerical vector, func is a vector of character functions. 
 { fdx<-NULL              # eg.  func <- c("x","x+1","x+2","x+3","log(x)")
@@ -369,6 +369,7 @@ else if (ncol(data.frame(m)[,-c(l1,l2,c1,c2)])!=0)
   else l2<-c(l2,col.num)
   }
 }
+
 nx=ncol(x)   #identify levels 1 and 2 exposures
 binx<-rep(F,nx)
 if(is.null(levelx))
@@ -737,7 +738,7 @@ list(x1=x1, x1.der=x1.der, lx=lx, m1y=m1y, m1y.der=m1y.der,
 
 #multilevel mediation analysis
 mlma<-function(y, data1=NULL, x=data1$parameter$x, m=data1$parameter$m, 
-               yref=NULL, xref=NULL, levelx=data1$parameter$levelx, 
+               yref=NULL, xref=NULL, levelx=data1$parameter$levelx, levely=data1$parameter$levely,
                l1=data1$parameter$l1,l2=data1$parameter$l2, 
                c1=data1$parameter$c1, #levelx is the level of x
                c1r=data1$parameter$c1r, c2=data1$parameter$c2, c2r=data1$parameter$c2r, level=data1$parameter$level,  
@@ -747,23 +748,23 @@ mlma<-function(y, data1=NULL, x=data1$parameter$x, m=data1$parameter$m,
                f20ky=data1$parameter$f20ky, f01km1=data1$parameter$f01km1, f01km2=data1$parameter$f01km2, 
                f10km=data1$parameter$f10km,
                data2=NULL, x.new=NULL, m.new=NULL, level.new=level, weight.new=NULL,
-               covariates.new=covariates)                               
-{two<-function(x, level, weight=rep(1,nrow(as.matrix(x))))
-{x<-as.matrix(x)
-levels<-unique(level[!is.na(level)])
-x2<-matrix(NA,length(levels),dim(x)[2])
-for(i in 1:length(levels))
-{cho<-(level==levels[i])
-if(sum(cho)>0)
-{if(sum(cho)==1)
-  x2[i,]<-x[level==levels[i],]
-else
-{temp<-as.matrix(x[level==levels[i],])
-weight1<-weight[level==levels[i]]
-x2[i,]<-apply(temp,2,weighted.mean,weight1,na.rm=TRUE)}}}
-colnames(x2)<-colnames(x)
-x2
-}
+               covariates.new=covariates,cov.mat=FALSE)                               
+{
+  two<-function(x, level, weight=rep(1,nrow(as.matrix(x))))
+  {x2<-NULL
+  if(is.null(dim(x)))
+    x2=cbind(x2,(aggregate(as.numeric(x)~level, na.action=na.pass, 
+                           FUN=function(x) c(mean=weighted.mean(x,weight=weight,na.rm=T))))[,2])
+  else
+    for(i in 1:ncol(x))
+      x2<-cbind(x2,(aggregate(as.numeric(x[,i])~level, na.action=na.pass,
+                              FUN=function(x) c(mean=weighted.mean(x,weight=weight,na.rm=T))))[,2])
+    colnames(x2)<-colnames(x)
+    x2
+  }
+  
+
+
 
 one<-function(x,level)  #change a level 2 x to have the length of observations
 {levels<-unique(level[!is.na(level)])
@@ -994,7 +995,10 @@ generate.m<-function(x.new, data1,l1,c1,l2,c2,full,covariates.new,level.new,data
     }           #glm
   m.new
 }
-
+func1<-function(a,mat)
+{as.vector(a%*%mat%*%a)}
+func2<-function(a,mat)
+{as.vector(a%*%mat*a)}
 #n<-length(y)
 #tt2<-cbind(data1$x1[,data1$l1x],covariates[,cy2])
 #colnames(tt2)<-c(colnames(data1$x1)[data1$l1x],colnames(covariates)[cy2])
@@ -1003,11 +1007,10 @@ generate.m<-function(x.new, data1,l1,c1,l2,c2,full,covariates.new,level.new,data
 #expl<-cbind(tt1,data1$m2y,tt2,data1$m1y)   
 
 #n<-length(y)
-mnames<-colnames(as.matrix(m))
-x.names=colnames(as.matrix(x))
-
+surv=is.Surv(y)
 biny<-FALSE
 
+if(!surv){
 temp.1<-find_level(y,level)
 if(temp.1[[1]]<=2)
  {levely=1
@@ -1027,6 +1030,7 @@ else
     else
      y<-ifelse(y==yref,0,1)}
  }
+}
 
 #organize the data if it has not been done
 if(is.null(data1))
@@ -1037,12 +1041,16 @@ if(is.null(data1))
    x=data1$parameter$x
    m=data1$parameter$m
    levelx=data1$parameter$levelx
+   levely=data1$parameter$levely
    l1=data1$parameter$l1
    l2=data1$parameter$l2
    c1=data1$parameter$c1
    c1r=data1$parameter$c1r
    c2=data1$parameter$c2
    c2r=data1$parameter$c2r}
+
+mnames<-colnames(as.matrix(m))
+x.names=colnames(as.matrix(x))
 
 if(is.null(data2) & is.null(x.new))  #using the original data
 {data2=data1
@@ -1108,13 +1116,26 @@ if(!is.null(c(cy1,cy2)))           ###added covariates to explain y
   colnames(cova)<-colnames(covariates)[c(cy1,cy2)]}
 else
   cova<-NULL
-expl<-cbind(data1$x1,data1$m2y,data1$m1y,cova)  # all variables to explain y
-temp.data<-cbind(y=y,level=level,data1$x1,data1$m1y,data1$m2y, covariates)
-colnames(temp.data)<-c("y","level",colnames(data1$x1),colnames(data1$m1y),
+if(is.null(cova))
+  expl<-cbind(data1$x1,data1$m2y,data1$m1y)  # all variables to explain y
+else
+  expl<-cbind(data1$x1,data1$m2y,data1$m1y,cova)  # all variables to explain y
+if(is.null(covariates))
+  temp.data<-cbind(y=y,level=level,data1$x1,data1$m1y,data1$m2y)
+else
+  temp.data<-cbind(y=y,level=level,data1$x1,data1$m1y,data1$m2y, covariates)
+if(surv)
+  colnames(temp.data)<-c("time","status","level",colnames(data1$x1),colnames(data1$m1y),
                        colnames(data1$m2y), colnames(covariates))
+else
+  colnames(temp.data)<-c("y","level",colnames(data1$x1),colnames(data1$m1y),
+                         colnames(data1$m2y), colnames(covariates))
 if(levely==1)
  {frml<-getformula(expl,random,intercept)
-  if(biny & is.null(family1))
+  if(surv)
+   {frml=gsub("y~","Surv(time, status)~",frml)
+    f1<-coxme(as.formula(frml),data=data.frame(temp.data))}
+  else if(biny & is.null(family1))
     f1<-glmer(frml,data=data.frame(temp.data),family=binomial(link="logit"))
   else if(!is.null(family1))
     f1<-glmer(frml,data=data.frame(temp.data),family=family1)
@@ -1123,7 +1144,10 @@ if(levely==1)
 else
   {temp.data2<-two(temp.data, level, weight)
    frml<-getformula(expl,random=NULL,intercept)
-   if(biny & is.null(family1))
+   if(surv)
+   {frml=gsub("y","Surv(time, status)",frml)
+    f1<-coxph(as.formula(frml),data=data.frame(temp.data2))}
+   else if(biny & is.null(family1))
     f1<-glm(frml,data=data.frame(temp.data2),family=binomial(link="logit"))
    else if(!is.null(family1))
     f1<-glm(frml,data=data.frame(temp.data2),family=family1)
@@ -1133,62 +1157,84 @@ else
 lc1<-c(l1,c1)
 lc2<-c(l2,c2)
 
-if(intercept)
-  coef.f1<-summary(f1)$coefficient[-1,1] 
+if(surv)
+  {coef.f1<-f1$coefficients
+   cov.f1=vcov(f1)}
+else if(intercept)
+  {coef.f1<-summary(f1)$coefficient[-1,1] 
+   cov.f1=vcov(f1)[-1,-1]}
 else 
-  coef.f1<-summary(f1)$coefficient[,1]
+  {coef.f1<-summary(f1)$coefficient[,1]
+   cov.f1=vcov(f1)}
+cov.f1=as.matrix(cov.f1)
 len<-c(ncol(data1$x1),ifelse(is.null(data1$m2y),0,ncol(data1$m2y)),
        ifelse(is.null(data1$m1y),0,ncol(data1$m1y)))
 
 DE=matrix(0,n,ncol(x))   #calculate direct effects
+DE.cov=DE                #calculate the variances of de
 lx=data1$lx
+
 for (i in 1:ncol(x))
  if (lx[i,2]<lx[i,3])                       
-   DE[,i]<-data2$x1.der[,lx[i,2]:lx[i,3]]%*%coef.f1[lx[i,2]:lx[i,3]]
+   {DE[,i]<-data2$x1.der[,lx[i,2]:lx[i,3]]%*%coef.f1[lx[i,2]:lx[i,3]]
+    DE.cov[,i]=apply(data2$x1.der[,lx[i,2]:lx[i,3]],1,func1,mat=cov.f1[lx[i,2]:lx[i,3],lx[i,2]:lx[i,3]])}
  else 
-   DE[,i]<-data2$x1.der[,lx[i,2]]*coef.f1[lx[i,2]]
+   {DE[,i]<-data2$x1.der[,lx[i,2]]*coef.f1[lx[i,2]]
+    DE.cov[,i]=data2$x1.der[,lx[i,2]:lx[i,3]]*cov.f1[lx[i,2]:lx[i,3],lx[i,2]:lx[i,3]]*data2$x1.der[,lx[i,2]:lx[i,3]]}
 
 ie2_1<-NULL   #part of the IE for level-2 mediators
+ie2_1.cov<-NULL #part of the variance for level 2 IE
 if (len[2]>0)
  if (!is.null(data1$m2))
  {if(!is.null(l2))
    {for (k in 1:length(l2))
      if (length(data1$m2[[k+1]])==1)
-      ie2_1<-cbind(ie2_1,data2$m2y.der[,data1$m2[[k+1]]]*coef.f1[len[1]+data1$m2[[k+1]]])
+      {ie2_1<-cbind(ie2_1,data2$m2y.der[,data1$m2[[k+1]]]*coef.f1[len[1]+data1$m2[[k+1]]])
+       ie2_1.cov<-cbind(ie2_1.cov,data2$m2y.der[,data1$m2[[k+1]]]*cov.f1[len[1]+data1$m2[[k+1]],len[1]+data1$m2[[k+1]]]*data2$m2y.der[,data1$m2[[k+1]]])}
      else
-      ie2_1<-cbind(ie2_1,data2$m2y.der[,data1$m2[[k+1]]]%*%coef.f1[len[1]+data1$m2[[k+1]]])
+      {ie2_1<-cbind(ie2_1,data2$m2y.der[,data1$m2[[k+1]]]%*%coef.f1[len[1]+data1$m2[[k+1]]])
+       ie2_1.cov<-cbind(ie2_1.cov,apply(data2$m2y.der[,data1$m2[[k+1]]],1,func1,mat=cov.f1[len[1]+data1$m2[[k+1]],len[1]+data1$m2[[k+1]]]))}
     temp.name<-mnames[l2]}
    else {k=0
          temp.name=NULL}
    if(!is.null(c2))
      for (i in 1:length(c2))
      {if (length(data1$m2[[k+i+1]])==1)
-       ie2_1<-cbind(ie2_1,data2$m2y.der[,data1$m2[[k+i+1]]]*coef.f1[len[1]+data1$m2[[k+i+1]]])
+       {ie2_1<-cbind(ie2_1,data2$m2y.der[,data1$m2[[k+i+1]]]*coef.f1[len[1]+data1$m2[[k+i+1]]])
+        ie2_1.cov<-cbind(ie2_1.cov,data2$m2y.der[,data1$m2[[k+i+1]]]*cov.f1[len[1]+data1$m2[[k+i+1]],len[1]+data1$m2[[k+i+1]]]*data2$m2y.der[,data1$m2[[k+i+1]]])}
      else
-       ie2_1<-cbind(ie2_1,data2$m2y.der[,data1$m2[[k+i+1]]]%*%diag(coef.f1[len[1]+data1$m2[[k+i+1]]]))
+       {ie2_1<-cbind(ie2_1,data2$m2y.der[,data1$m2[[k+i+1]]]%*%diag(coef.f1[len[1]+data1$m2[[k+i+1]]]))
+        ie2_1.cov<-cbind(ie2_1.cov,apply(data2$m2y.der[,data1$m2[[k+i+1]]],1,func2,mat=diag(diag(cov.f1[len[1]+data1$m2[[k+i+1]],len[1]+data1$m2[[k+i+1]]]))))}
      temp.name=c(temp.name,paste(mnames[c2[i]],1:length(data1$m2[[k+i+1]]),sep="."))}
      colnames(ie2_1)<-temp.name
- }
+     colnames(ie2_1.cov)<-temp.name}
 
 ie1_1<-NULL   #part of the IE for level-1 mediators
+ie1_1.cov<-NULL # part of the variance of ie1
 if (len[3]>0)
   if (!is.null(data1$m1))
   {if(!is.null(l1))
     {for (k in 1:length(l1))
       if (length(data1$m1[[k+1]])==1)
-        ie1_1<-cbind(ie1_1,data2$m1y.der[,data1$m1[[k+1]]]*coef.f1[len[1]+len[2]+data1$m1[[k+1]]])
+        {ie1_1<-cbind(ie1_1,data2$m1y.der[,data1$m1[[k+1]]]*coef.f1[len[1]+len[2]+data1$m1[[k+1]]])
+         ie1_1.cov<-cbind(ie1_1.cov,(data2$m1y.der[,data1$m1[[k+1]]])^2*cov.f1[len[1]+len[2]+data1$m1[[k+1]],len[1]+len[2]+data1$m1[[k+1]]])}
       else
-        ie1_1<-cbind(ie1_1,data2$m1y.der[,data1$m1[[k+1]]]%*%coef.f1[len[1]+len[2]+data1$m1[[k+1]]])
+        {ie1_1<-cbind(ie1_1,data2$m1y.der[,data1$m1[[k+1]]]%*%coef.f1[len[1]+len[2]+data1$m1[[k+1]]])
+         ie1_1.cov<-cbind(ie1_1.cov,apply(data2$m1y.der[,data1$m1[[k+1]]],1,func1,mat=cov.f1[len[1]+len[2]+data1$m1[[k+1]],len[1]+len[2]+data1$m1[[k+1]]]))}
       temp.name=mnames[l1]}
-   else k=0
+   else {k=0
+         temp.name=NULL}
    if(!is.null(c1))
      for (i in 1:length(c1))
        {if (length(data1$m1[[k+i+1]])==1)
-         ie1_1<-cbind(ie1_1,data2$m1y.der[,data1$m1[[k+i+1]]]*coef.f1[len[1]+len[2]+data1$m1[[k+i+1]]])
+         {ie1_1<-cbind(ie1_1,data2$m1y.der[,data1$m1[[k+i+1]]]*coef.f1[len[1]+len[2]+data1$m1[[k+i+1]]])
+          ie1_1.cov<-cbind(ie1_1.cov,(data2$m1y.der[,data1$m1[[k+i+1]]])^2*cov.f1[len[1]+len[2]+data1$m1[[k+i+1]],len[1]+len[2]+data1$m1[[k+i+1]]])}
         else
-         ie1_1<-cbind(ie1_1,data2$m1y.der[,data1$m1[[k+i+1]]]%*%diag(coef.f1[len[1]+len[2]+data1$m1[[k+i+1]]]))
+         {ie1_1<-cbind(ie1_1,data2$m1y.der[,data1$m1[[k+i+1]]]%*%diag(coef.f1[len[1]+len[2]+data1$m1[[k+i+1]]]))
+          ie1_1.cov<-cbind(ie1_1.cov,t(apply(data2$m1y.der[,data1$m1[[k+i+1]]],1,func2,mat=diag(diag(cov.f1[len[1]+len[2]+data1$m1[[k+i+1]],len[1]+len[2]+data1$m1[[k+i+1]]])))))}
         temp.name=c(temp.name,paste(mnames[c1[i]],1:length(data1$m1[[k+i+1]]),sep=""))}
-   colnames(ie1_1)<-temp.name
+    colnames(ie1_1)<-temp.name
+    colnames(ie1_1.cov)<-temp.name
   }
 levelx=lx[,1]
 nx=length(levelx)
@@ -1198,6 +1244,7 @@ nx2=sum(levelx==2)
 m.2=data1$m.2
 if(!is.null(m.2))    #analysis for level 2 mediators
   {fm2<-list(NULL)            #models for x to explain level 2 mediators
+   coef.fm2<-list(NULL)
    if(!is.null(covariates))
     {cov.2<-two(covariates,level,weight)
      cov.2.new=two(covariates.new, level.new, weight.new)}
@@ -1206,9 +1253,11 @@ if(!is.null(m.2))    #analysis for level 2 mediators
      cov.2.new<-NULL}
   if(!is.null(l2))
   {fm2[[1]]<-l2
+   coef.fm2[[1]]<-l2
    ie2_2<-array(NA,c(nrow(m.2),length(l2),nx2))
    colnames(ie2_2)=mnames[l2]
    dimnames(ie2_2)[[3]]=names(x)[levelx==2]
+   ie2_2.cov<-ie2_2
    ie2_3=matrix(NA,nrow(m.2),length(l2))
    for (i in 1:length(l2))
    {if(sum(cm[[1]]==l2[i])>0)
@@ -1238,38 +1287,52 @@ if(!is.null(m.2))    #analysis for level 2 mediators
       model<-glm(frml.m,data=data.frame(temp.data),family=familym[[l2[i]]])
    fm2<-append(fm2,list(model))
    coef.temp<-summary(model)$coefficient[,1]   #find the second part of IE2
+   cov.temp<-vcov(model)
    if(intercept)
-     coef.temp<-coef.temp[-1]
+     {coef.temp<-coef.temp[-1]
+      cov.temp=as.matrix(cov.temp[-1,-1])}
    coef.temp<-coef.temp[1:numx]
+   cov.temp=as.matrix(cov.temp[1:numx,1:numx])
+   coef.fm2<-append(coef.fm2, list(coef.temp))
    temp.trans=NULL
    if(!is.null(data1$f01km2.2))
     temp.trans=(1:nrow(data1$f01km2.2[[1]]))[data1$f01km2.2[[1]][,1]==l2[i]]
    n2x=(1:nx)[levelx==2]
-   for (j in n2x){
-     if(!data1$binx[j]){
+   for (j in 1:length(n2x)){
+     if(!data1$binx[n2x[j]]){
       if(length(temp.trans)==0)
-        ie2_2[,i,j]=coef.temp[match(j,data1$fm22[[i+1]])] #if there is no transformation, the coefficient is the ie2_2
+        {ie2_2[,i,j]=coef.temp[match(j,data1$fm22[[i+1]])] #if there is no transformation, the coefficient is the ie2_2
+         ie2_2.cov[,i,j]=cov.temp[match(j,data1$fm22[[i+1]]),match(j,data1$fm22[[i+1]])]}
       else {
         temp.exp=data1$f01km2.2[[1]][temp.trans,2]
         temp.trans2=match(n2x[j],temp.exp)
       if(is.na(temp.trans2))
-       ie2_2[,i,j]=coef.temp[match(j,data1$fm22[[i+1]])] #if there is no transformation of the exposure variable
+        {ie2_2[,i,j]=coef.temp[match(j,data1$fm22[[i+1]])] #if there is no transformation of the exposure variable
+         ie2_2.cov[,i,j]=cov.temp[match(j,data1$fm22[[i+1]]),match(j,data1$fm22[[i+1]])]}
       else{
        temp.row=temp.trans[temp.trans2]
        if(length(data1$f01km2.2[[temp.row+1]])==1)
-          ie2_2[,i,j]<-coef.temp[match(data1$f01km2.2[[temp.row+1]],data1$fm22[[i+1]])]*
-                       data2$xm2.der[,data1$f01km2.2[[temp.row+1]]]
+          {ie2_2[,i,j]<-coef.temp[match(data1$f01km2.2[[temp.row+1]],data1$fm22[[i+1]])]*
+                        data2$xm2.der[,data1$f01km2.2[[temp.row+1]]]
+           ie2_2.cov[,i,j]<-cov.temp[match(data1$f01km2.2[[temp.row+1]],data1$fm22[[i+1]]),match(data1$f01km2.2[[temp.row+1]],data1$fm22[[i+1]])]*
+                            data2$xm2.der[,data1$f01km2.2[[temp.row+1]]]^2}
        else
-          ie2_2[,i,j]<-data2$xm2.der[,data1$f01km2.2[[temp.row+1]]]%*%
+          {ie2_2[,i,j]<-data2$xm2.der[,data1$f01km2.2[[temp.row+1]]]%*%
                        coef.temp[match(data1$f01km2.2[[temp.row+1]],data1$fm22[[i+1]])]
+           ie2_2.cov[,i,j]<-apply(data2$xm2.der[,data1$f01km2.2[[temp.row+1]]],1,func1,
+                                  mat=cov.temp[match(data1$f01km2.2[[temp.row+1]],data1$fm22[[i+1]]),match(data1$f01km2.2[[temp.row+1]],data1$fm22[[i+1]])])}
      }}}
     else{ #for binary x, use ie2_2 only, not that the mean is weighted by sample size
       if (length(data1$m2[[i+1]])==1)
-        ie2_2[,i,j]<-(mean(data2$m2y[x[,j]==1,data1$m2[[i+1]]])-mean(data2$m2y[x[,j]==0,data1$m2[[i+1]]]))*
-                      coef.f1[len[1]+data1$m2[[i+1]]]
+        {ie2_2[,i,j]<-(mean(data2$m2y[x[,n2x[j]]==1,data1$m2[[i+1]]],na.rm=T)-mean(data2$m2y[x[,n2x[j]]==0,data1$m2[[i+1]]],na.rm=T))*
+                       coef.f1[len[1]+data1$m2[[i+1]]]
+         ie2_2.cov[,i,j]<-(mean(data2$m2y[x[,n2x[j]]==1,data1$m2[[i+1]]],na.rm=T)-mean(data2$m2y[x[,n2x[j]]==0,data1$m2[[i+1]]],na.rm=T))^2*
+                           cov.f1[len[1]+data1$m2[[i+1]],len[1]+data1$m2[[i+1]]]}
       else
-        ie2_2[,i,j]<-(apply(data2$m2y[x[,j]==1,data1$m2[[i+1]]],2,mean)-apply(data2$m2y[x[,j]==0,data1$m2[[i+1]]],2,mean))%*%
-          coef.f1[len[1]+data1$m2[[i+1]]]
+        {ie2_2[,i,j]<-(apply(data2$m2y[x[,n2x[j]]==1,data1$m2[[i+1]]],2,mean,na.rm=T)-apply(data2$m2y[x[,n2x[j]]==0,data1$m2[[i+1]]],2,mean,na.rm=T))%*%
+                       coef.f1[len[1]+data1$m2[[i+1]]]
+         vec.temp=apply(data2$m2y[x[,n2x[j]]==1,data1$m2[[i+1]]],2,mean,na.rm=T)-apply(data2$m2y[x[,n2x[j]]==0,data1$m2[[i+1]]],2,mean,na.rm=T)
+         ie2_2.cov[,i,j]<-vec.temp%*%cov.f1[len[1]+data1$m2[[i+1]],len[1]+data1$m2[[i+1]]]%*%vec.temp}
     } 
    }
    ie2_3[,i]=d_link(link.fun=model$family$link,x=predict(model,newdata=data.frame(temp.data.new),type="response"))
@@ -1279,8 +1342,11 @@ if(!is.null(m.2))    #analysis for level 2 mediators
  else
    {j<-0
    ie2_2<-NULL
+   ie2_2.cov<-NULL
    ie2_3=NULL
    }
+   
+   
  if(!is.null(c2))    #did not test
    for (i in 1:length(c2))
    {if(sum(cm[[1]]==c2[i])>0)
@@ -1321,79 +1387,113 @@ if(!is.null(m.2))    #analysis for level 2 mediators
      #p.temp<-predict(model,type="response",newdata=data.frame(temp.data))
      fm2<-append(fm2,list(model))
      fm2[[1]]<-c(fm2[[1]],c2[i])
+     coef.fm2[[1]]<-c(coef.fm2[[1]],c2[i])
      coef.temp<-summary(model)$coefficient[,1]   #find the second part of IE2
+     cov.temp<-vcov(model)
      if(intercept)
-       coef.temp<-coef.temp[-1]
+       {coef.temp<-coef.temp[-1]
+        cov.temp=as.matrix(cov.temp[-1,-1])}
      coef.temp<-coef.temp[1:numx]
+     cov.temp<-as.matrix(cov.temp[1:numx,1:numx])
+     coef.fm2=append(coef.fm2,list(coef.temp))
      temp.trans=match(c2[i],data1$f01km2.2[[1]][,1]) 
      n2x=(1:nx)[levelx==2]
      tmp.ie2_2<-NULL
+     tmp.ie2_2.cov<-NULL
      
      for (z in 1:length(n2x)){    
        if(!data1$binx[n2x[z]]){
          if(is.na(temp.trans))
-           tmp.ie2_2=array(c(tmp.ie2_2,cbind(ie2_2[,,z],coef.temp[z])),
-                                c(dim(cbind(ie2_2[,,z],coef.temp[z])),z))#if there is no transformation, the coefficient is the ie2_2
+           {tmp.ie2_2=array(c(tmp.ie2_2,cbind(ie2_2[,,z],coef.temp[z])),
+                            c(dim(cbind(ie2_2[,,z],coef.temp[z])),z))#if there is no transformation, the coefficient is the ie2_2
+            tmp.ie2_2.cov=array(c(tmp.ie2_2.cov,cbind(ie2_2.cov[,,z],cov.temp[z,z])),
+                                c(dim(cbind(ie2_2.cov[,,z],cov.temp[z,z])),z))}  #if there is no transformation, the variance of the coefficient is the ie2_2.cov
          else {temp.exp=data1$f01km2.2[[1]][temp.trans,2]
            temp.trans2=match(n2x[z],temp.exp)
          if(is.na(temp.trans2))
-           tmp.ie2_2=array(c(tmp.ie2_2,cbind(ie2_2[,,z],coef.temp[z])),
-                           c(dim(cbind(ie2_2[,,z],coef.temp[z])),z)) #if there is no transformation of the exposure variable
+           {tmp.ie2_2=array(c(tmp.ie2_2,cbind(ie2_2[,,z],coef.temp[z])),
+                            c(dim(cbind(ie2_2[,,z],coef.temp[z])),z)) #if there is no transformation of the exposure variable
+            tmp.ie2_2.cov=array(c(tmp.ie2_2.cov,cbind(ie2_2.cov[,,z],cov.temp[z,z])),
+                                c(dim(cbind(ie2_2.cov[,,z],cov.temp[z,z])),z)) #if there is no transformation of the exposure variable
+           }
          else{temp.row=temp.trans[temp.trans2]
          if(length(data1$f01km2.2[[temp.trans2+1]])==1)
-           tmp.ie2_2<-array(c(tmp.ie2_2,cbind(ie2_2[,,z],coef.temp[match(data1$f01km2.2[[temp.row+1]],data1$fm22[[i+1]])]*
+           {tmp.ie2_2<-array(c(tmp.ie2_2,cbind(ie2_2[,,z],coef.temp[match(data1$f01km2.2[[temp.row+1]],data1$fm22[[i+1]])]*
                                                 data2$xm2.der[,data1$f01km2.2[[temp.row+1]]])),
-                            c(dim(cbind(ie2_2[,,z],coef.temp[match(data1$f01km2.2[[temp.row+1]],data1$fm22[[i+1]])]*
+                             c(dim(cbind(ie2_2[,,z],coef.temp[match(data1$f01km2.2[[temp.row+1]],data1$fm22[[i+1]])]*
                                           data2$xm2.der[,data1$f01km2.2[[temp.row+1]]])),z))
+            tmp.ie2_2.cov<-array(c(tmp.ie2_2.cov,cbind(ie2_2.cov[,,z],cov.temp[match(data1$f01km2.2[[temp.row+1]],data1$fm22[[i+1]]),match(data1$f01km2.2[[temp.row+1]],data1$fm22[[i+1]])]*
+                                                data2$xm2.der[,data1$f01km2.2[[temp.row+1]]]^2)),
+                            c(dim(cbind(ie2_2.cov[,,z],cov.temp[match(data1$f01km2.2[[temp.row+1]],data1$fm22[[i+1]]),match(data1$f01km2.2[[temp.row+1]],data1$fm22[[i+1]])]*
+                                          data2$xm2.der[,data1$f01km2.2[[temp.row+1]]]^2)),z))}
           else
-            itmp.ie2_2<-array(c(tmp.ie2_2,cbind(ie2_2[,,z],data2$xm2.der[,data1$f01km2.2[[temp.row+1]]]%*%
-                                             coef.temp[match(data1$f01km2.2[[temp.row+1]],data1$fm22[[i+1]])])),
-                         c(dim(cbind(ie2_2[,,z],data2$xm2.der[,data1$f01km2.2[[temp.row+1]]]%*%
-                                       coef.temp[match(data1$f01km2.2[[temp.row+1]],data1$fm22[[i+1]])])),z))
+            {tmp.ie2_2<-array(c(tmp.ie2_2,cbind(ie2_2[,,z],data2$xm2.der[,data1$f01km2.2[[temp.row+1]]]%*%
+                                                  coef.temp[match(data1$f01km2.2[[temp.row+1]],data1$fm22[[i+1]])])),
+                              c(dim(cbind(ie2_2[,,z],data2$xm2.der[,data1$f01km2.2[[temp.row+1]]]%*%
+                                            coef.temp[match(data1$f01km2.2[[temp.row+1]],data1$fm22[[i+1]])])),z))
+             temp1=apply(data2$xm2.der[,data1$f01km2.2[[temp.row+1]]],1,func1,
+                         cov.temp[match(data1$f01km2.2[[temp.row+1]],data1$fm22[[i+1]]),match(data1$f01km2.2[[temp.row+1]],data1$fm22[[i+1]])])
+             tmp.ie2_2.cov<-array(c(tmp.ie2_2.cov,cbind(ie2_2.cov[,,z],temp1)),
+                             c(dim(cbind(ie2_2.cov[,,z],temp1)),z))}
          }}
        }
       else { #for binary x, use ie2_2 only, not that the mean is weighted by sample size
         if (length(data1$m2[[j+i+1]])==1)
-          tmp.ie2_2<-array(c(tmp.ie2_2,cbind(ie2_2[,,z],(mean(data2$m2y[x[,z]==1,data1$m2[[j+i+1]]])-mean(data2$m2y[x[,z]==0,data1$m2[[j+i+1]]]))*
+          {tmp.ie2_2<-array(c(tmp.ie2_2,cbind(ie2_2[,,z],(mean(data2$m2y[x[,z]==1,data1$m2[[j+i+1]]],na.rm=T)-mean(data2$m2y[x[,z]==0,data1$m2[[j+i+1]]],na.rm=T))*
                              coef.f1[len[1]+data1$m2[[i+j+1]]])),
-                           c(dim(cbind(ie2_2[,,z],(mean(data2$m2y[x[,z]==1,data1$m2[[j+i+1]]])-mean(data2$m2y[x[,z]==0,data1$m2[[j+i+1]]]))*
+                           c(dim(cbind(ie2_2[,,z],(mean(data2$m2y[x[,z]==1,data1$m2[[j+i+1]]],na.rm=T)-mean(data2$m2y[x[,z]==0,data1$m2[[j+i+1]]],na.rm=T))*
                                          coef.f1[len[1]+data1$m2[[i+j+1]]])),z))
+           temp1=(mean(data2$m2y[x[,z]==1,data1$m2[[j+i+1]]],na.rm=T)-mean(data2$m2y[x[,z]==0,data1$m2[[j+i+1]]],na.rm=T))^2*
+                  cov.f1[len[1]+data1$m2[[i+j+1]],len[1]+data1$m2[[i+j+1]]]
+           tmp.ie2_2.cov<-array(c(tmp.ie2_2.cov,cbind(ie2_2.cov[,,z],temp1)),
+                           c(dim(cbind(ie2_2.cov[,,z],temp1)),z))}
         else
-          tmp.ie2_2<-array(c(tmp.ie2_2,cbind(ie2_2[,,z],(apply(data2$m2y[x[,z]==1,data1$m2[[j+i+1]]],2,mean)-apply(data2$m2y[x[,z]==0,data1$m2[[j+i+1]]],2,mean))%*%
+          {tmp.ie2_2<-array(c(tmp.ie2_2,cbind(ie2_2[,,z],(apply(data2$m2y[x[,z]==1,data1$m2[[j+i+1]]],2,mean,na.rm=T)-apply(data2$m2y[x[,z]==0,data1$m2[[j+i+1]]],2,mean,na.rm=T))%*%
                              coef.f1[len[1]+data1$m2[[i+j+1]]])),
-                           c(dim(cbind(ie2_2[,,z],(apply(data2$m2y[x[,z]==1,data1$m2[[j+i+1]]],2,mean)-apply(data2$m2y[x[,z]==0,data1$m2[[j+i+1]]],2,mean))%*%
+                           c(dim(cbind(ie2_2[,,z],(apply(data2$m2y[x[,z]==1,data1$m2[[j+i+1]]],2,mean,na.rm=T)-apply(data2$m2y[x[,z]==0,data1$m2[[j+i+1]]],2,mean,na.rm=T))%*%
                                          coef.f1[len[1]+data1$m2[[i+j+1]]])),z))
+           temp1=(apply(data2$m2y[x[,z]==1,data1$m2[[j+i+1]]],2,mean,na.rm=T)-apply(data2$m2y[x[,z]==0,data1$m2[[j+i+1]]],2,mean,na.rm=T))%*%
+                  cov.f1[len[1]+data1$m2[[i+j+1]],len[1]+data1$m2[[i+j+1]]]%*%(apply(data2$m2y[x[,z]==1,data1$m2[[j+i+1]]],2,mean,na.rm=T)-apply(data2$m2y[x[,z]==0,data1$m2[[j+i+1]]],2,mean,na.rm=T))
+           tmp.ie2_2.cov<-array(c(tmp.ie2_2.cov,cbind(ie2_2.cov[,,z],temp1)),
+                                c(dim(cbind(ie2_2.cov[,,z],temp1)),z))}
         
       }   
      }   
      ie2_2=tmp.ie2_2
+     ie2_2.cov=tmp.ie2_2.cov
      ie2_3=cbind(ie2_3,d_link(link.fun=model$family$link,x=predict(model,type="response",newdata=data.frame(temp.data.new))))
     }
     colnames(ie2_2)<-c(name.temp,paste(colnames(m)[c2[i]],
                                        1:length(data1$m2[[temp+1]]),sep="."))
+    colnames(ie2_2.cov)<-c(name.temp,paste(colnames(m)[c2[i]],
+                                       1:length(data1$m2[[temp+1]]),sep="."))
     colnames(ie2_3)<-c(name.temp,paste(colnames(m)[c2[i]],
                                        1:length(data1$m2[[temp+1]]),sep="."))
-    
    }
   } 
 else
 {ie2_2<-NULL
+ ie2_2.cov=NULL
  ie2_3=NULL
  fm2=NULL
+ coef.fm2=NULL
 }
 
+
 fm1<-list(NULL)            #models for x to explain level 1 mediators
+coef.fm1=list(NULL)
 if(!is.null(c(l1,c1)))   #analysis for level 1 mediators
 {
 # ie1_2<-NULL
  if(!is.null(l1))
  {fm1[[1]]<-l1
+  coef.fm1[[1]]=l1
   ie1_2=array(NA,c(n,length(l1),nx))
   colnames(ie1_2)=mnames[l1]
   if(nx1!=0)
   dimnames(ie1_2)[[3]]=x.names#[levelx==1]
+  ie1_2.cov=ie1_2
   ie1_3=matrix(NA,n,length(l1))
-  
   for (i in 1:length(l1))
   {if(sum(cm[[1]]==l1[i])>0) #add covariates
    {temp2<-1+match(l1[i],cm[[1]])
@@ -1427,68 +1527,96 @@ if(!is.null(c(l1,c1)))   #analysis for level 1 mediators
    
    fm1<-append(fm1,model)
    coef.temp<-summary(model)$coefficient[,1]   #find the second part of IE2
+   cov.temp<-vcov(model)   #find the second part of IE2 var
    if(intercept)
-     coef.temp<-coef.temp[-1]
+     {coef.temp<-coef.temp[-1]
+      cov.temp=as.matrix(cov.temp[-1,-1])}
    coef.temp<-coef.temp[1:numx]
+   cov.temp=as.matrix(cov.temp[1:numx,1:numx])
+   coef.fm1<-append(coef.fm1,list(coef.temp))
    if(!is.null(data1$fm12[[i+1]]))
      {coef.temp12<-coef.temp[1:length(data1$fm12[[i+1]])]
-      coef.temp1<-coef.temp[-(1:length(data1$fm12[[i+1]]))]}
+      coef.temp1<-coef.temp[-(1:length(data1$fm12[[i+1]]))]
+      cov.temp12<-as.matrix(cov.temp[1:length(data1$fm12[[i+1]]),1:length(data1$fm12[[i+1]])])
+      cov.temp1<-as.matrix(cov.temp[-(1:length(data1$fm12[[i+1]])),-(1:length(data1$fm12[[i+1]]))])}
    else
-     coef.temp1=coef.temp
-  
+     {coef.temp1=coef.temp
+      cov.temp1=cov.temp}
+   
    temp.trans2=ifelse(is.null(data1$f01km1.2[[1]]),NA,(1:nrow(data1$f01km1.2[[1]]))[data1$f01km1.2[[1]][,1]==l1[i]])
    temp.trans1=ifelse(is.null(data1$f10km.2[[1]]),NA,(1:nrow(data1$f10km.2[[1]]))[data1$f10km.2[[1]][,1]==l1[i]]) 
    for (j in 1:nx){
    if(!data1$binx[j]){
      if(is.na(temp.trans2) & is.na(temp.trans1))
-       ie1_2[,i,j]=coef.temp[match(j,c(data1$fm12[[i+1]],data1$fm11[[i+1]]))] #if there is no transformation, the coefficient is the ie2_2
+       {ie1_2[,i,j]=coef.temp[match(j,c(data1$fm12[[i+1]],data1$fm11[[i+1]]))] #if there is no transformation, the coefficient is the ie2_2
+        ie1_2.cov[,i,j]=cov.temp[match(j,c(data1$fm12[[i+1]],data1$fm11[[i+1]])),match(j,c(data1$fm12[[i+1]],data1$fm11[[i+1]]))] }
      else if(!is.na(temp.trans1)){
        temp.exp=data1$f10km.2[[1]][temp.trans1,2]
        temp.trans1.2=match(j,temp.exp)
        if(is.na(temp.trans1.2))
-         ie1_2[,i,j]=coef.temp[match(j,c(data1$fm12[[i+1]],data1$fm11[[i+1]]))] #if there is no transformation of the exposure variable
+         {ie1_2[,i,j]=coef.temp[match(j,c(data1$fm12[[i+1]],data1$fm11[[i+1]]))] #if there is no transformation of the exposure variable
+          ie1_2.cov[,i,j]=cov.temp[match(j,c(data1$fm12[[i+1]],data1$fm11[[i+1]])),match(j,c(data1$fm12[[i+1]],data1$fm11[[i+1]]))]}
        else{
          temp.row=temp.trans1[temp.trans1.2]
          if(length(data1$f10km.2[[temp.row+1]])==1)
-           ie1_2[,i,j]<-coef.temp1[match(data1$f10km.2[[temp.row+1]],data1$fm11[[i+1]])]*
-             data2$xm1.der[,data1$f10km.2[[temp.row+1]]]
+           {ie1_2[,i,j]<-coef.temp1[match(data1$f10km.2[[temp.row+1]],data1$fm11[[i+1]])]*
+                         data2$xm1.der[,data1$f10km.2[[temp.row+1]]]
+            ie1_2.cov[,i,j]<-cov.temp1[match(data1$f10km.2[[temp.row+1]],data1$fm11[[i+1]]),match(data1$f10km.2[[temp.row+1]],data1$fm11[[i+1]])]*
+                             data2$xm1.der[,data1$f10km.2[[temp.row+1]]]^2}
          else
-           ie1_2[,i,j]<-data2$xm1.der[,data1$f10km.2[[temp.row+1]]]%*%
-             coef.temp1[match(data1$f10km.2[[temp.row+1]],data1$fm11[[i+1]])]
+           {ie1_2[,i,j]<-data2$xm1.der[,data1$f10km.2[[temp.row+1]]]%*%
+                         coef.temp1[match(data1$f10km.2[[temp.row+1]],data1$fm11[[i+1]])]
+            ie1_2.cov[,i,j]<-apply(data2$xm1.der[,data1$f10km.2[[temp.row+1]]],1,func2,
+                                   mat=cov.temp1[match(data1$f10km.2[[temp.row+1]],data1$fm11[[i+1]]),match(data1$f10km.2[[temp.row+1]],data1$fm11[[i+1]])])}
        }}
      else {
        temp.exp=data1$f01km1.2[[1]][temp.trans2,2]
        temp.trans2.2=match(j,temp.exp)
        if(is.na(temp.trans2.2))
-         ie1_2[,i,j]=coef.temp[match(j,c(data1$fm12[[i+1]],data1$fm11[[i+1]]))] #if there is no transformation of the exposure variable
+         {ie1_2[,i,j]=coef.temp[match(j,c(data1$fm12[[i+1]],data1$fm11[[i+1]]))] #if there is no transformation of the exposure variable
+          ie1_2.cov[,i,j]=cov.temp[match(j,c(data1$fm12[[i+1]],data1$fm11[[i+1]])),match(j,c(data1$fm12[[i+1]],data1$fm11[[i+1]]))] }
        else{
          temp.row=temp.trans2[temp.trans2.2]
          if(length(data1$f01km1.2[[temp.row+1]])==1)
-           ie1_2[,i,j]<-coef.temp12[match(data1$f01km1.2[[temp.row+1]],data1$fm12[[i+1]])]*
-             data2$xm1.der[,data1$f01km1.2[[temp.row+1]]]
+           {ie1_2[,i,j]<-coef.temp12[match(data1$f01km1.2[[temp.row+1]],data1$fm12[[i+1]])]*
+                         data2$xm1.der[,data1$f01km1.2[[temp.row+1]]]
+            ie1_2.cov[,i,j]<-cov.temp12[match(data1$f01km1.2[[temp.row+1]],data1$fm12[[i+1]]),match(data1$f01km1.2[[temp.row+1]],data1$fm12[[i+1]])]*
+                             data2$xm1.der[,data1$f01km1.2[[temp.row+1]]]^2}
          else
-           ie1_2[,i,j]<-data2$xm1.der[,data1$f01km1.2[[temp.row+1]]]%*%
-             coef.temp12[match(data1$f01km1.2[[temp.row+1]],data1$fm12[[i+1]])]
+           {ie1_2[,i,j]<-data2$xm1.der[,data1$f01km1.2[[temp.row+1]]]%*%
+                         coef.temp12[match(data1$f01km1.2[[temp.row+1]],data1$fm12[[i+1]])]
+            ie1_2.cov[,i,j]<-apply(data2$xm1.der[,data1$f01km1.2[[temp.row+1]]],1,func1,
+                             mat=cov.temp12[match(data1$f01km1.2[[temp.row+1]],data1$fm12[[i+1]]),match(data1$f01km1.2[[temp.row+1]],data1$fm12[[i+1]])])}
        }}
      }
    else{ #for binary x, use ie1_2 only, note that the mean is weighted by sample size for level 2 exposure
      if (length(data1$m1[[i+1]])==1)
-       ie1_2[,i,j]<-(mean(data2$m1y[x[,j]==1,data1$m1[[i+1]]])-mean(data2$m1y[x[,j]==0,data1$m1[[i+1]]]))*
-         coef.f1[len[1]+len[2]+data1$m1[[i+1]]]
+       {ie1_2[,i,j]<-(mean(data2$m1y[x[,j]==1,data1$m1[[i+1]]],na.rm=T)-mean(data2$m1y[x[,j]==0,data1$m1[[i+1]]],na.rm=T))*
+                      coef.f1[len[1]+len[2]+data1$m1[[i+1]]]
+        ie1_2.cov[,i,j]<-(mean(data2$m1y[x[,j]==1,data1$m1[[i+1]]],na.rm=T)-mean(data2$m1y[x[,j]==0,data1$m1[[i+1]]],na.rm=T))^2*
+                         cov.f1[len[1]+len[2]+data1$m1[[i+1]],len[1]+len[2]+data1$m1[[i+1]]]}
      else
-       ie1_2[,i,j]<-(apply(data2$m1y[x[,j]==1,data1$m1[[i+1]]],2,mean)-apply(data2$m1y[x[,j]==0,data1$m1[[i+1]]],2,mean))%*%
+       {ie1_2[,i,j]<-(apply(data2$m1y[x[,j]==1,data1$m1[[i+1]]],2,mean,na.rm=T)-apply(data2$m1y[x[,j]==0,data1$m1[[i+1]]],2,mean,na.rm=T))%*%
          coef.f1[len[1]+len[2]+data1$m1[[i+1]]]
+        temp.vec=(apply(data2$m1y[x[,j]==1,data1$m1[[i+1]]],2,mean,na.rm=T)-apply(data2$m1y[x[,j]==0,data1$m1[[i+1]]],2,mean,na.rm=T))
+        ie1_2.cov[,i,j]<-temp.vec%*%cov.f1[len[1]+len[2]+data1$m1[[i+1]],len[1]+len[2]+data1$m1[[i+1]]]%*%temp.vec}
    } 
    } 
-   ie1_3[,i]=d_link(link.fun=(summary(model))$link,x=predict(model,newdata=data.frame(temp.data.new),type="response"))
+   #browser()
+   #if(surv & levely==1)
+   #   ie1_3[,i]=predict(model) #newdata is not supported yet
+   #else 
+     ie1_3[,i]=d_link(link.fun=(summary(model))$link,x=predict(model,newdata=data.frame(temp.data.new),type="response",allow.new.levels=T))
   }
   j<-i
  }
  else
    {j<-0
     ie1_2=NULL
+    ie1_2.cov=NULL
     ie1_3=NULL}
 
+  
  if(!is.null(c1))  
    for (i in 1:length(c1))
    {if(sum(cm[[1]]==c1[i])>0)   #add covariates
@@ -1538,173 +1666,243 @@ if(!is.null(c(l1,c1)))   #analysis for level 1 mediators
                    family=familym[[c1[i]]])
      fm1<-append(fm1,model)
      fm1[[1]]<-c(fm1[[1]],c1[i])
+     coef.fm1[[1]]<-c(coef.fm1[[1]],c1[i])
      temp.data.new<-cbind(level=level.new,expl.m.new)  #[temp.6]
      colnames(temp.data.new)<-c("level",colnames(expl.m))
      #p.temp<-predict(model,type="response",newdata=data.frame(temp.data),allow.new.levels=T)
      coef.temp<-summary(model)$coefficient[,1]   #find the second part of IE2
+     cov.temp<-vcov(model)   #find the second part of IE2
      if(intercept)
-        coef.temp<-coef.temp[-1]
+        {coef.temp<-coef.temp[-1]
+         cov.temp<-as.matrix(cov.temp[-1,-1])}
      coef.temp<-coef.temp[1:numx]
+     cov.temp<-as.matrix(cov.temp[1:numx,1:numx])
+     coef.fm1<-append(coef.fm1,list(coef.temp))
      coef.temp12<-coef.temp[1:length(data1$fm12[[k2+1]])]
      coef.temp1<-coef.temp[-(1:length(data1$fm12[[k2+1]]))]
+     cov.temp12<-as.matrix(cov.temp[1:length(data1$fm12[[k2+1]]),1:length(data1$fm12[[k2+1]])])
+     cov.temp1<-as.matrix(cov.temp[-(1:length(data1$fm12[[k2+1]])),-(1:length(data1$fm12[[k2+1]]))])
      
      temp.trans1=match(c1[i],data1$f01km1.2[[1]][,1]) 
      temp.trans2=match(c1[i],data1$f10km.2[[1]][,1]) 
      tmp.ie1_2=NULL
+     tmp.ie1_2.cov=NULL
      for (z in 1:nx){
        if(!data1$binx[z]){
          if(is.na(temp.trans1) & is.na(temp.trans2))
-           tmp.ie1_2=array(c(tmp.ie1_2,cbind(ie1_2[,,z],coef.temp[match(z,c(data1$fm12[[k2+1]],data1$fm11[[k1+1]]))])),
+           {tmp.ie1_2=array(c(tmp.ie1_2,cbind(ie1_2[,,z],coef.temp[match(z,c(data1$fm12[[k2+1]],data1$fm11[[k1+1]]))])),
                            c(dim(cbind(ie1_2[,,z],coef.temp[match(z,c(data1$fm12[[k2+1]],data1$fm11[[k1+1]]))])),z))#if there is no transformation, the coefficient is the ie2_2
+            tmp.ie1_2.cov=array(c(tmp.ie1_2.cov,cbind(ie1_2.cov[,,z],cov.temp[match(z,c(data1$fm12[[k2+1]],data1$fm11[[k1+1]])),match(z,c(data1$fm12[[k2+1]],data1$fm11[[k1+1]]))])),
+                           c(dim(cbind(ie1_2.cov[,,z],cov.temp[match(z,c(data1$fm12[[k2+1]],data1$fm11[[k1+1]])),match(z,c(data1$fm12[[k2+1]],data1$fm11[[k1+1]]))])),z))#if there is no transformation, the coefficient is the ie2_2
+           }
          else if(!is.na(temp.trans1)) 
            {temp.exp=data1$f01km1.2[[1]][temp.trans1,2]
             temp.trans1.2=match(z,temp.exp)
             if(is.na(temp.trans1.2))
-              tmp.ie1_2=array(c(tmp.ie1_2,cbind(ie1_2[,,z],coef.temp[match(z,c(data1$fm12[[k2+1]],data1$fm11[[k1+1]]))])),
+              {tmp.ie1_2=array(c(tmp.ie1_2,cbind(ie1_2[,,z],coef.temp[match(z,c(data1$fm12[[k2+1]],data1$fm11[[k1+1]]))])),
                               c(dim(cbind(ie1_2[,,z],coef.temp[match(z,c(data1$fm12[[k2+1]],data1$fm11[[k1+1]]))])),z))#if there is no transformation of the exposure variable
+               tmp.ie1_2.cov=array(c(tmp.ie1_2.cov,cbind(ie1_2.cov[,,z],cov.temp[match(z,c(data1$fm12[[k2+1]],data1$fm11[[k1+1]])),match(z,c(data1$fm12[[k2+1]],data1$fm11[[k1+1]]))])),
+                              c(dim(cbind(ie1_2.cov[,,z],cov.temp[match(z,c(data1$fm12[[k2+1]],data1$fm11[[k1+1]])),match(z,c(data1$fm12[[k2+1]],data1$fm11[[k1+1]]))])),z))}
             else{temp.row=temp.trans1[temp.trans1.2]
                  if(length(data1$f01km1.2[[temp.row+1]])==1)
-                   tmp.ie1_2<-array(c(tmp.ie1_2,cbind(ie1_2[,,z],coef.temp1[match(data1$f01km1.2[[temp.row+1]],data1$fm11[[k1+1]])]*
+                   {tmp.ie1_2<-array(c(tmp.ie1_2,cbind(ie1_2[,,z],coef.temp1[match(data1$f01km1.2[[temp.row+1]],data1$fm11[[k1+1]])]*
                                      data2$xm1.der[,data1$f01km1.2[[temp.row+1]]])),
                                     c(dim(cbind(ie1_2[,,z],coef.temp1[match(data1$f01km1.2[[temp.row+1]],data1$fm11[[k1+1]])]*
                                                   data2$xm1.der[,data1$f01km1.2[[temp.row+1]]])),z))
+                   tmp.ie1_2.cov<-array(c(tmp.ie1_2.cov,cbind(ie1_2.cov[,,z],cov.temp1[match(data1$f01km1.2[[temp.row+1]],data1$fm11[[k1+1]]),match(data1$f01km1.2[[temp.row+1]],data1$fm11[[k1+1]])]*
+                                                        data2$xm1.der[,data1$f01km1.2[[temp.row+1]]]^2)),
+                                    c(dim(cbind(ie1_2.cov[,,z],cov.temp1[match(data1$f01km1.2[[temp.row+1]],data1$fm11[[k1+1]]),match(data1$f01km1.2[[temp.row+1]],data1$fm11[[k1+1]])]*
+                                                  data2$xm1.der[,data1$f01km1.2[[temp.row+1]]]^2)),z))}
                  else
-                   tmp.ie1_2<-array(c(tmp.ie1_2,cbind(ie1_2[,,z],data2$xm1.der[,data1$f01km1.2[[temp.row+1]]]%*%
+                   {tmp.ie1_2<-array(c(tmp.ie1_2,cbind(ie1_2[,,z],data2$xm1.der[,data1$f01km1.2[[temp.row+1]]]%*%
                                      coef.temp1[match(data1$f01km1.2[[temp.row+1]],data1$fm11[[k1+1]])])),
                                     c(dim(cbind(ie1_2[,,z],data2$xm1.der[,data1$f01km1.2[[temp.row+1]]]%*%
                                                   coef.temp1[match(data1$f01km1.2[[temp.row+1]],data1$fm11[[k1+1]])])),z))
+                    temp.vec=apply(data2$xm1.der[,data1$f01km1.2[[temp.row+1]]],1,func1,
+                                   mat=cov.temp1[match(data1$f01km1.2[[temp.row+1]],data1$fm11[[k1+1]]),match(data1$f01km1.2[[temp.row+1]],data1$fm11[[k1+1]])])
+                    tmp.ie1_2.cov<-array(c(tmp.ie1_2.cov,cbind(ie1_2.cov[,,z],temp.vec)),
+                                    c(dim(cbind(ie1_2.cov[,,z],temp.vec)),z))}
          }}
          else  
            {temp.exp=data1$f10km.2[[1]][temp.trans2,2]
             temp.trans2.2=match(z,temp.exp)
             if(is.na(temp.trans2.2))
-              tmp.ie1_2=array(c(tmp.ie1_2,cbind(ie1_2[,,z],coef.temp[match(c1[i],c(data1$fm12[[k2+1]],data1$fm11[[k1+1]]))])),
+              {tmp.ie1_2=array(c(tmp.ie1_2,cbind(ie1_2[,,z],coef.temp[match(c1[i],c(data1$fm12[[k2+1]],data1$fm11[[k1+1]]))])),
                               c(dim(cbind(ie1_2[,,z],coef.temp[match(c1[i],c(data1$fm12[[k2+1]],data1$fm11[[k1+1]]))])),z)) #if there is no transformation of the exposure variable
+               tmp.ie1_2.cov=array(c(tmp.ie1_2.cov,cbind(ie1_2.cov[,,z],cov.temp[match(c1[i],c(data1$fm12[[k2+1]],data1$fm11[[k1+1]])),match(c1[i],c(data1$fm12[[k2+1]],data1$fm11[[k1+1]]))])),
+                              c(dim(cbind(ie1_2.cov[,,z],cov.temp[match(c1[i],c(data1$fm12[[k2+1]],data1$fm11[[k1+1]])),match(c1[i],c(data1$fm12[[k2+1]],data1$fm11[[k1+1]]))])),z))}
             else{temp.row=temp.trans2[temp.trans2.2]
                  if(length(data1$f10km.2[[temp.row+1]])==1)
-                   tmp.ie1_2<-array(c(tmp.ie1_2,cbind(ie1_2[,,z],coef.temp12[match(data1$f10km.2[[temp.row+1]],data1$fm12[[k2+1]])]*
+                   {tmp.ie1_2<-array(c(tmp.ie1_2,cbind(ie1_2[,,z],coef.temp12[match(data1$f10km.2[[temp.row+1]],data1$fm12[[k2+1]])]*
                                      data2$xm1.der[,data1$f10km.2[[temp.row+1]]])),
                                     c(dim(cbind(ie1_2[,,z],coef.temp12[match(data1$f10km.2[[temp.row+1]],data1$fm12[[k2+1]])]*
                                                   data2$xm1.der[,data1$f10km.2[[temp.row+1]]])),z))
+                   tmp.ie1_2.cov<-array(c(tmp.ie1_2.cov,cbind(ie1_2.cov[,,z],cov.temp12[match(data1$f10km.2[[temp.row+1]],data1$fm12[[k2+1]]),match(data1$f10km.2[[temp.row+1]],data1$fm12[[k2+1]])]*
+                                                        data2$xm1.der[,data1$f10km.2[[temp.row+1]]]^2)),
+                                    c(dim(cbind(ie1_2.cov[,,z],cov.temp12[match(data1$f10km.2[[temp.row+1]],data1$fm12[[k2+1]]),match(data1$f10km.2[[temp.row+1]],data1$fm12[[k2+1]])]*
+                                                  data2$xm1.der[,data1$f10km.2[[temp.row+1]]])),z))}
                  else
-                   tmp.ie1_2<-array(c(tmp.ie1_2,cbind(ie1_2[,,z],data2$xm1.der[,data1$f10km.2[[temp.row+1]]]%*%
+                   {tmp.ie1_2<-array(c(tmp.ie1_2,cbind(ie1_2[,,z],data2$xm1.der[,data1$f10km.2[[temp.row+1]]]%*%
                                      coef.temp12[match(data1$f10km.2[[temp.row+1]],data1$fm12[[k2+1]])])),
                                     c(dim(cbind(ie1_2[,,z],data2$xm1.der[,data1$f10km.2[[temp.row+1]]]%*%
                                                   coef.temp12[match(data1$f10km.2[[temp.row+1]],data1$fm12[[k2+1]])])),z))
+                    temp.vec=apply(data2$xm1.der[,data1$f10km.2[[temp.row+1]]],1,func1,
+                                   mat=cov.temp12[match(data1$f10km.2[[temp.row+1]],data1$fm12[[k2+1]]),match(data1$f10km.2[[temp.row+1]],data1$fm12[[k2+1]])])
+                    tmp.ie1_2.cov<-array(c(tmp.ie1_2.cov,cbind(ie1_2.cov[,,z],temp.vec)),
+                                    c(dim(cbind(ie1_2[,,z],temp.vec)),z))}
          }}
        }
        else { #for binary x, use ie2_2 only, not that the mean is weighted by sample size
-         if (length(data1$m1[[j+i+1]])==1)
-           tmp.ie1_2<-array(c(tmp.ie1_2,cbind(ie1_2[,,z],(mean(data2$m1y[x[,z]==1,data1$m1[[j+i+1]]])-
-                                         mean(data2$m1y[x[,z]==0,data1$m1[[j+i+1]]]))*
-                                        coef.f1[len[1]+len[2]+data1$m1[[j+i+1]]])),
-                            c(dim(cbind(ie1_2[,,z],(mean(data2$m1y[x[,z]==1,data1$m1[[j+i+1]]])-
-                                                      mean(data2$m1y[x[,z]==0,data1$m1[[j+i+1]]]))*
-                                          coef.f1[len[1]+len[2]+data1$m1[[j+i+1]]])),z))
-         else
-           tmp.ie1_2<-array(c(tmp.ie1_2,cbind(ie1_2[,,z],((apply(data2$m1y[x[,z]==1,data1$m1[[j+i+1]]],2,mean)
-                                         -apply(data2$m1y[x[,z]==0,data1$m1[[j+i+1]]],2,mean))%*%
-                                        coef.f1[len[1]+len[2]+data1$m1[[i+j+1]]])[1,1])),
-                            c(dim(cbind(ie1_2[,,z],((apply(data1$m1y[x[,z]==1,data1$m1[[j+i+1]]],2,mean)
-                                                    -apply(data1$m1y[x[,z]==0,data1$m1[[j+i+1]]],2,mean))%*%
-                                          coef.f1[len[1]+len[2]+data1$m1[[i+j+1]]])[1,1])),z))
+         {tmp.ie1_2<-array(c(tmp.ie1_2,cbind(ie1_2[,,z],(mean(data2$m1y[x[,z]==1,k],na.rm=T)-
+                                                          mean(data2$m1y[x[,z]==0,k],na.rm=T))*
+                                              coef.f1[len[1]+len[2]+k])),
+                          c(dim(cbind(ie1_2[,,z],(mean(data2$m1y[x[,z]==1,k],na.rm=T)-
+                                                    mean(data2$m1y[x[,z]==0,k],na.rm=T))*
+                                        coef.f1[len[1]+len[2]+k])),z))
+         temp.vec=(mean(data2$m1y[x[,z]==1,k],na.rm=T)-mean(data2$m1y[x[,z]==0,k],na.rm=T))^2*cov.f1[len[1]+len[2]+k,len[1]+len[2]+k]
+         tmp.ie1_2.cov<-array(c(tmp.ie1_2.cov,cbind(ie1_2.cov[,,z],temp.vec)),
+                          c(dim(cbind(ie1_2.cov[,,z],temp.vec)),z))}
          
        }}
      ie1_2=tmp.ie1_2
-     ie1_3=cbind(ie1_3,d_link(link.fun=(summary(model))$link,x=predict(model,type="response",newdata=data.frame(temp.data.new))))
+     ie1_2.cov=tmp.ie1_2.cov
+     ie1_3=cbind(ie1_3,d_link(link.fun=(summary(model))$link,x=predict(model,type="response",newdata=data.frame(temp.data.new),allow.new.levels=T)))
     }
     colnames(ie1_2)<-c(name.temp,paste(colnames(m)[c1[i]],
-                                        1:length(data1$m1[[temp+1]]),sep="."))
+                                       1:length(data1$m1[[temp+1]]),sep="."))
     dimnames(ie1_2)[[3]]=x.names
+    colnames(ie1_2.cov)<-c(name.temp,paste(colnames(m)[c1[i]],
+                                       1:length(data1$m1[[temp+1]]),sep="."))
+    dimnames(ie1_2.cov)[[3]]=x.names
     colnames(ie1_3)<-c(name.temp,paste(colnames(m)[c1[i]],
                                         1:length(data1$m1[[temp+1]]),sep="."))
    }
 }
+
 
 if(!is.null(ie1_1) & !is.null(ie1_2))   #get the estimates for level 1 mediators
  {if(nx1!=0)
    {ie1=array(ie1_2[,,levelx==1],c(n,dim(ie1_2)[2],nx1))
     colnames(ie1)=colnames(ie1_2)
     dimnames(ie1)[[3]]=x.names[levelx==1]
+    ie1.cov=ie1
     aie1=matrix(NA,nx1,ncol(ie1))
     colnames(aie1)=colnames(ie1)
     rownames(aie1)=x.names[levelx==1]
+    aie1.cov=aie1
     llx1=1}
   else
   {ie1=NULL
-   aie1=NULL}
+   aie1=NULL
+   ie1.cov=ie1
+   aie1.cov=aie1}
   if(nx2!=0)
   {ie12=array(NA,c(dim(two(ie1_2[,,1],level)),nx2))
    colnames(ie12)=colnames(ie1_2)
+   ie12.cov=ie12
    aie12=matrix(NA,nx2,ncol(ie12))
    colnames(aie12)=colnames(ie12)
    rownames(aie12)=x.names[levelx==2]
+   aie12.cov=aie12
    llx2=1}
   else
   {ie12=NULL
-   aie12=NULL}
+   aie12=NULL
+   ie12.cov=NULL
+   aie12.cov=NULL}
   for (i in 1:nx)
    {if(levelx[i]==1){
     if (data1$binx[i])
-     ie1[,,llx1]<-ie1_2[,,i]
+     {ie1[,,llx1]<-ie1_2[,,i]
+      ie1.cov[,,llx1]<-ie1_2.cov[,,i]}
     else
-     ie1[,,llx1]<-ie1_1*ie1_2[,,i]*ie1_3
+     {ie1[,,llx1]<-ie1_1*ie1_2[,,i]*ie1_3
+      ie1.cov[,,llx1]<-(ie1_2[,,i]*ie1_3)^2*ie1_1.cov+(ie1_1*ie1_3)^2*ie1_2.cov[,,i]}
     aie1[llx1,]=apply(as.matrix(ie1[,,llx1]),2,mean,na.rm=T)
+    aie1.cov[llx1,]=(apply(as.matrix(sqrt(ie1.cov[,,llx1])),2,mean,na.rm=T))^2 #approximation, not exact
     llx1=llx1+1
    }
     else{ 
       ie1_2.temp=two(ie1_2[,,i],level)
       ie1_1.temp=two(ie1_1,level)
       ie1_3.temp=two(ie1_3,level)
+      ie1_2.cov.temp=(two(sqrt(ie1_2.cov[,,i]),level))^2
+      ie1_1.cov.temp=(two(sqrt(ie1_1.cov),level))^2
       if (data1$binx[i])
-        ie12[,,llx2]<-ie1_2.temp
+        {ie12[,,llx2]<-ie1_2.temp
+         ie12.cov[,,llx2]<-ie1_2.cov.temp}
       else
-        ie12[,,llx2]<-ie1_1.temp*ie1_2.temp*ie1_3.temp
+        {ie12[,,llx2]<-ie1_1.temp*ie1_2.temp*ie1_3.temp
+         ie12.cov[,,llx2]<-(ie1_1.temp*ie1_3.temp)^2*ie1_2.cov.temp+(ie1_3.temp*ie1_2.temp)^2*ie1_1.cov.temp}
       aie12[llx2,]=apply(as.matrix(ie12[,,llx2]),2,mean,na.rm=T)
+      aie12.cov[llx2,]=(apply(as.matrix(sqrt(ie12.cov[,,llx2])),2,mean,na.rm=T))^2
       llx2=llx2+1
     }
 }}
 else {ie1<-NULL
       aie1=NULL
       ie12=NULL
-      aie12=NULL}
+      aie12=NULL
+      ie1.cov=NULL
+      aie1.cov=NULL
+      ie12.cov=NULL
+      aie12.cov=NULL}
+
 
 if(!is.null(ie2_1) & !is.null(ie2_2))   #get the estimates for level 1 mediators
 {ie2=array(0,c(dim(data2$m.2),nx2))
  dimnames(ie2)=dimnames(ie2_2)
+ ie2.cov=ie2
  aie2=matrix(NA,nx2,ncol(ie2))
  colnames(aie2)=colnames(ie2)
  rownames(aie2)=x.names[levelx==2]
+ aie2.cov=aie2
  numx2=(1:nx)[levelx==2]  #place of level2 exposure in x
  ie2_1.temp=two(ie2_1,level)
+ ie2_1.cov.temp=(two(sqrt(ie2_1.cov),level))^2
  ie2_3.temp=ie2_3
  for (i in 1:nx2)
   {if(data1$binx[numx2[i]])
-     ie2[,,i]<-ie2_2[,,i]
+     {ie2[,,i]<-ie2_2[,,i]
+      ie2.cov[,,i]<-ie2_2.cov[,,i]}
    else
-     ie2[,,i]<-ie2_1.temp*ie2_2[,,i]*ie2_3.temp
+     {ie2[,,i]<-ie2_1.temp*ie2_2[,,i]*ie2_3.temp
+      ie2.cov[,,i]<-ie2_1.cov.temp*(ie2_2[,,i]*ie2_3.temp)^2+ie2_2.cov[,,i]*(ie2_1.temp*ie2_3.temp)^2}
    aie2[i,]=apply(as.matrix(ie2[,,i]),2,mean,na.rm=T)
-  }
+   aie2.cov[i,]=(apply(as.matrix(sqrt(ie2.cov[,,i])),2,mean,na.rm=T))^2
+ }
 }
 else {ie2<-NULL
 aie2=NULL
+ie2.cov<-NULL
+aie2.cov=NULL
 }
 
+
 if(nx1>0)                         #calculate the direct effect
-  {de1=as.matrix(DE[,levelx==1])
-   colnames(de1)=x.names[levelx==1]
-   ade1=apply(de1,2,mean)
-   }
+{de1=as.matrix(DE[,levelx==1])
+colnames(de1)=x.names[levelx==1]
+ade1=apply(de1,2,mean)
+de1.cov=as.matrix(DE.cov[,levelx==1])
+colnames(de1.cov)=x.names[levelx==1]
+ade1.cov=(apply(sqrt(de1.cov),2,mean))^2
+}
 else 
   {de1=NULL
-   ade1=NULL}
+   ade1=NULL
+   de1.cov=NULL
+   ade1.cov=NULL}
    
 if(nx2>0)
   {de2=two(DE[,levelx==2],level)
-   ade2=apply(de2,2,mean)}
+   ade2=apply(de2,2,mean)
+   de2.cov=(two(sqrt(DE.cov[,levelx==2]),level))^2
+   ade2.cov=(apply(sqrt(de2.cov),2,mean))^2}
 else
   {de2=NULL
-   ade2=NULL}
+   ade2=NULL
+   de2.cov=NULL
+   ade2.cov=NULL}
    
 if(nx1>0)                         #calculate the total effect
   {te1=as.matrix(de1+apply(ie1,c(1,3),sum,na.rm=T))
@@ -1725,7 +1923,6 @@ else
  {te2=NULL
   ate2=NULL}
    
-  
 if(!is.null(joint))  #get the estimates for joint mediator effect
 {joint1<-(1:length(joint[[1]]))[joint[[1]]==1]
  joint2<-(1:length(joint[[1]]))[joint[[1]]==2]
@@ -1775,20 +1972,32 @@ else
  je2=NULL
  aje2<-NULL}
 
+if(cov.mat)
+  a<-list(de1=de1,de2=de2,ade1=ade1,ade2=ade2,te1=te1,te2=te2,ate1=ate1,ate2=ate2,
+          ie1=ie1,ie2=ie2,ie12=ie12, aie1=aie1,aie2=aie2,aie12=aie12,
+          f1=f1,fm1=fm1,fm2=fm2, je1=je1,je2=je2,aje1=aje1,aje2=aje2,
+          ie1_1=ie1_1,ie1_2=ie1_2,ie1_3=ie1_3,ie2_1=ie2_1,ie2_2=ie2_2, ie2_3=ie2_3,
+          x=x.new, x.j=two(x.new,level.new), m=m, covariates=covariates, 
+          intercept=intercept, cm=cm,data1=data1,data2=data2,surv=surv,
+          coef.f1=coef.f1,coef.fm1=coef.fm1,coef.fm2=coef.fm2,
+          de1.cov=de1.cov,de2.cov=de2.cov,ade1.cov=ade1.cov,ade2.cov=ade2.cov,
+          ie1.cov=ie1.cov,ie2.cov=ie2.cov,ie12.cov=ie12.cov, 
+          aie1.cov=aie1.cov,aie2.cov=aie2.cov,aie12.cov=aie12.cov)
+else
+  a<-list(de1=de1,de2=de2,ade1=ade1,ade2=ade2,te1=te1,te2=te2,ate1=ate1,ate2=ate2,
+          ie1=ie1,ie2=ie2,ie12=ie12, aie1=aie1,aie2=aie2,aie12=aie12,
+          f1=f1,fm1=fm1,fm2=fm2, je1=je1,je2=je2,aje1=aje1,aje2=aje2,
+          ie1_1=ie1_1,ie1_2=ie1_2,ie1_3=ie1_3,ie2_1=ie2_1,ie2_2=ie2_2, ie2_3=ie2_3,
+          x=x.new, x.j=two(x.new,level.new), m=m, covariates=covariates, 
+          intercept=intercept, cm=cm,data1=data1,data2=data2,surv=surv,
+          coef.f1=coef.f1,coef.fm1=coef.fm1,coef.fm2=coef.fm2)
 
-a<-list(de1=de1,de2=de2,ade1=ade1,ade2=ade2,te1=te1,te2=te2,ate1=ate1,ate2=ate2,
-        ie1=ie1,ie2=ie2,ie12=ie12, aie1=aie1,aie2=aie2,aie12=aie12,
-        f1=f1,fm1=fm1,fm2=fm2, je1=je1,je2=je2,aje1=aje1,aje2=aje2,
-        ie1_1=ie1_1,ie1_2=ie1_2,ie1_3=ie1_3,ie2_1=ie2_1,ie2_2=ie2_2, ie2_3=ie2_3,
-        x=x.new, x.j=two(x.new,level.new), 
-        m=m, covariates=covariates, intercept=intercept, cm=cm,
-        data1=data1,data2=data2)
 class(a)<-"mlma"
 return(a)
 }
 
 boot.mlma<-function(y, data1=NULL,x=data1$parameter$x, m=data1$parameter$m, levelx=data1$parameter$levelx, 
-                    xref=NULL, yref=NULL, l1=data1$parameter$l1,l2=data1$parameter$l2, 
+                    levely=data1$parameter$levely,xref=NULL, yref=NULL, l1=data1$parameter$l1,l2=data1$parameter$l2, 
                     c1=data1$parameter$c1, #levelx is the level of x
                     c1r=data1$parameter$c1r, c2=data1$parameter$c2, c2r=data1$parameter$c2r, 
                     level=data1$parameter$level,  weight=rep(1,nrow(as.matrix(x))), 
@@ -1799,26 +2008,167 @@ boot.mlma<-function(y, data1=NULL,x=data1$parameter$x, m=data1$parameter$m, leve
                     f20ky=data1$parameter$f20ky, f01km1=data1$parameter$f01km1, 
                     f01km2=data1$parameter$f01km2, f10km=data1$parameter$f10km,
                     data2=NULL, x.new=NULL, m.new=m, level.new=level, weight.new=NULL,
-                    covariates.new=covariates,boot=100, echo=TRUE)
-{ two <- function(x, level, weight = rep(1, nrow(as.matrix(x)))) {
-  x <- as.matrix(x)
-  levels <- unique(level[!is.na(level)])
-  x2 <- matrix(NA, length(levels), dim(x)[2])
-  for (i in 1:length(levels)) {
-    cho <- (level == levels[i])
-    if (sum(cho) > 0) {
-      if(sum(cho)==1)
-        x2[i, ] <- x[level == levels[i], ]
-      else {
-        temp <- as.matrix(x[level == levels[i], ])
-        weight1 <- weight[level == levels[i]]
-        x2[i, ] <- apply(temp, 2, weighted.mean, weight1, 
-                         na.rm = TRUE)}
-    }
-  }
-  colnames(x2) <- colnames(x)
+                    covariates.new=covariates,boot=100, echo=TRUE, plot.it=TRUE, cov.mat=FALSE)
+{two<-function(x, level, weight=rep(1,nrow(as.matrix(x))))
+{x2<-NULL
+if(is.null(dim(x)))
+  x2=cbind(x2,(aggregate(as.numeric(x)~level, na.action=na.pass, 
+                         FUN=function(x) c(mean=weighted.mean(x,weight=weight,na.rm=T))))[,2])
+else
+  for(i in 1:ncol(x))
+    x2<-cbind(x2,(aggregate(as.numeric(x[,i])~level, na.action=na.pass,
+                            FUN=function(x) c(mean=weighted.mean(x,weight=weight,na.rm=T))))[,2])
+  colnames(x2)<-colnames(x)
   x2
 }
+
+update.data.org<-function(data1,bootsample,y.boot,x.boot,
+                          m.boot,weight.boot,level.boot)  #data1 is the original data.org results, bootsample is booted sample
+{x2fx<-function(x,func) #x is the list of original numerical vector, func is a vector of character functions. 
+{ # eg.  func <- c("x","x+1","x+2","x+3","log(x)")
+  func.list <- list()
+  #test.data <- matrix(data=rep(x,length(func)),length(x),length(func))
+  #test.data <- data.frame(test.data)
+  result<-NULL
+  for(i in 1:length(func)){
+    func.list[[i]] <- function(x){}
+    body(func.list[[i]]) <- parse(text=func[i])
+  }
+  #result <- mapply(do.call,func.list,lapply(test.data,list))
+  col_fun<-NULL
+  z<-1
+  for (i in 1:length(func.list))
+  {res<-as.matrix(func.list[[i]](x))
+  result<-cbind(result,res)
+  col_fun<-cbind(col_fun,c(z,z+ncol(res)-1))
+  z<-z+ncol(res)}
+  list(values=as.matrix(result),col_fun=as.matrix(col_fun))
+}
+x2fdx<-function(x,func)  #x is the list of original numerical vector, func is a vector of character functions. 
+{ fdx<-NULL              # eg.  func <- c("x","x+1","x+2","x+3","log(x)")
+for(i in 1:length(func)){
+  if (length(grep("ifelse",func[i]))>0)
+  {str<-unlist(strsplit(func[i],","))
+  fun1<-D(parse(text=str[2]), "x")
+  fun2<-D(parse(text=unlist(strsplit(str[3],")"))),"x")
+  x1<-eval(fun1)
+  x2<-eval(fun2)
+  if(length(x1)==1)
+    x1<-rep(x1,length(x))
+  if(length(x2)==1)
+    x2<-rep(x2,length(x))
+  fun3<-paste(str[1],"x1,x2)",sep=",")
+  fdx<-cbind(fdx,eval(parse(text=fun3)))
+  }
+  else if(length(grep("ns",func[i]))>0)
+  {temp<-paste("ns.dev",substring(func[i],3,nchar(func[i])-1),",derivs1=1)",sep="")
+  fdx<-cbind(fdx,eval(parse(text=temp)))}
+  else if(length(grep("bs",func[i]))>0)
+  {temp<-paste("bs.dev",substring(func[i],3,nchar(func[i])-1),",derivs1=1)",sep="")
+  fdx<-cbind(fdx,eval(parse(text=temp)))}
+  else{
+    dx2x <- D(parse(text=func[i]), "x") 
+    temp<-eval(dx2x)
+    if(length(temp)==1)
+      fdx<-cbind(fdx,rep(temp,length(x)))
+    else fdx<-cbind(fdx,temp)}
+}
+as.matrix(fdx)
+}
+one2two<-function(x,l1,weight=rep(1,length(x))) #l1 is a vector that distribute x to different level 1 groups
+{x1<-rep(NA,length(x))
+l1.1<-l1[!is.na(l1)]
+x.1<-x[!is.na(l1)]
+weight.1<-weight[!is.na(l1)]
+weight.1<-ifelse(is.na(weight.1),0,weight.1)   #missing weight will not be counted when calculate the level 1 variable
+x1.1<-rep(0,length(x.1))
+for (i in unique(l1.1))
+  x1.1[l1.1==i]<-weighted.mean(x.1[l1.1==i],weight.1[l1.1==i],na.rm=TRUE)
+x1[!is.na(l1)]<-x1.1
+cbind(x1,x)
+}
+
+if (ncol(data.frame(x.boot))!=ncol(data1$parameter$x)) #if there are level 2 mediator(s), but no level 2 exposure(s)
+{x.temp=NULL
+x.names=colnames(x.boot)
+for (i in 1:ncol(x.boot))
+  x.temp=cbind(x.temp,one2two(x.boot[,i],level.boot))
+x.temp=data.frame(x.temp)
+colnames(x.temp)=colnames(data1$parameter$x)
+x.boot=x.temp
+}
+
+data3=data1
+data3$parameter$x=x.boot
+data3$parameter$weight=weight.boot
+data3$parameter$m=m.boot
+data3$parameter$level=level.boot
+
+if(!is.null(data1$x1))
+{data3$x1=as.matrix(data1$x1[bootsample,])
+colnames(data3$x1)=colnames(data1$x1)}
+if(!is.null(data1$x1.der))
+{data3$x1.der=as.matrix(data1$x1.der[bootsample,])
+colnames(data3$x1.der)=colnames(data1$x1.der)}
+if(!is.null(data1$m1y))
+{data3$m1y=as.matrix(data1$m1y[bootsample,])
+colnames(data3$m1y)=colnames(data1$m1y)}
+if(!is.null(data1$m1y.der))
+{data3$m1y.der=as.matrix(data1$m1y.der[bootsample,])
+colnames(data3$m1y.der)=colnames(data1$m1y.der)}
+if(!is.null(data1$m2y))
+{data3$m2y=as.matrix(data1$m2y[bootsample,])
+colnames(data3$m2y)=colnames(data1$m2y)}
+if(!is.null(data1$m2y.der))
+{data3$m2y.der=as.matrix(data1$m2y.der[bootsample,])
+colnames(data3$m2y.der)=colnames(data1$m2y.der)}
+if(!is.null(data1$xm1))
+{data3$xm1=as.matrix(data1$xm1[bootsample,])
+colnames(data3$xm1)=colnames(data1$xm1)}
+if(!is.null(data1$xm1.der))
+{data3$xm1.der=as.matrix(data1$xm1.der[bootsample,])
+colnames(data3$xm1.der)=colnames(data1$xm1.der)}
+
+lc2<-c(data1$parameter$l2,data1$parameter$c2)
+if(!is.null(lc2))                  #create x variables to explain level 2 mediators
+{data3$xm2<-as.matrix(two(as.matrix(x.boot[,data1$parameter$levelx==2]),level.boot))
+#colnames(data3$xm2)<- colnames(data1$xm2)
+data3$xm2.der<-matrix(1,nrow(data3$xm2),ncol(data3$xm2))
+#colnames(xm2.der)<-colnames(xm2)
+
+data3$m.2<-two(as.matrix(m.boot[,lc2]),level.boot)
+colnames(data3$m.2)<-data1$parameter$mnames[lc2]
+
+if(!is.null(data1$parameter$f01km2))
+{k=unique(data1$parameter$f01km2[[1]][,2])
+for (l in k){
+  temp.2=as.matrix(two(as.matrix(x.boot[,k]),level.boot))
+  temp<-(2:length(data1$parameter$f01km2))[data1$parameter$f01km2[[1]][,2]==l]
+  allfun=data1$parameter$f01km2[[temp[1]]]
+  if (length(temp)>1)
+    for(i in 2:length(temp))
+      allfun<-c(allfun,data1$parameter$f01km2[[temp[i]]])
+  unifun<-unique(allfun)
+  unifun1<-unifun[unifun!="x"]
+  unifun2<-c("x",unifun1)
+  d_d<-x2fx(temp.2,unifun1)
+  d.der<-as.matrix(x2fdx(temp.2,unifun1))
+  d<-as.matrix(d_d$values)
+  data3$xm2.der<-cbind(data3$xm2.der,d.der)
+  colnames(data3$xm2.der)<-colnames(data1$xm2.der)
+  data3$xm2<-cbind(data3$xm2,d)
+  colnames(data3$xm2)<-colnames(data1$xm2)
+}}}
+else
+{data3$m.2<-NULL
+data3$xm2<-NULL
+data3$xm2.der<-NULL
+}
+data3
+}
+
+
+
 
 
 getformula<-function(expl,random="(1|level)",intercept=TRUE)
@@ -2252,6 +2602,9 @@ generate.m<-function(x.new, data1,l1,c1,l2,c2,full,covariates.new,level.new,data
 }
 
 biny<-FALSE
+surv=is.Surv(y)
+
+if(!surv){
 temp.1<-find_level(y,level)
 if(temp.1[[1]]<=2)
 {levely=1
@@ -2271,6 +2624,7 @@ if(is.null(yref))
 else
   y<-ifelse(y==yref,0,1)}
 }
+}
 
 n2<-length(unique(level[!is.na(level.new)]))
 #1a. an anlaysis on the whole data set
@@ -2281,6 +2635,7 @@ if(is.null(data1))
 x=data1$parameter$x
 m=data1$parameter$m
 levelx=data1$parameter$levelx
+levely=data1$parameter$levely
 l1=data1$parameter$l1
 l2=data1$parameter$l2
 c1=data1$parameter$c1 
@@ -2321,7 +2676,8 @@ else #when all .new comes from data2
 full<-mlma(y=y, data1=data1, weight=weight, 
            random=random, random.m1=random.m1,intercept=intercept, family1=family1, familym=familym,
            covariates=covariates, cy1=cy1, cy2=cy2, cm=cm, joint=joint, data2=data2,x.new=x.new, 
-           m.new=data2$parameter$m, level.new=level.new,weight.new=weight.new,covariates.new=covariates.new)
+           m.new=data2$parameter$m, level.new=level.new,weight.new=weight.new,covariates.new=covariates.new,
+           cov.mat=cov.mat)
 
 if(is.null(m.new))  #generate the new mediator from the full model if there is no m.new assigned.
  {m.new<-generate.m(x.new,data1,l1,c1,l2,c2,full,covariates.new,level.new,data2,cm)
@@ -2333,23 +2689,13 @@ if(is.null(m.new))  #generate the new mediator from the full model if there is n
   full<-mlma(y=y, data1=data1, weight=weight, 
              random=random, random.m1=random.m1,intercept=intercept, family1=family1, familym=familym,
              covariates=covariates, cy1=cy1, cy2=cy2, cm=cm, joint=joint, data2=data2,x.new=x.new, 
-             m.new=m.new, level.new=level.new,weight.new=weight.new,covariates.new=covariates.new)}
+             m.new=m.new, level.new=level.new,weight.new=weight.new,covariates.new=covariates.new,cov.mat=cov.mat)}
   
 #data2<-data.org(x.new, levelx, levely, m.new, l1, l2, c1, c1r, c2, c2r, f01y, f10y, f02ky, f20ky,
 #                f01km1, f01km2, f10km, level.new, weight.new)
 #2. bootstrap sample and prepare for data
-de1.boot<-NULL
 ade1.boot<-NULL
-de2.boot<-NULL
 ade2.boot<-NULL
-ie1.boot<-NULL
-je1.boot<-NULL
-ie12.boot<-NULL
-ie2.boot<-NULL
-je2.boot<-NULL
-je12.boot<-NULL
-te1.boot<-NULL
-te2.boot<-NULL
 aie1.boot<-NULL
 aje1.boot<-NULL
 aie12.boot<-NULL
@@ -2358,72 +2704,71 @@ aje2.boot<-NULL
 aje12.boot<-NULL
 ate1.boot<-NULL
 ate2.boot<-NULL
+coef.f1<-full$coef.f1
+coef.fm1<-full$coef.fm1
+coef.fm2<-full$coef.fm2
+if(plot.it){
+ie1.boot<-NULL
+ie12.boot<-NULL
+ie2.boot<-NULL
 ie1_1.boot<-NULL
 ie1_2.boot<-NULL
-ie1_3.boot<-NULL
 ie2_1.boot<-NULL
 ie2_2.boot<-NULL
 ie2_3.boot<-NULL
-
+ie1_3.boot<-NULL
+de1.boot<-NULL
+de2.boot<-NULL
+je1.boot<-NULL
+je2.boot<-NULL
+je12.boot<-NULL
+te1.boot<-NULL
+te2.boot<-NULL
+}
 m<-data.frame(m)
-t1<-table(level)  #number of cases for each level
-t2<-sort(unique(level)) #the unique levels in the original data
-level.boot<-rep(t2,t1)
-n1<-length(y)
+#level=droplevels(level) #remove all levels that are empty
+n1=length(level)
+temp1=1:n1
+t3=aggregate(temp1~level, 
+             FUN=function(x) c(x))
+level.boot=sort(level)
 for(l in 1:boot)
 {#a. create bootsample
- x.boot<-NULL
- y.boot<-NULL
- m.boot<-NULL
- weight.boot<-NULL
- covariates.boot<-NULL
- for(j in 1:length(t2))
- {temp<-level==t2[j]
-  temp.2<-sample(t1[j],replace=TRUE,prob=weight[temp])
-  #x.boot<-c(x.boot,x[temp][temp.2])
-  y.boot<-c(y.boot,y[temp][temp.2]) 
-  if(ncol(m)==1)
-    m.boot<-c(m.boot,m[temp,][temp.2])
-  else if(t1[j]==1)                       #if there is only one observation in a level
-    m.boot<-rbind(m.boot,m[temp,]) 
+  func<-function(vec,weight)
+  {if(length(vec)==1)
+    temp=vec
   else
-    m.boot<-rbind(m.boot,m[temp,][temp.2,]) 
-  if(ncol(x)==1)
-    x.boot<-c(x.boot,x[temp,][temp.2])
-  else if(t1[j]==1)                       #if there is only one observation in a level
-    x.boot<-rbind(x.boot,x[temp,]) 
+    temp=sample(vec,replace=TRUE,prob=weight[vec])
+  temp
+  }
+  
+  temp.2=unlist(sapply(t3[,2],func,weight))
+  y.boot<-y[temp.2] 
+  m.boot<-m[temp.2,]
+  x.boot<-x[temp.2,]
+  if(!is.null(covariates))
+    covariates.boot<-covariates[temp.2,]
   else
-    x.boot<-rbind(x.boot,x[temp,][temp.2,]) 
-if(!is.null(covariates))
- {if(ncol(as.matrix(covariates))==1)
-    covariates.boot<-c(covariates.boot,covariates[temp,][temp.2])
-  else if(t1[j]==1)                       #if there is only one observation in a level
-    covariates.boot<-rbind(covariates.boot,covariates[temp,]) 
-  else
-    covariates.boot<-rbind(covariates.boot,covariates[temp,][temp.2,])}
-else
-  covariates.boot=NULL
-  weight.boot<-c(weight.boot,weight[temp][temp.2])
- }
+    covariates.boot=NULL
+  weight.boot<-weight[temp.2]
+
  if(!is.null(m.boot))
  {m.boot<-data.frame(m.boot)
  colnames(m.boot)<-mnames
  }
- if(!is.null(dim(x.boot)))
+ if(!is.null(x.boot))  #remove dim()
  {x.boot<-data.frame(x.boot)
   colnames(x.boot)<-x.names
  }
- if(!is.null(dim(covariates.boot)))
+ if(!is.null(covariates.boot)) #remove dim()
  {x.boot<-data.frame(x.boot)
  colnames(x.boot)<-x.names
  }
 
 #b. create the boot data1
- data1.boot<-data.org(x=x.boot, m=m.boot, levely=levely, levelx=levelx, 
-                      xref=xref, l1=l1,l2=l2, c1=c1, c1r=c1r,c2=c2, c2r=c2r, f01y=f01y, 
-                      f10y=f10y,f02ky=f02ky, f20ky=f20ky, f01km1=f01km1, f01km2=f01km2, 
-                      f10km=f10km, level=level.boot, weight=weight.boot)
- 
+  data1.boot<-update.data.org(data1=data1,bootsample=temp.2,y.boot,x.boot,m.boot,
+                              weight.boot,level.boot)  #data1 is the original data.org results, bootsample is booted sample
+  
 
 #c. analysis on the boot data
  full.boot<-mlma(y=y.boot, data1=data1.boot, weight=weight.boot, 
@@ -2434,51 +2779,70 @@ else
             covariates.new=covariates.new) 
 
 #3. organize the results
- de1.boot<-rbind(de1.boot,full.boot$de1)
- de2.boot<-rbind(de2.boot,full.boot$de2)
  ade1.boot<-rbind(ade1.boot,full.boot$ade1)
  ade2.boot<-rbind(ade2.boot,full.boot$ade2)
  
- te1.boot<-rbind(te1.boot,full.boot$te1)
- te2.boot<-rbind(te2.boot,full.boot$te2)
  ate1.boot<-rbind(ate1.boot,full.boot$ate1)
  ate2.boot<-rbind(ate2.boot,full.boot$ate2)
  
- ie1.boot<-abind(ie1.boot,full.boot$ie1,along=1)
- ie2.boot<-abind(ie2.boot,full.boot$ie2,along=1)
- ie12.boot<-abind(ie12.boot,full.boot$ie12,along=1)
  aie1.boot<-rbind(aie1.boot,full.boot$aie1)
  aie2.boot<-rbind(aie2.boot,full.boot$aie2)
  aie12.boot<-rbind(aie12.boot,full.boot$aie12)
 
- je1.boot<-abind(je1.boot,full.boot$je1,along=1)
- je2.boot<-abind(je2.boot,full.boot$je2,along=1)
- je12.boot<-abind(je12.boot,full.boot$je12,along=1)
  aje1.boot<-rbind(aje1.boot,full.boot$aje1)
  aje2.boot<-rbind(aje2.boot,full.boot$aje2)
  aje12.boot<-rbind(aje12.boot,full.boot$aje12)
  
+ coef.f1=rbind(coef.f1, full.boot$coef.f1)
+ if(length(coef.fm1)>1)
+   for (i in 2:length(coef.fm1))
+     coef.fm1[[i]]=rbind(coef.fm1[[i]], full.boot$coef.fm1[[i]])
+ if(length(coef.fm2)>1)
+   for (i in 2:length(coef.fm2))
+     coef.fm2[[i]]=rbind(coef.fm2[[i]], full.boot$coef.fm2[[i]])
+
+ if(plot.it){
+ ie1.boot<-abind(ie1.boot,full.boot$ie1,along=1)
+ ie2.boot<-abind(ie2.boot,full.boot$ie2,along=1)
+ ie12.boot<-abind(ie12.boot,full.boot$ie12,along=1)
  ie1_2.boot<-abind(ie1_2.boot,full.boot$ie1_2,along=1)
  ie2_1.boot<-rbind(ie2_1.boot,full.boot$ie2_1)
  ie1_1.boot<-rbind(ie1_1.boot,full.boot$ie1_1)
- ie1_3.boot<-rbind(ie1_3.boot,full.boot$ie1_3)
  ie2_2.boot<-abind(ie2_2.boot,full.boot$ie2_2,along=1)
+ ie1_3.boot<-rbind(ie1_3.boot,full.boot$ie1_3)
  ie2_3.boot<-rbind(ie2_3.boot,full.boot$ie2_3)
-
+ de1.boot<-rbind(de1.boot,full.boot$de1)
+ de2.boot<-rbind(de2.boot,full.boot$de2)
+ te1.boot<-rbind(te1.boot,full.boot$te1)
+ te2.boot<-rbind(te2.boot,full.boot$te2)
+ je1.boot<-abind(je1.boot,full.boot$je1,along=1)
+ je2.boot<-abind(je2.boot,full.boot$je2,along=1)
+ je12.boot<-abind(je12.boot,full.boot$je12,along=1)
+ }
+ 
 if(echo) 
  print(l)
 }
-a<-list(de1=de1.boot,de2=de2.boot,ie1=ie1.boot,ie2=ie2.boot,te1=te1.boot,te2=te2.boot,
-        ie12=ie12.boot,je1=je1.boot,je2=je2.boot,je12=je12.boot, 
-        ade1=ade1.boot,ade2=ade2.boot,aie1=aie1.boot,aie2=aie2.boot,
-        aie12=aie12.boot,aje1=aje1.boot,aje2=aje2.boot,aje12=aje12.boot,ate1=ate1.boot,ate2=ate2.boot,
-        ie1_1=ie1_1.boot,ie1_2=ie1_2.boot,ie1_3=ie1_3.boot,ie2_1=ie2_1.boot,ie2_2=ie2_2.boot,ie2_3=ie2_3.boot,
-        full=full,levelx=levelx, level=level.new,x=x.new, weight=weight.new, m=m.new,boot=boot) #, xboot=xboot, xjboot=xjboot
+
+if(plot.it)
+  a<-list(de1=de1.boot,de2=de2.boot,ie1=ie1.boot,ie2=ie2.boot,ie12=ie12.boot,   
+          te1=te1.boot,te2=te2.boot,je1=je1.boot,je2=je2.boot,je12=je12.boot,
+          ade1=ade1.boot,ade2=ade2.boot,aie1=aie1.boot,aie2=aie2.boot,
+          aie12=aie12.boot,aje1=aje1.boot,aje2=aje2.boot,aje12=aje12.boot,
+          ate1=ate1.boot,ate2=ate2.boot,ie1_1=ie1_1.boot,ie1_2=ie1_2.boot,
+          ie1_3=ie1_3.boot,ie2_1=ie2_1.boot,ie2_2=ie2_2.boot,ie2_3=ie2_3.boot,
+          full=full,levelx=levelx,level=level.new,x=x.new, weight=weight.new,  
+          m=m.new, boot=boot, plot.it=plot.it,coef.f1=coef.f1,coef.fm1=coef.fm1,coef.fm2=coef.fm2) #, xboot=xboot, xjboot=xjboot
+else
+  a<-list(ade1=ade1.boot,ade2=ade2.boot,aie1=aie1.boot,aie2=aie2.boot,aie12=aie12.boot,
+          aje1=aje1.boot,aje2=aje2.boot,aje12=aje12.boot,ate1=ate1.boot,ate2=ate2.boot,
+          full=full,levelx=levelx, level=level.new,x=x.new, weight=weight.new, m=m.new,
+          boot=boot, plot.it=plot.it,coef.f1=coef.f1,coef.fm1=coef.fm1,coef.fm2=coef.fm2) #, xboot=xboot, xjboot=xjboot
 class(a)<-"mlma.boot"
 return(a)
 }
 
-print.mlma<-function(x,...,w2=rep(1,length(object$de2)),digits=2)
+print.mlma<-function(x,...,w2=rep(1,nrow(as.matrix(object$de2))),digits=2)
 {object<-x
 if(!is.null(object$ate2))
  {cat("Level 2 Third Variable Effects: \n")
@@ -2495,7 +2859,10 @@ if(!is.null(object$ate1))
 }
 
 summary.mlma<-function(object,...,type="III")
-{f1<-Anova(object$f1,type=type)
+{if(!object$surv)
+  f1<-Anova(object$f1,type=type)
+ else
+  f1<-object$f1 
  mnames<-colnames(object$m)
  if(!is.null(object$fm1[[1]]))
   {temp<-object$fm1
@@ -2529,7 +2896,7 @@ print.summary.mlma<-function(x,...)
 
 
 #other functions
-plot.mlma<-function(x,..., var=NULL, cate=FALSE, w2=rep(1,length(object$de2)))
+plot.mlma<-function(x,..., var=NULL, cate=FALSE, w2=rep(1,nrow(as.matrix(object$de2))))
 {object<-x
 x<-object$x
 if(!is.null(var) & is.character(var))   #change var to number of column in m
@@ -2537,21 +2904,19 @@ if(!is.null(var) & is.character(var))   #change var to number of column in m
  var1<-grep(var,temp.name)}
 
 two<-function(x, level, weight=rep(1,nrow(as.matrix(x))))
-{x<-as.matrix(x)
-levels<-unique(level[!is.na(level)])
-x2<-matrix(NA,length(levels),dim(x)[2])
-for(i in 1:length(levels))
-{cho<-(level==levels[i])
-if(sum(cho)>0)
-{if(sum(cho)==1)
-  x2[i,]<-x[level==levels[i],]
+{x2<-NULL
+
+if(is.null(dim(x)))
+  x2=cbind(x2,(aggregate(as.numeric(x)~level, na.action=na.pass, 
+                         FUN=function(x) c(mean=weighted.mean(x,weight=weight,na.rm=T))))[,2])
 else
-{temp<-as.matrix(x[level==levels[i],])
-weight1<-weight[level==levels[i]]
-x2[i,]<-apply(temp,2,weighted.mean,weight1,na.rm=TRUE)}}}
-colnames(x2)<-colnames(x)
-x2
+  for(i in 1:ncol(x))
+    x2<-cbind(x2,(aggregate(as.numeric(x[,i])~level, na.action=na.pass,
+                            FUN=function(x) c(mean=weighted.mean(x,weight=weight,na.rm=T))))[,2])
+  colnames(x2)<-colnames(x)
+  x2
 }
+
 
 marg.den<-function(x,y)
 {y<-y[!is.na(x)]
@@ -2563,7 +2928,9 @@ for (i in 1:length(z1))
 cbind(z1,z2)
 }
 
-op <- par(no.readonly = TRUE) # the whole list of settable par's.
+oldpar <- par(no.readonly = TRUE)  #line i
+on.exit(par(oldpar)) #line i+1
+
 if(is.null(var))
 {par(mfrow=c(length(c(object$ate1,object$ate2)),1))
  if(!is.null(object$ate1))
@@ -2589,6 +2956,7 @@ else{
   m<-object$m[,var]
   y<-predict(object$f1)
   cate=F
+  
   if(!is.factor(m) & !is.character(m) & nlevels(as.factor(m))>2)
     m.j<-two(m,object$data2$parameter$level)
   else
@@ -2598,7 +2966,10 @@ else{
      else
        m.j<-two(object$data2$m2y[,grep(var,colnames(object$data2$m2y))],object$data2$parameter$level)
     }
-  y.j<-two(y,object$data2$parameter$level)
+  if(is.null(names(object$f1)))
+    y.j<-two(y,object$data2$parameter$level)
+  else
+    y.j<-two(y,object$data2$parameter$level[-object$f1$na.action])
   a1<-unique(c(grep(var,colnames(object$aie1)),grep(var,colnames(object$aie12))))
   a2<-grep(var,colnames(object$aie2))
   levelx=object$data1$parameter$levelx
@@ -2609,7 +2980,7 @@ else{
   if(length(a1)>0)
   {if(!is.null(object$aie1))
     for (j in 1:nrow(object$aie1)){
-      j1=match(rownames(object$aie1),x.names)
+      j1=match(rownames(object$aie1)[j],x.names)
     if(!object$data1$binx[j1])
     {par(mfcol=c(3,length(a1)))
      for(i in 1:length(a1))
@@ -2619,13 +2990,17 @@ else{
       a<-marg.den(object$x[,j],object$ie1_2[,a1[i],j])
       suppressWarnings(plot(a,xlab="x",ylab=colnames(object$aie1)[a1[i]],type="l",
                      main=paste("Differential effect of", rownames(object$aie1)[j], "and",colnames(object$ie1)[a1[i]],sep=" ")))
+      if(is.null(names(object$f1)))
+        m1=m
+      else
+        m1=m[-object$f1$na.action]
       if(!cate)
-      {a<-marg.den(m,y)
+      {a<-marg.den(m1,y)
        suppressWarnings(scatter.smooth(a[,1],a[,2],xlab=var,ylab="y",
                                       main=paste("Predicted relationship between y and",var,sep=" ")))
       }
       else
-        plot(y~as.factor(m), ylab="y",xlab=var,
+        plot(y~as.factor(m1), ylab="y",xlab=var,
              main=paste("Predicted relationship \n between y and",colnames(object$aie1)[a1[i]],sep=" ")) 
      }}
     else 
@@ -2634,21 +3009,25 @@ else{
        plot(m~as.factor(object$x[,j1]),xlab=rownames(object$aie1)[j],ylab=var) 
       else
        plot(as.factor(m)~as.factor(object$x[,j1]),xlab=rownames(object$aie1)[j],ylab=var)
-      if(!cate)
-       {a<-marg.den(m,y)
+    if(is.null(names(object$f1)))
+      m1=m
+    else
+      m1=m[-object$f1$na.action]
+       if(!cate)
+       {a<-marg.den(m1,y)
         suppressWarnings(scatter.smooth(a[,1],a[,2],xlab=var,ylab="y",
                                        main=paste("Predicted relationship between y and",var,sep=" ")))
        }
        else
-        plot(y~as.factor(m), ylab="y",xlab=var,
+        plot(y~as.factor(m1), ylab="y",xlab=var,
              main=paste("Predicted relationship \n between y and",colnames(object$aie1)[i],sep=" ")) 
      } 
    #readline("Press <return> to continue") 
    }
     if(!is.null(object$aie12))
       for (j in 1:nrow(object$aie12)){
-        j1=match(rownames(object$aie12),x.names)
-        j2=match(rownames(object$aie12),x.names.2)
+        j1=match(rownames(object$aie12)[j],x.names)
+        j2=match(rownames(object$aie12)[j],x.names.2)
         if(!object$data1$binx[j1])
         {par(mfcol=c(3,length(a1)))
              for(i in 1:length(a1))
@@ -2692,8 +3071,8 @@ else{
   
   if(length(a2)>0){   
     for (j in 1:nrow(object$aie2)){
-      j1=grep(rownames(object$aie2),x.names)
-      j2=grep(rownames(object$aie2),x.names.2)
+      j1=grep(rownames(object$aie2)[j],x.names)
+      j2=grep(rownames(object$aie2)[j],x.names.2)
       if(!object$data1$binx[j1])
       {par(mfcol=c(3,length(a2)))
            for(i in a2)
@@ -2742,13 +3121,13 @@ summary.mlma.boot<-function(object,...,alpha=0.05, RE=FALSE,digits=4)
   #n is the number of elements from each bootstrap sample
 {mat<-matrix(vector,length(vector)/n,n)
 all<-summarize.boot1(t(mat),a1,a2,b1,b2)
-all
+data.frame(all)
 }
 summarize.boot.re<-function(vector,n,te,a1,a2,b1,b2)  #vector is stacked results from bootstrap samples
   #n is the number of elements from each bootstrap sample
-{mat<-matrix(vector,length(vector)/n,n)%*%diag(1/c(te))
-all<-summarize.boot1(t(mat),a1,a2,b1,b2)
-all
+{mat<-t(matrix(vector,length(vector)/n,n))*(1/te)
+all<-summarize.boot1(mat,a1,a2,b1,b2)
+data.frame(all)
 }
 summarize.boot1<-function(mat,a1,a2,b1,b2){
 mean.temp=apply(mat,2,mean,na.rm=T)
@@ -2782,24 +3161,28 @@ if(!is.null(object$ate2))
 total.effect2<-cbind(est=object$full$ate2,summarize.boot1(object$ate2,a1,a2,b1,b2))
 if(!is.null(object$aie2))
   {indirect.effect2.1<-apply(object$aie2,2,summarize.boot,boot,a1,a2,b1,b2)
-   if(is.list(indirect.effect2.1))
+  if(is.list(indirect.effect2.1))
     {for (i in 1:nrow(object$full$aie2))
-       {for (j in 1:ncol(object$full$aie2))
-         indirect.effect2[[i]]=cbind(indirect.effect2[[i]],indirect.effect2.1[[i]][,j])
+       {temp=NULL
+        for (j in 1:ncol(object$full$aie2))
+           temp=cbind(temp,as.numeric(indirect.effect2.1[[j]][i,]))
+        indirect.effect2[[i]]=temp
         indirect.effect2[[i]]=rbind(object$full$aie2[i,],indirect.effect2[[i]])
-        rownames(indirect.effect2[[i]])=c("est","mean","sd","upbd","lwbd","upbd.quan","lwbd.quan")
+
+rownames(indirect.effect2[[i]])=c("est","mean","sd","upbd","lwbd","upbd.quan","lwbd.quan")
         colnames(indirect.effect2[[i]])=colnames(object$aie2)}
      names(indirect.effect2)=rownames(object$full$aie2)}
    else
    {indirect.effect2=rbind(object$full$aie2,indirect.effect2.1)
     rownames(indirect.effect2)=c("est","mean","sd","upbd","lwbd","upbd.quan","lwbd.quan")}}
-
 if(!is.null(object$aie12))
 {indirect.effect12.1<-apply(object$aie12,2,summarize.boot,boot,a1,a2,b1,b2)
 if(is.list(indirect.effect12.1))
 {for (i in 1:nrow(object$full$aie12))
-{for (j in 1:ncol(object$full$aie12))
-  indirect.effect12[[i]]=cbind(indirect.effect12[[i]],indirect.effect12.1[[i]][,j])
+{temp=NULL
+ for (j in 1:ncol(object$full$aie12))
+  temp=cbind(temp,as.numeric(indirect.effect12.1[[j]][i,]))
+ indirect.effect12[[i]]=temp
 indirect.effect12[[i]]=rbind(object$full$aie12[i,],indirect.effect12[[i]])
 rownames(indirect.effect12[[i]])=c("est","mean","sd","upbd","lwbd","upbd.quan","lwbd.quan")
 colnames(indirect.effect12[[i]])=colnames(object$aie12)}
@@ -2812,22 +3195,24 @@ if(!is.null(object$aje2))
 {jdirect.effect2.1<-apply(object$aje2,2,summarize.boot,boot,a1,a2,b1,b2)
 if(is.list(jdirect.effect2.1))
 {for (i in 1:nrow(object$full$aje2))
-{for (j in 1:ncol(object$full$aje2))
-  jdirect.effect2[[i]]=cbind(jdirect.effect2[[i]],jdirect.effect2.1[[i]][,j])
+{temp=NULL
+ for (j in 1:ncol(object$full$aje2))
+  temp=cbind(temp,as.numeric(jdirect.effect2.1[[j]][i,]))
+ jdirect.effect2[[i]]=temp
 jdirect.effect2[[i]]=rbind(object$full$aje2[i,],jdirect.effect2[[i]])
 rownames(jdirect.effect2[[i]])=c("est","mean","sd","upbd","lwbd","upbd.quan","lwbd.quan")
-colnames(jdirect.effect2[[i]])=colnames(object$aje)}
+colnames(jdirect.effect2[[i]])=colnames(object$aje2)}
   names(jdirect.effect2)=rownames(object$full$aje2)}
 else
 {jdirect.effect2=rbind(object$full$aje2,jdirect.effect2.1)
 rownames(jdirect.effect2)=c("est","mean","sd","upbd","lwbd","upbd.quan","lwbd.quan")}}
 
 effect2=NULL
-if(is.list(direct.effect2))
- for (i in 1:ncol(object$ate2))
-  {effect2[[i]]=cbind(te=total.effect2[i,],de=direct.effect2[i,],indirect.effect2[[i]],
+if(is.list(indirect.effect2))
+ {for (i in 1:ncol(object$ate2))
+   effect2[[i]]=cbind(te=total.effect2[i,],de=direct.effect2[i,],indirect.effect2[[i]],
                      indirect.effect12[[i]],jdirect.effect2[[i]])
-   names(effect2)=colnames(object$ate2)}
+  names(effect2)=colnames(object$ate2)}
 else
   effect2=cbind(te=total.effect2[1,],de=direct.effect2[1,],indirect.effect2,
                 indirect.effect12,jdirect.effect2)
@@ -2840,9 +3225,14 @@ if(!is.null(object$ate1))
  {indirect.effect1.1<-apply(object$aie1,2,summarize.boot,boot,a1,a2,b1,b2)
  if(is.list(indirect.effect1.1))
  {for (i in 1:nrow(object$full$aie1))
- {for (j in 1:ncol(object$full$aie1))
-   indirect.effect1[[i]]=cbind(indirect.effect1[[i]],indirect.effect1.1[[i]][,j])
- indirect.effect1[[i]]=rbind(object$full$aie1[i,],indirect.effect1[[i]])
+ {indirect.effect1[[i]]<-as.numeric(indirect.effect1.1[[1]][i,])
+  if(ncol(object$full$aie1)>1)
+  for (j in 2:ncol(object$full$aie1))
+   indirect.effect1[[i]]=cbind(indirect.effect1[[i]],as.numeric(indirect.effect1.1[[j]][i,]))
+ if(is.null(dim(indirect.effect1[[i]])))  #if there is only one mediator
+   indirect.effect1[[i]]=matrix(c(object$full$aie1[i,],indirect.effect1[[i]]),ncol=1)
+ else
+   indirect.effect1[[i]]=rbind(object$full$aie1[i,],indirect.effect1[[i]])
  rownames(indirect.effect1[[i]])=c("est","mean","sd","upbd","lwbd","upbd.quan","lwbd.quan")
  colnames(indirect.effect1[[i]])=colnames(object$aie1)}
    names(indirect.effect1)=rownames(object$full$aie1)}
@@ -2855,7 +3245,7 @@ if(!is.null(object$ate1))
  if(is.list(jdirect.effect1.1))
  {for (i in 1:nrow(object$full$aje1))
  {for (j in 1:ncol(object$full$aje1))
-   jdirect.effect1[[i]]=cbind(jdirect.effect1[[i]],jdirect.effect1.1[[i]][,j])
+   jdirect.effect1[[i]]=cbind(jdirect.effect1[[i]],as.numeric(jdirect.effect1.1[[j]][i,]))
  jdirect.effect1[[i]]=rbind(object$full$aje1[i,],jdirect.effect1[[i]])
  rownames(jdirect.effect1[[i]])=c("est","mean","sd","upbd","lwbd","upbd.quan","lwbd.quan")
  colnames(jdirect.effect1[[i]])=colnames(object$aje1)}
@@ -2865,11 +3255,11 @@ if(!is.null(object$ate1))
  rownames(jdirect.effect1)=c("est","mean","sd","upbd","lwbd","upbd.quan","lwbd.quan")}}
  
  effect1=NULL
- if(is.list(direct.effect1))
-   for (i in 1:ncol(object$ate1))
-   {effect1[[i]]=cbind(te=total.effect1[i,],de=direct.effect1[i,],indirect.effect1[[i]],
+ if(is.list(indirect.effect1))
+   {for (i in 1:ncol(object$ate1))
+     effect1[[i]]=cbind(te=total.effect1[i,],de=direct.effect1[i,],indirect.effect1[[i]],
                        jdirect.effect1[[i]])
-   names(effect1)=colnames(object$ate1)}
+    names(effect1)=colnames(object$ate1)}
  else
    effect1=cbind(te=total.effect1[1,],de=direct.effect1[1,],indirect.effect1,
                  jdirect.effect1)
@@ -2891,9 +3281,12 @@ if(!is.null(object$ate2))
  {indirect.re2.1<-apply(object$aie2,2,summarize.boot.re,boot,object$ate2,a1,a2,b1,b2)
  if(is.list(indirect.re2.1))
  {for (i in 1:nrow(object$full$aie2))
- {for (j in 1:ncol(object$full$aie2))
-   indirect.re2[[i]]=cbind(indirect.re2[[i]],indirect.re2.1[[i]][,j])
- indirect.re2[[i]]=rbind(object$full$aie2[i,]/object$full$ate2,indirect.re2[[i]])
+ {temp=NULL
+   for (j in 1:ncol(object$full$aie2))
+    temp=cbind(temp,as.numeric(indirect.re2.1[[j]][i,]))
+   indirect.re2[[i]]=temp
+  
+ indirect.re2[[i]]=rbind(object$full$aie2[i,]/object$full$ate2[i],indirect.re2[[i]])
  rownames(indirect.re2[[i]])=c("est","mean","sd","upbd","lwbd","upbd.quan","lwbd.quan")
  colnames(indirect.re2[[i]])=colnames(object$aie2)}
    names(indirect.re2)=rownames(object$full$aie2)}
@@ -2905,9 +3298,11 @@ if(!is.null(object$aie12))
 {indirect.re12.1<-apply(object$aie12,2,summarize.boot.re,boot,object$ate2,a1,a2,b1,b2)
 if(is.list(indirect.re12.1))
 {for (i in 1:nrow(object$full$aie12))
-{for (j in 1:ncol(object$full$aie12))
-  indirect.re12[[i]]=cbind(indirect.re12[[i]],indirect.re12.1[[i]][,j])
-indirect.re12[[i]]=rbind(object$full$aie12[i,]/object$full$ate2,indirect.re12[[i]])
+{temp=NULL
+  for (j in 1:ncol(object$full$aie12))
+   temp=cbind(temp,as.numeric(indirect.re12.1[[j]][i,]))
+ indirect.re12[[i]]=temp
+indirect.re12[[i]]=rbind(object$full$aie12[i,]/object$full$ate2[i],indirect.re12[[i]])
 rownames(indirect.re12[[i]])=c("est","mean","sd","upbd","lwbd","upbd.quan","lwbd.quan")
 colnames(indirect.re12[[i]])=colnames(object$aie12)}
   names(indirect.re12)=rownames(object$full$aie12)}
@@ -2919,22 +3314,24 @@ if(!is.null(object$aje2))
 {jdirect.re2.1<-apply(object$aje2,2,summarize.boot.re,boot,object$ate2,a1,a2,b1,b2)
 if(is.list(jdirect.re2.1))
 {for (i in 1:nrow(object$full$aje2))
-{for (j in 1:ncol(object$full$aje2))
-  jdirect.re2[[i]]=cbind(jdirect.re2[[i]],jdirect.re2.1[[i]][,j])
-jdirect.re2[[i]]=rbind(object$full$aje2[i,]/object$full$ate2,jdirect.re2[[i]])
+{temp=NULL
+ for (j in 1:ncol(object$full$aje2))
+  temp=cbind(temp,as.numeric(jdirect.re2.1[[j]][i,]))
+ jdirect.re2[[i]]=temp
+jdirect.re2[[i]]=rbind(object$full$aje2[i,]/object$full$ate2[i],jdirect.re2[[i]])
 rownames(jdirect.re2[[i]])=c("est","mean","sd","upbd","lwbd","upbd.quan","lwbd.quan")
-colnames(jdirect.re2[[i]])=colnames(object$aje)}
+colnames(jdirect.re2[[i]])=colnames(object$aje2)}
   names(jdirect.re2)=rownames(object$full$aje2)}
 else
 {jdirect.re2=rbind(object$full$aje2/object$full$ate2,jdirect.re2.1)
 rownames(jdirect.re2)=c("est","mean","sd","upbd","lwbd","upbd.quan","lwbd.quan")}}
 
 re2=NULL
-if(is.list(direct.re2))
-  for (i in 1:ncol(object$ate2))
-  {re2[[i]]=cbind(de=direct.re2[i,],indirect.re2[[i]],
+if(is.list(indirect.re2))
+  {for (i in 1:ncol(object$ate2))
+   re2[[i]]=cbind(de=direct.re2[i,],indirect.re2[[i]],
                       indirect.re12[[i]],jdirect.re2[[i]])
-  names(re2)=colnames(object$ate2)}
+   names(re2)=colnames(object$ate2)}
 else
   re2=cbind(de=direct.re2[1,],indirect.re2,
                 indirect.re12,jdirect.re2)
@@ -2946,9 +3343,14 @@ if(!is.null(object$aie1))
 {indirect.re1.1<-apply(object$aie1,2,summarize.boot.re,boot,object$ate1,a1,a2,b1,b2)
 if(is.list(indirect.re1.1))
 {for (i in 1:nrow(object$full$aie1))
-{for (j in 1:ncol(object$full$aie1))
-  indirect.re1[[i]]=cbind(indirect.re1[[i]],indirect.re1.1[[i]][,j])
-indirect.re1[[i]]=rbind(object$full$aie1[i,]/object$full$ate1,indirect.re1[[i]])
+{indirect.re1[[i]]=as.numeric(indirect.re1.1[[1]][i,])
+ if(ncol(object$full$aie1)>1)
+  for (j in 2:ncol(object$full$aie1))
+   indirect.re1[[i]]=cbind(indirect.re1[[i]],as.numeric(indirect.re1.1[[j]][i,]))
+  if(is.null(dim(indirect.re1[[i]])))  #if there is only one mediator
+    indirect.re1[[i]]=matrix(c(object$full$aie1[i,]/object$full$ate1[i],indirect.re1[[i]]),ncol=1)
+  else
+    indirect.re1[[i]]=rbind(object$full$aie1[i,]/object$full$ate1[i],indirect.re1[[i]])
 rownames(indirect.re1[[i]])=c("est","mean","sd","upbd","lwbd","upbd.quan","lwbd.quan")
 colnames(indirect.re1[[i]])=colnames(object$aie1)}
   names(indirect.re1)=rownames(object$full$aie1)}
@@ -2961,8 +3363,8 @@ if(!is.null(object$aje1))
 if(is.list(jdirect.re1.1))
 {for (i in 1:nrow(object$full$aje1))
 {for (j in 1:ncol(object$full$aje1))
-  jdirect.re1[[i]]=cbind(jdirect.re1[[i]],jdirect.re1.1[[i]][,j])
-jdirect.re1[[i]]=rbind(object$full$aje1[i,]/object$full$ate1,jdirect.re1[[i]])
+  jdirect.re1[[i]]=cbind(jdirect.re1[[i]],as.numeric(jdirect.re1.1[[j]][i,]))
+jdirect.re1[[i]]=rbind(object$full$aje1[i,]/object$full$ate1[i],jdirect.re1[[i]])
 rownames(jdirect.re1[[i]])=c("est","mean","sd","upbd","lwbd","upbd.quan","lwbd.quan")
 colnames(jdirect.re1[[i]])=colnames(object$aje1)}
   names(jdirect.re1)=rownames(object$full$aje1)}
@@ -2971,16 +3373,15 @@ else
 rownames(jdirect.re1)=c("est","mean","sd","upbd","lwbd","upbd.quan","lwbd.quan")}}
 
 re1=NULL
-if(is.list(direct.re1))
-  for (i in 1:ncol(object$ate1))
-  {re1[[i]]=cbind(te=total.re1[i,],de=direct.re1[i,],indirect.re1[[i]],
+if(is.list(indirect.re1))
+  {for (i in 1:ncol(object$ate1))
+    re1[[i]]=cbind(te=total.re1[i,],de=direct.re1[i,],indirect.re1[[i]],
                       jdirect.re1[[i]])
-  names(re1)=colnames(object$ate1)}
+   names(re1)=colnames(object$ate1)}
 else
   re1=cbind(te=total.re1[1,],de=direct.re1[1,],indirect.re1,
                 jdirect.re1)
 }
-
 a<-list(effect1=effect1,effect2=effect2,re1=re1,re2=re2,RE=RE,digits=digits)
 class(a)<-"summary.mlma.boot"
 return(a)
@@ -3018,43 +3419,37 @@ print.summary.mlma.boot<-function(x,...,digits=x$digits)
   }
 }
 
-plot.mlma.boot<-function(x,..., var=NULL, alpha=0.05,quant=FALSE) #quantile=True to use quantile CIS
+plot.mlma.boot<-function(x,..., var=NULL, alpha=0.05,quant=FALSE, plot.it=x$plot.it) #quantile=True to use quantile CIS
 {object<-x
 
 two<-function(x, level, weight=rep(1,nrow(as.matrix(x))))
-{x<-as.matrix(x)
-levels<-unique(level[!is.na(level)])
-x2<-matrix(NA,length(levels),dim(x)[2])
-for(i in 1:length(levels))
-{cho<-(level==levels[i])
-if(sum(cho)>0)
-{if(sum(cho)==1)
-  x2[i,]<-x[level==levels[i],]
+{x2<-NULL
+if(is.null(dim(x)))
+  x2=cbind(x2,(aggregate(as.numeric(x)~level, na.action=na.pass, 
+                         FUN=function(x) c(mean=weighted.mean(x,weight=weight,na.rm=T))))[,2])
 else
-{temp<-as.matrix(x[level==levels[i],])
-weight1<-weight[level==levels[i]]
-x2[i,]<-apply(temp,2,weighted.mean,weight1,na.rm=TRUE)}}}
-colnames(x2)<-colnames(x)
-x2
+  for(i in 1:ncol(x))
+    x2<-cbind(x2,(aggregate(as.numeric(x[,i])~level, na.action=na.pass,
+                            FUN=function(x) c(mean=weighted.mean(x,weight=weight,na.rm=T))))[,2])
+  colnames(x2)<-colnames(x)
+  x2
+}
+
+boot.ci<-function(x,mat,cri_val)
+{
+mat1=as.vector(t(mat))
+x1=rep(x,each=ncol(mat))
+temp1=aggregate(mat1~x1, 
+                FUN=function(x) c(mean=mean(x,na.rm=T),sd_dev=sd(x,na.rm=T)), simplify = TRUE, drop = TRUE)
+upbd<-temp1[,2][,1]+cri_val*temp1[,2][,2]
+lwbd<-temp1[,2][,1]-cri_val*temp1[,2][,2]
+return(data.frame(x=temp1[,1],F=temp1[,2][,1],L=lwbd,U=upbd))
 }
 
 
-  boot.ci<-function(x,mat,cri_val) #the mat is the booted results with row be different x, and columns diff boot
-                                 #cri_val is the critical value
-  {x.uniq<-sort(unique(x))
-   mn<-NULL
-   upbd<-NULL
-   lwbd<-NULL
-   for (i in x.uniq)
-   {sd_dev<-sd(as.vector(mat[x==i,]))
-    mn1<-mean(as.vector(mat[x==i,]))
-    upbd<-c(upbd,mn1+cri_val*sd_dev)
-    lwbd<-c(lwbd,mn1-cri_val*sd_dev)
-    mn<-c(mn,mn1)}
-   return(data.frame(x=x.uniq,F=mn,L=lwbd,U=upbd))
-  }
-  
-  plot_ci<-function(df,main="IE",xlab="x",ylab="IE",cate=FALSE)
+
+
+plot_ci<-function(df,main="IE",xlab="x",ylab="IE",cate=FALSE)
   {if(!cate){
     plot(df$x, df$F, ylim = range(c(df$L,df$U),na.rm=T), type = "l",main=main,xlab=xlab,ylab=ylab)
     polygon(c(df$x,rev(df$x)),c(df$L,rev(df$U)),col = "grey75", border = FALSE)
@@ -3067,22 +3462,21 @@ x2
               ylim=range(c(df$U,df$L)))
   }
   
- op <- par(no.readonly = TRUE) # the whole list of settable par's.
- 
+oldpar <- par(no.readonly = TRUE)  #line i
+on.exit(par(oldpar)) #line i+1
+
  if(is.null(var))
  {summary.obj<-summary(object,alpha=alpha)
- 
  par(mfrow=c(length(c(object$full$ate1,object$full$ate2)),1))
  if(!is.null(object$full$ate1))
-   {
-   if (length(object$full$ate1)==1)
-   {re<-summary.obj$re1[1,]
+   {if (length(object$full$ate1)==1)
+   {re<-summary.obj$re1[[1]][1,]
    if(quant)
-   {upper<-summary.obj$re1[6,]
-    lower<-summary.obj$re1[7,]}
+   {upper<-summary.obj$re1[[1]][6,]
+    lower<-summary.obj$re1[[1]][7,]}
    else
-   {lower<-summary.obj$re1[5,]
-    upper<-summary.obj$re1[4,]}
+   {lower<-summary.obj$re1[[1]][5,]
+    upper<-summary.obj$re1[[1]][4,]}
    d<-order(re)
    name1<-c("DE",colnames(object$full$aie1),colnames(object$full$aje1))
    bp<-barplot2(re[d],horiz=TRUE,xlab=paste("Relative Effects of Level 1 Mediation Effects with Exposure Variable", rownames(object$full$aie1),sep=" "),
@@ -3107,13 +3501,13 @@ x2
  
    if(!is.null(object$ate2))
    {if (length(object$full$ate2)==1)
-   {re<-summary.obj$re2[1,]
+   {re<-summary.obj$re2[[1]][1,]
    if(quant)
-   {upper<-summary.obj$re2[6,]
-   lower<-summary.obj$re2[7,]}
+   {upper<-summary.obj$re2[[1]][6,]
+   lower<-summary.obj$re2[[1]][7,]}
    else
-   {lower<-summary.obj$re2[5,]
-   upper<-summary.obj$re2[4,]}
+   {lower<-summary.obj$re2[[1]][5,]
+   upper<-summary.obj$re2[[1]][4,]}
    d<-order(re)
    name1<-c("DE",colnames(object$full$aie2),colnames(object$full$aie12),colnames(object$full$aje2))
    bp<-barplot2(re[d],horiz=TRUE,xlab=paste("Relative Effects of Level 2 Mediation Effects with Exposure Variable", colnames(object$ate2),sep=" "),
@@ -3136,14 +3530,14 @@ x2
                ci.l = lower[d], cex.names=0.9,beside=FALSE,cex.axis=0.9,las=1,
                xlim=range(c(upper,lower)), col = rainbow(length(d), start = 3/6, end = 4/6))}}
   }
- 
- 
- 
- 
- else{
+ else if (plot.it) {
    object1=object$full
    m<-object1$m[,var]
    y<-predict(object1$f1)
+   if(is.null(names(object1$f1)))
+     m1=m
+   else
+     m1=m[-object1$f1$na.action]
    cate=F
    if(!is.factor(m) & !is.character(m) & nlevels(as.factor(m))>2)
      m.j<-two(m,object1$data2$parameter$level)
@@ -3154,7 +3548,11 @@ x2
     else
       m.j<-two(object1$data2$m2y[,grep(var,colnames(object1$data2$m2y))],object1$data2$parameter$level)
    }
-    y.j<-two(y,object1$data2$parameter$level)   #what if y is binary?---get the linear part
+    if(is.null(names(object1$f1)))
+      y.j<-two(y,object1$data2$parameter$level)   #what if y is binary?---get the linear part
+    else
+      y.j<-two(y,object1$data2$parameter$level[-object1$f1$na.action])
+    
    a1<-unique(c(grep(var,colnames(object1$aie1)),grep(var,colnames(object1$aie12))))
    a2<-grep(var,colnames(object1$aie2))
    levelx=object1$data1$parameter$levelx
@@ -3167,7 +3565,7 @@ x2
    if(length(a1)>0)
    {if(!is.null(object1$aie1))
      for (j in 1:nrow(object1$aie1)){
-       j1=match(rownames(object1$aie1),x.names)
+       j1=match(rownames(object1$aie1)[j],x.names)
        if(!object1$data1$binx[j1])
        {par(mfcol=c(3,length(a1)))
          for(i in 1:length(a1))
@@ -3200,22 +3598,22 @@ x2
            plot_ci(ie1_1,xlab=var,ylab="y",main=paste("Predicted relationship between y and",var,sep=" "))
            }
            else
-             plot(y~as.factor(m), ylab="y",xlab=var,
+             plot(y~as.factor(m1), ylab="y",xlab=var,
                   main=paste("Predicted relationship \n between y and",colnames(object$aie1)[i],sep=" ")) 
          }}   
   
      if(!is.null(object1$aie12))
        for (j in 1:nrow(object1$aie12)){
-         j1=match(rownames(object1$aie12),x.names)
-         j2=match(rownames(object1$aie12),x.names.2)
+         j1=match(rownames(object1$aie12)[j],x.names)
+         j2=match(rownames(object1$aie12)[j],x.names.2)
          if(!object1$data1$binx[j1])
          {par(mfcol=c(3,length(a1)))
            for(i in 1:length(a1))
-           {        # browser()
+           {        
            ie12<-boot.ci(object1$x.j[,j2],matrix(object$ie12[,a1[i],j],ncol=object$boot),cri_val)
            plot_ci(ie12,xlab=x.names.2[j2],ylab=paste("Level 2 IE of", colnames(object1$aie12)[a1[i]],sep=" "),
                    main=paste("IE with exposure variable", rownames(object1$aie12)[j],sep=" "))
-           ie12_2<-boot.ci(object1$x.j[,j2],matrix(object$ie1_2[,a1[i],j1],ncol=object$boot),cri_val)
+           ie12_2<-boot.ci(object1$x[,j1],matrix(object$ie1_2[,a1[i],j1],ncol=object$boot),cri_val)
            suppressWarnings(plot_ci(ie12_2,xlab=x.names.2[j2],ylab=colnames(object$aie12)[a1[i]],
                                     main=paste("Differential effect of", rownames(object$aie12)[j], "and",
                                                colnames(object$ie12)[a1[i]],sep=" ")))
@@ -3225,10 +3623,10 @@ x2
            plot_ci(ie12_1,xlab=var,ylab="y",main=paste("Predicted relationship between y and",var,sep=" "))
            }
            else
-             boxplot(matrix(object$ie12_1[,a1[i]],ncol=object$boot)[1,], ylab="y",
+               boxplot(matrix(object$ie1_1[,a1[i]],ncol=object$boot)[1,], ylab="y",
                      xlab=dimnames(object$ie12)[[2]][a1[i]], 
                      main=paste("Predicted relationship \n between y and",colnames(object$aie12)[a1[i]],sep=" ")) 
-           }}
+               }}
          else
          {par(mfcol=c(2,length(a1)))
      
@@ -3256,8 +3654,8 @@ x2
    
    if(length(a2)>0)
      for (j in 1:nrow(object1$aie2)){
-       j1=match(rownames(object1$aie2),x.names)
-       j2=grep(rownames(object1$aie2),x.names.2)
+       j1=match(rownames(object1$aie2)[j],x.names)
+       j2=grep(rownames(object1$aie2)[j],x.names.2)
        
        if(!object1$data1$binx[j1])
        {par(mfcol=c(3,length(a2)))
@@ -3272,7 +3670,7 @@ x2
          temp.matrix=apply(matrix(object$ie2_1[,a2[i]],ncol=object$boot),2,two,object$level)
          if(!cate)
          {
-          ie2_1<-boot.ci(m,temp.matrix,cri_val)
+          ie2_1<-boot.ci(m.j,temp.matrix,cri_val)
           plot_ci(ie2_1,xlab=var,ylab="y",main=paste("Predicted relationship between y and",var,sep=" "))
          }
          else 
@@ -3297,7 +3695,105 @@ x2
            plot(y.j~as.factor(m.j), ylab="y",xlab=var,
                 main=paste("Predicted relationship \n between y and",colnames(object$aie2)[i],sep=" ")) 
        }} }  
-     
-#par(op)
+else
+{ temp=grep(var,colnames(object$m))
+  a1=object$coef.fm1[[1]]%in%temp
+  a2=object$coef.fm2[[1]]%in%temp
+  if(sum(a1)>0)
+  { par(mfcol=c(sum(a1)+1,1))
+    temp=grep(var,colnames(object$coef.f1))
+    boxplot(object$coef.f1[,temp],main=paste("Coefficients of", var, "at the final model"))  
+    temp1=colnames(object$coef.f1)[temp]
+    a1=(1:length(a1))[a1]
+    for(i in 1:length(a1))
+      boxplot(object$coef.fm1[[a1[i]+1]], 
+              main=paste("Coefficients of exposures in predicting",temp1[i]))
+  }
+  if(sum(a2)>0)
+  { par(mfcol=c(sum(a2)+1,1))
+    temp=grep(var,colnames(object$coef.f1))
+    boxplot(object$coef.f1[,temp],main=paste("Coefficients of", var, "at the final model"))  
+    temp1=colnames(object$coef.f1)[temp]
+    a2=(1:length(a2))[a2]
+    for(i in 1:length(a2))
+      boxplot(object$coef.fm2[[a2[i]+1]], 
+              main=paste("Coefficients of exposures in predicting",temp1[i]))
+  }
 }
+  #plot(object$full, var=var)
+
+}
+
+
+joint.effect<-function(object,var.list,...,alpha=0.05, echo=FALSE)
+{summarize.boot<-function(vector,n,a1,a2,b1,b2)  #vector is stacked results from bootstrap samples
+  #n is the number of elements from each bootstrap sample
+{mat<-matrix(vector,length(vector)/n,n)
+all<-summarize.boot1(t(mat),a1,a2,b1,b2)
+data.frame(all)
+}
+summarize.boot1<-function(mat,a1,a2,b1,b2){
+  mean.temp=apply(mat,2,mean,na.rm=T)
+  sd.temp=apply(mat,2,sd,na.rm=T)
+  cbind(mean=mean.temp,sd=sd.temp,upbd=mean.temp+b2*sd.temp,
+        lwbd=mean.temp+b1*sd.temp,upbd.quan=apply(mat,2,quantile,a2,na.rm=T),
+        lwbd.quan=apply(mat,2,quantile,a1,na.rm=T))
+}
+
+a1<-alpha/2
+a2<-1-a1
+b1<-qnorm(a1)
+b2<-qnorm(a2)
+boot=object$boot
+
+aie1=object$aie1
+aie2=cbind(object$aie2,object$aie12)
+
+m1.names=colnames(aie1)
+m2.names=colnames(aie2)
+
+if(!is.character(var.list))
+  var.list=colnames(object$m)[var.list]
+
+where1=c(unlist(sapply(var.list,grep,m1.names)))
+where2=c(unlist(sapply(var.list,grep,m2.names)))
+
+indirect.effect2=NULL
+indirect.effect1=NULL
+re1=NULL
+re2=NULL
+
+if(length(where2)!=0)
+{temp=cbind(object$full$aie2,object$full$aie12)
+ if(nrow(temp)==1)
+   temp=sum(temp[,where2])
+ else
+  temp=apply(as.matrix(cbind(object$full$aie2,object$full$aie12)[,where2]),1,sum)
+ ie2.1=apply(as.matrix(aie2[,where2]),1,sum)
+ indirect.effect2<-cbind(est=temp,summarize.boot(ie2.1,boot,a1,a2,b1,b2))
+ rownames(indirect.effect2)=rownames(object$full$aie2)
+ re2<-cbind(est=temp/object$full$ate2,summarize.boot(ie2.1/as.vector(t(object$ate2)),boot,a1,a2,b1,b2))
+}
+if(length(where1)!=0)
+{if(nrow(object$full$aie1)==1)
+  temp=sum(object$full$aie1[,where1])
+ else
+  temp=apply(as.matrix(object$full$aie1[,where1]),1,sum)
+ ie1.1=apply(as.matrix(aie1[,where1]),1,sum)
+ indirect.effect1<-cbind(est=temp,summarize.boot(ie1.1,boot,a1,a2,b1,b2))
+ rownames(indirect.effect1)=rownames(object$full$aie1)
+ re1<-cbind(est=temp/object$full$ate1,summarize.boot(ie1.1/as.vector(t(object$ate1)),boot,a1,a2,b1,b2))
+}
+
+if(echo){
+cat("The joint indirect effect:\n")
+print(rbind(indirect.effect1,indirect.effect2))
+cat("The joint relative effect:\n")
+print(rbind(re1,re2))
+}
+
+list(indirect.effect1=indirect.effect1, indirect.effect2=indirect.effect2,
+     re1=re1,re2=re2)
+}
+
 

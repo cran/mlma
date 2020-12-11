@@ -10,6 +10,7 @@ The function transforms the data set and does multilevel mediation analysis.  Th
 \usage{
 mlma(y, data1=NULL, x=data1$parameter$x, m=data1$parameter$m, 
                yref=NULL, xref=NULL, levelx=data1$parameter$levelx, 
+               levely=data1$parameter$levely, 
                l1=data1$parameter$l1,l2=data1$parameter$l2, 
                c1=data1$parameter$c1, #levelx is the level of x
                c1r=data1$parameter$c1r, c2=data1$parameter$c2, 
@@ -23,7 +24,7 @@ mlma(y, data1=NULL, x=data1$parameter$x, m=data1$parameter$m,
                f01km1=data1$parameter$f01km1,f01km2=data1$parameter$f01km2, 
                f10km=data1$parameter$f10km, data2=NULL, x.new=NULL, 
                m.new=NULL, level.new=level, weight.new=NULL,
-               covariates.new=covariates)
+               covariates.new=covariates,cov.mat=FALSE)
 }
 %- maybe also 'usage' for other objects documented here.
 \details{
@@ -56,6 +57,9 @@ the reference group of x if it is binary. By default it will be the first level 
 }
   \item{levelx}{
 the level of x (1 or 2). If it is not given, levelx will be decided by x.
+}
+  \item{levely}{
+the level of y (1 or 2). If it is not given, levely will be decided by y.
 }
   \item{l1}{
 the column numbers of level 1 continuous mediators in m or the list of names of the level 1 continuous mediators.
@@ -121,6 +125,7 @@ the transformation functions as describe in the function \code{"\link[=data.org]
 the settings that we want to make inferences on the mediation effects. %If m.new=NULL, generate new mediators from x.new.
 }
   \item{data2}{The transformed and organized data set from data.org on the set of new x.new and m.new etc..  If the data set has not been organized, leave data2=NULL (by default).}
+  \item{cov.mat}{If true, save the estimated variances for mediation effects by normal assumption.}
 }
 \value{
 A "mlma" mode list will be returned with the following items:
