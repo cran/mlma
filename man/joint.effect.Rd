@@ -1,5 +1,6 @@
 \name{joint.effect}
 \alias{joint.effect}
+\alias{print.joint.effect}
 %- Also NEED an '\alias' for EACH other topic documented here.
 \title{
 Find the joint effect of a list of mediators.
@@ -8,12 +9,16 @@ Find the joint effect of a list of mediators.
 This function provides the inference information (estimation, standard deviation, etc.) for the joint and relative effect of a list of mediators.
 }
 \usage{
-joint.effect(object,var.list,...,alpha=0.05,echo=FALSE)
+joint.effect(object,var.list,digits=4,...,alpha=0.05)
+\method{print}{joint.effect}(x,...)
 }
 %- maybe also 'usage' for other objects documented here.
 \arguments{
   \item{object}{
 an "boot.mlma" object.
+}
+  \item{x}{
+an "joint.effect" object from the joint.effect function.
 }
  \item{var.list}{
 a list of mediators whose joint effects are of interest.
@@ -24,8 +29,8 @@ arguments to be passed to methods.
   \item{alpha}{
 the significance level at which to draw the confidence bands.  
 }
-  \item{echo}{
-print the result if echo=TRUE.  
+  \item{digits}{
+number of digits to be printed.  
 }
 }
 \author{

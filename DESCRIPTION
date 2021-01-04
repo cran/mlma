@@ -1,12 +1,12 @@
 Package: mlma
 Type: Package
 Title: Multilevel Mediation Analysis
-Version: 6.0-0
-Date: 2020-12-12
+Version: 6.0-1
+Date: 2020-12-21
 Author: Qingzhao Yu, Bin Li
 Maintainer: Qingzhao Yu <qyu@lsuhsc.edu>
-Depends: R (>= 2.14.1), lme4, splines, car, abind, coxme
-Imports: gplots,survival
+Depends: R (>= 2.14.1), lme4, car, abind, coxme, gplots
+Imports: survival, splines
 Suggests: knitr, rmarkdown
 VignetteBuilder: knitr
 Encoding: UTF-8
@@ -16,6 +16,6 @@ URL: https://cran.r-project.org/package=mlma,
         https://publichealth.lsuhsc.edu/Faculty_pages/qyu/index.html
 RoxygenNote: 6.1.1
 NeedsCompilation: no
-Packaged: 2020-12-11 01:48:33 UTC; qyu
+Packaged: 2020-12-21 18:30:14 UTC; qyu
 Repository: CRAN
-Date/Publication: 2020-12-11 10:20:02 UTC
+Date/Publication: 2021-01-04 18:40:02 UTC

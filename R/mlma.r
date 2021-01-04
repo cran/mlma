@@ -2729,7 +2729,7 @@ m<-data.frame(m)
 #level=droplevels(level) #remove all levels that are empty
 n1=length(level)
 temp1=1:n1
-t3=aggregate(temp1~level, 
+t3=aggregate(temp1~level, simplify=FALSE,
              FUN=function(x) c(x))
 level.boot=sort(level)
 for(l in 1:boot)
@@ -2768,7 +2768,7 @@ for(l in 1:boot)
 #b. create the boot data1
   data1.boot<-update.data.org(data1=data1,bootsample=temp.2,y.boot,x.boot,m.boot,
                               weight.boot,level.boot)  #data1 is the original data.org results, bootsample is booted sample
-  
+
 
 #c. analysis on the boot data
  full.boot<-mlma(y=y.boot, data1=data1.boot, weight=weight.boot, 
@@ -3725,7 +3725,7 @@ else
 }
 
 
-joint.effect<-function(object,var.list,...,alpha=0.05, echo=FALSE)
+joint.effect<-function(object,var.list,digits=4,...,alpha=0.05)
 {summarize.boot<-function(vector,n,a1,a2,b1,b2)  #vector is stacked results from bootstrap samples
   #n is the number of elements from each bootstrap sample
 {mat<-matrix(vector,length(vector)/n,n)
@@ -3785,15 +3785,20 @@ if(length(where1)!=0)
  re1<-cbind(est=temp/object$full$ate1,summarize.boot(ie1.1/as.vector(t(object$ate1)),boot,a1,a2,b1,b2))
 }
 
-if(echo){
-cat("The joint indirect effect:\n")
-print(rbind(indirect.effect1,indirect.effect2))
-cat("The joint relative effect:\n")
-print(rbind(re1,re2))
+result=list(indirect.effect1=indirect.effect1, indirect.effect2=indirect.effect2,
+            re1=re1,re2=re2,var.list=var.list,digits=digits)
+class(result)="joint.effect"
+result
 }
 
-list(indirect.effect1=indirect.effect1, indirect.effect2=indirect.effect2,
-     re1=re1,re2=re2)
+print.joint.effect<-function(x,...)
+{ object=x
+  digits=object$digits
+  cat("The joint indirect effect of",paste(object$var.list,sep=","),":\n")
+  a=as.matrix(rbind(object$indirect.effect1,object$indirect.effect2))
+  print(round(a,digits))
+  cat("The joint relative effect of",paste(object$var.list,sep=","),":\n")
+  a=as.matrix(rbind(object$re1,object$re2))
+  print(round(a,digits))
 }
-
 

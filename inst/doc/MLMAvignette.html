@@ -12,7 +12,7 @@
 
 <meta name="author" content="Qingzhao Yu and Bin Li" />
 
-<meta name="date" content="2020-12-10" />
+<meta name="date" content="2020-12-21" />
 
 <title>Examples for Multilevel Mediation Analysis</title>
 
@@ -95,7 +95,7 @@ code > span.in { color: #60a0b0; font-weight: bold; font-style: italic; } /* Inf
 
 <h1 class="title toc-ignore">Examples for Multilevel Mediation Analysis</h1>
 <h4 class="author">Qingzhao Yu and Bin Li</h4>
-<h4 class="date">2020-12-10</h4>
+<h4 class="date">2020-12-21</h4>
 
 
 
@@ -271,25 +271,25 @@ mlma.e1<span class="op">$</span>fm2  <span class="co">#models for level 2 mediat
 <span class="kw">summary</span>(boot.e1)
 <span class="co">#&gt; MLMA Analysis: Estimated Effects at level 1:</span>
 <span class="co">#&gt; $x1</span>
-<span class="co">#&gt;               te     de      m1</span>
-<span class="co">#&gt; est       1.0447 0.5021  0.5426</span>
-<span class="co">#&gt; mean      0.5395 0.5562 -0.0167</span>
-<span class="co">#&gt; sd        0.0000 0.0000  0.0000</span>
-<span class="co">#&gt; upbd      0.5395 0.5562 -0.0167</span>
-<span class="co">#&gt; lwbd      0.5395 0.5562 -0.0167</span>
-<span class="co">#&gt; upbd.quan 0.5395 0.5562 -0.0167</span>
-<span class="co">#&gt; lwbd.quan 0.5395 0.5562 -0.0167</span>
+<span class="co">#&gt;                te      de      m1</span>
+<span class="co">#&gt; est        1.0447  0.5021  0.5426</span>
+<span class="co">#&gt; mean       0.5937  0.4909  0.1029</span>
+<span class="co">#&gt; sd         0.3709  0.3782  0.0899</span>
+<span class="co">#&gt; upbd       1.3207  1.2322  0.2792</span>
+<span class="co">#&gt; lwbd      -0.1332 -0.2505 -0.0734</span>
+<span class="co">#&gt; upbd.quan  1.2681  1.1508  0.2791</span>
+<span class="co">#&gt; lwbd.quan -0.1997 -0.2705 -0.0258</span>
 <span class="co">#&gt; </span>
 <span class="co">#&gt; MLMA Analysis: Estimated Effects at level 2:</span>
 <span class="co">#&gt; $x2</span>
-<span class="co">#&gt;               te     de   m2.1     m1</span>
-<span class="co">#&gt; est       1.0496 0.6183 0.0063 0.4250</span>
-<span class="co">#&gt; mean      1.0518 0.6495 0.0045 0.3979</span>
-<span class="co">#&gt; sd        0.0000 0.0000 0.0000 0.0000</span>
-<span class="co">#&gt; upbd      1.0518 0.6495 0.0045 0.3979</span>
-<span class="co">#&gt; lwbd      1.0518 0.6495 0.0045 0.3979</span>
-<span class="co">#&gt; upbd.quan 1.0518 0.6495 0.0045 0.3979</span>
-<span class="co">#&gt; lwbd.quan 1.0518 0.6495 0.0045 0.3979</span></code></pre></div>
+<span class="co">#&gt;               te     de    m2.1     m1</span>
+<span class="co">#&gt; est       1.0496 0.6183  0.0063 0.4250</span>
+<span class="co">#&gt; mean      1.0871 0.6574  0.0045 0.4253</span>
+<span class="co">#&gt; sd        0.2091 0.2847  0.0202 0.1518</span>
+<span class="co">#&gt; upbd      1.4970 1.2155  0.0441 0.7228</span>
+<span class="co">#&gt; lwbd      0.6773 0.0993 -0.0352 0.1277</span>
+<span class="co">#&gt; upbd.quan 1.4675 1.2840  0.0431 0.6923</span>
+<span class="co">#&gt; lwbd.quan 0.6869 0.1685 -0.0368 0.1585</span></code></pre></div>
 <p>The <span class="math inline">\(plot\)</span> function for the <span class="math inline">\(boot.mlma\)</span> objects works similarly for the <span class="math inline">\(mlma\)</span> objects but confidence intervals for estimations are added.</p>
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw">plot</span>(boot.e1)
 <span class="co">#&gt; Error in plot.new(): figure margins too large</span>
