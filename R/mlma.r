@@ -336,6 +336,7 @@ if(is.null(c(l1,l2,c1,c2)))                   #identify the type and level of me
  temp.mnames<-mnames
   for (i in 1:ncol(temp.m))
   {temp.1<-find_level(temp.m[,i],level)
+  #browser()
    col.num<-grep(temp.mnames[i],mnames)
    if (temp.1[[1]]==1)
      {m[,col.num]<-as.factor(m[,col.num])
@@ -444,7 +445,7 @@ x1.der=NULL
 k=1
 x1.names=NULL
 for (j in 1:nx)
- if(!(j %in% f01y[[1]]) & !(j %in% f01y[[1]]))
+ if(!(j %in% f01y[[1]]) & !(j %in% f10y[[1]]))
  {x1<-cbind(x1,x[,j])
   x1.der<-cbind(x1.der,rep(1,n1))
   lx[j,2]<-k
@@ -1111,6 +1112,7 @@ if(sum(data1$lx[,1]==2)!=0)  #ith row of lx is for the ith column of x
 else 
   tt1=NULL
 
+#browser()
 if(!is.null(c(cy1,cy2)))           ###added covariates to explain y
  {cova<-as.matrix(covariates[,c(cy1,cy2)])
   colnames(cova)<-colnames(covariates)[c(cy1,cy2)]}
@@ -1120,10 +1122,9 @@ if(is.null(cova))
   expl<-cbind(data1$x1,data1$m2y,data1$m1y)  # all variables to explain y
 else
   expl<-cbind(data1$x1,data1$m2y,data1$m1y,cova)  # all variables to explain y
-if(is.null(covariates))
-  temp.data<-cbind(y=y,level=level,data1$x1,data1$m1y,data1$m2y)
-else
-  temp.data<-cbind(y=y,level=level,data1$x1,data1$m1y,data1$m2y, covariates)
+temp.data<-cbind(y=y,level=level,data1$x1,data1$m1y,data1$m2y)
+if(!is.null(covariates))
+  temp.data<-cbind(temp.data, covariates)
 if(surv)
   colnames(temp.data)<-c("time","status","level",colnames(data1$x1),colnames(data1$m1y),
                        colnames(data1$m2y), colnames(covariates))
@@ -1157,16 +1158,27 @@ else
 lc1<-c(l1,c1)
 lc2<-c(l2,c2)
 
+temp.name=colnames(temp.data)[-(1:2)]
+dim.temp=ncol(temp.data)-2
+coef.f1=rep(0,dim.temp)
+cov.f1=matrix(0,dim.temp,dim.temp)
+
 if(surv)
-  {coef.f1<-f1$coefficients
-   cov.f1=vcov(f1)}
+  {temp.coef<-f1$coefficients
+   match.temp=match(names(temp.coef),temp.name)
+   coef.f1[match.temp]=temp.coef
+   cov.f1[match.temp,match.temp]=matrix(vcov(f1))}
 else if(intercept)
-  {coef.f1<-summary(f1)$coefficient[-1,1] 
-   cov.f1=vcov(f1)[-1,-1]}
+  {temp.coef<-summary(f1)$coefficient[-1,1] 
+  match.temp=match(names(temp.coef),temp.name)
+  coef.f1[match.temp]=temp.coef
+  cov.f1[match.temp,match.temp]=matrix(vcov(f1)[-1,-1])}
 else 
-  {coef.f1<-summary(f1)$coefficient[,1]
-   cov.f1=vcov(f1)}
-cov.f1=as.matrix(cov.f1)
+  {temp.coef<-summary(f1)$coefficient[,1]
+  match.temp=match(names(temp.coef),temp.name)
+  coef.f1[match.temp]=temp.coef
+  cov.f1[match.temp,match.temp]=matrix(vcov(f1))}
+#cov.f1=as.matrix(cov.f1)
 len<-c(ncol(data1$x1),ifelse(is.null(data1$m2y),0,ncol(data1$m2y)),
        ifelse(is.null(data1$m1y),0,ncol(data1$m1y)))
 
@@ -1882,7 +1894,7 @@ aie2.cov=NULL
 if(nx1>0)                         #calculate the direct effect
 {de1=as.matrix(DE[,levelx==1])
 colnames(de1)=x.names[levelx==1]
-ade1=apply(de1,2,mean)
+ade1=apply(de1,2,mean,na.rm=T)
 de1.cov=as.matrix(DE.cov[,levelx==1])
 colnames(de1.cov)=x.names[levelx==1]
 ade1.cov=(apply(sqrt(de1.cov),2,mean))^2
@@ -2132,9 +2144,11 @@ colnames(data3$xm1.der)=colnames(data1$xm1.der)}
 lc2<-c(data1$parameter$l2,data1$parameter$c2)
 if(!is.null(lc2))                  #create x variables to explain level 2 mediators
 {data3$xm2<-as.matrix(two(as.matrix(x.boot[,data1$parameter$levelx==2]),level.boot))
-#colnames(data3$xm2)<- colnames(data1$xm2)
+#if(is.null(data1$parameter$f01km2))
+#  colnames(data3$xm2)<- colnames(data1$xm2)
 data3$xm2.der<-matrix(1,nrow(data3$xm2),ncol(data3$xm2))
-#colnames(xm2.der)<-colnames(xm2)
+#if(is.null(data1$parameter$f01km2))
+#  colnames(data3$xm2.der)<-colnames(data1$xm2.der)
 
 data3$m.2<-two(as.matrix(m.boot[,lc2]),level.boot)
 colnames(data3$m.2)<-data1$parameter$mnames[lc2]
@@ -2155,10 +2169,11 @@ for (l in k){
   d.der<-as.matrix(x2fdx(temp.2,unifun1))
   d<-as.matrix(d_d$values)
   data3$xm2.der<-cbind(data3$xm2.der,d.der)
-  colnames(data3$xm2.der)<-colnames(data1$xm2.der)
   data3$xm2<-cbind(data3$xm2,d)
+}}
+  colnames(data3$xm2.der)<-colnames(data1$xm2.der)
   colnames(data3$xm2)<-colnames(data1$xm2)
-}}}
+}
 else
 {data3$m.2<-NULL
 data3$xm2<-NULL
@@ -2747,7 +2762,8 @@ for(l in 1:boot)
   m.boot<-m[temp.2,]
   x.boot<-x[temp.2,]
   if(!is.null(covariates))
-    covariates.boot<-covariates[temp.2,]
+    {covariates.boot<-data.frame(covariates[temp.2,])
+     colnames(covariates.boot)=colnames(covariates)}
   else
     covariates.boot=NULL
   weight.boot<-weight[temp.2]
@@ -2768,7 +2784,6 @@ for(l in 1:boot)
 #b. create the boot data1
   data1.boot<-update.data.org(data1=data1,bootsample=temp.2,y.boot,x.boot,m.boot,
                               weight.boot,level.boot)  #data1 is the original data.org results, bootsample is booted sample
-
 
 #c. analysis on the boot data
  full.boot<-mlma(y=y.boot, data1=data1.boot, weight=weight.boot, 
@@ -3215,7 +3230,7 @@ if(is.list(indirect.effect2))
   names(effect2)=colnames(object$ate2)}
 else
   effect2=cbind(te=total.effect2[1,],de=direct.effect2[1,],indirect.effect2,
-                indirect.effect12,jdirect.effect2)
+                indirect.effect12[[1]],jdirect.effect2)
 }
 
 if(!is.null(object$ate1))
