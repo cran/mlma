@@ -33,5 +33,9 @@ Qingzhao Yu  \email{qyu@lsuhsc.edu}, Bin Li \email{bli@lsu.edu}
 Maintainer: Qingzhao Yu  \email{qyu@lsuhsc.edu}
 }
 \references{
-Yu, Q. and Li, B., (2020). <doi:10.1371/journal.pone.0241072>. "Third-Variable Effect Analysis with Multilevel AdditiveModels," PLoS ONE 15(10): e0241072. 
+Yu, Q. and Li, B., (2020). <doi:10.1371/journal.pone.0241072>. "Third-Variable Effect Analysis with Multilevel Additive Models," PLoS ONE 15(10): e0241072.
+
+Yu, Q., Yu, M., Zou, J., Wu, X., Gomez, SL, Li, B. (2021). <doi:10.1177/26320843211061292>. "Multilevel Mediation Analysis on Time-to-Event Outcomes - Exploring racial/ethnic Disparities in Breast Cancer Survival in California," Research Methods in Medicine & Health Sciences. 
+
+Yu, Q. and Li, B., 2022. Statistical Methods for Mediation, Confounding and Moderation Analysis Using R and SAS. Chapman and Hall/CRC. ISBN 9780367365479.
 }

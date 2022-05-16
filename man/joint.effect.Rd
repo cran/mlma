@@ -48,3 +48,5 @@ joint.effect(temp3.boot, var.list=c("m.4"))
 % Add one or more standard keywords, see file 'KEYWORDS' in the
 % R documentation directory.
 \keyword{joint effect statistics}
+
+

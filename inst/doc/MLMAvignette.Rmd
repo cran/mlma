@@ -25,7 +25,7 @@ knitr::opts_chunk$set(
 ```
 
 ## Package installation
-The R package mlma is created for linear and nonlinear mediation analysis with multilevel data using multilevel additive models [@Yu2020a]. The vignette is composed of three parts. We first generate a simulated dataset. Based on the simulation,  part I focuses on how to transform variables and prepare data for the mediation analysis. Part II walks through functions of the multilevel mediation analysis and Part III explains how to make inferences on multilevel mediation effects.      
+The R package mlma is created for linear and nonlinear mediation analysis with multilevel data using multilevel additive models [@Yu2020a, @Yu2021, @Yu2022]. The vignette is composed of three parts. We first generate a simulated dataset. Based on the simulation,  part I focuses on how to transform variables and prepare data for the mediation analysis. Part II walks through functions of the multilevel mediation analysis and Part III explains how to make inferences on multilevel mediation effects.      
 
 To use the R package mlma, we first install the package in R (`install.packages("mlma")`) and load it. 
 
