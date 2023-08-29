@@ -1,7 +1,7 @@
 # data clean #start line #292
 data.org<-function(x, m, levely=1,  y=NULL, levelx=NULL, xref=NULL, 
-                   l1=NULL,l2=NULL, c1=NULL, c1r=rep(1,length(c1)), #levelx is the level of x
-                   c2=NULL, c2r=rep(1,length(c2)), f01y=NULL, f10y=NULL,                  #level is the level of observations
+                   l1=NULL,l2=NULL, c1=NULL, c1r=NULL, #levelx is the level of x
+                   c2=NULL, c2r=NULL, f01y=NULL, f10y=NULL,                  #level is the level of observations
                    f02ky=NULL, f20ky=NULL, f01km1=NULL, f01km2=NULL, f10km=NULL,          #weight is the level 1 weight of cases
                    level=1:nrow(as.matrix(x)), weight=NULL)                                        #weight2 is the level 2 weight of cases, weight2=rep(1,length(unique(level[!is.na(level)])))   
 {ns.dev<-function (x, df = NULL, knots = NULL, qnots=NULL,intercept = FALSE, Boundary.knots = range(x),derivs1=0) 
@@ -319,7 +319,6 @@ else if(l==2 & (is.factor(vari) | is.character(vari) | nlevels(as.factor(vari))=
 else
   return(list(4,NA))
 }
-
 n1<-nrow(as.matrix(m))                                   
 x=data.frame(x)
 mnames<-colnames(as.matrix(m))                #change variable names to columns in m
@@ -336,16 +335,15 @@ if(is.null(c(l1,l2,c1,c2)))                   #identify the type and level of me
  temp.mnames<-mnames
   for (i in 1:ncol(temp.m))
   {temp.1<-find_level(temp.m[,i],level)
-  #browser()
    col.num<-grep(temp.mnames[i],mnames)
    if (temp.1[[1]]==1)
-     {m[,col.num]<-as.factor(m[,col.num])
+     {#m[,col.num]<-as.factor(m[,col.num])
       c1<-c(c1,col.num)
       c1r<-c(c1r,temp.1[[2]])}
    else if (temp.1[[1]]==2)
      l1<-c(l1,col.num)
    else if(temp.1[[1]]==3)
-     {m[,col.num]<-as.factor(m[,col.num])
+     {#m[,col.num]<-as.factor(m[,col.num])
       c2<-c(c2,col.num)
       c2r<-c(c2r,temp.1[[2]])}
    else l2<-c(l2,col.num)
@@ -529,7 +527,6 @@ for (j in 1:nx)
   m2y.der<-temp$m1y.der
   m2<-temp$m1
   m2yd<-dim(as.matrix(m2y))[2]}
- 
  if(!is.null(l1))         #create level 1 and corresponding level 2 m variables to explain y
  {m1y<-as.matrix(as.matrix(m[,l1]))
   m1y.der<-matrix(1,n1,ncol(m1y))
@@ -1491,7 +1488,6 @@ else
  coef.fm2=NULL
 }
 
-
 fm1<-list(NULL)            #models for x to explain level 1 mediators
 coef.fm1=list(NULL)
 if(!is.null(c(l1,c1)))   #analysis for level 1 mediators
@@ -1795,7 +1791,7 @@ if(!is.null(c(l1,c1)))   #analysis for level 1 mediators
 if(!is.null(ie1_1) & !is.null(ie1_2))   #get the estimates for level 1 mediators
  {if(nx1!=0)
    {ie1=array(ie1_2[,,levelx==1],c(n,dim(ie1_2)[2],nx1))
-    colnames(ie1)=colnames(ie1_2)
+    colnames(ie1)=colnames(ie1_2)   
     dimnames(ie1)[[3]]=x.names[levelx==1]
     ie1.cov=ie1
     aie1=matrix(NA,nx1,ncol(ie1))
@@ -1863,7 +1859,7 @@ else {ie1<-NULL
 
 if(!is.null(ie2_1) & !is.null(ie2_2))   #get the estimates for level 1 mediators
 {ie2=array(0,c(dim(data2$m.2),nx2))
- dimnames(ie2)=dimnames(ie2_2)
+dimnames(ie2)=dimnames(ie2_2)
  ie2.cov=ie2
  aie2=matrix(NA,nx2,ncol(ie2))
  colnames(aie2)=colnames(ie2)
@@ -1943,8 +1939,8 @@ if(!is.null(joint))  #get the estimates for joint mediator effect
   colnames(je1)=paste("j",joint1,sep="")
   dimnames(je1)[[3]]=x.names[levelx==1]
   for (i in length(joint1))
-  {posi1=order_char(colnames(ie1),mnames[joint[joint1[i]+1]])
-   je1[,i,]=apply(ie1[,posi1,],c(1,3),sum,na.rm=T)
+  {posi1=order_char(colnames(ie1),mnames[joint[[joint1[i]+1]]])
+   je1[,i,]=apply(ie1[,posi1,],1,sum,na.rm=T)
   }
   aje1=t(apply(je1,c(2,3),mean,na.rm=T))
  }
@@ -2969,7 +2965,10 @@ if(is.null(var))
 }
 else{
   m<-object$m[,var]
-  y<-predict(object$f1)
+  if(is.null(names(object$f1)))
+    y=predict(object$f1,na.action=na.exclude)
+  else
+    y<-predict(object$f1)
   cate=F
   
   if(!is.factor(m) & !is.character(m) & nlevels(as.factor(m))>2)
@@ -3439,7 +3438,7 @@ plot.mlma.boot<-function(x,..., var=NULL, alpha=0.05,quant=FALSE, plot.it=x$plot
 
 two<-function(x, level, weight=rep(1,nrow(as.matrix(x))))
 {x2<-NULL
-if(is.null(dim(x)))
+if(is.null(dim(x))) 
   x2=cbind(x2,(aggregate(as.numeric(x)~level, na.action=na.pass, 
                          FUN=function(x) c(mean=weighted.mean(x,weight=weight,na.rm=T))))[,2])
 else
@@ -3550,7 +3549,8 @@ on.exit(par(oldpar)) #line i+1
    m<-object1$m[,var]
    y<-predict(object1$f1)
    if(is.null(names(object1$f1)))
-     m1=m
+     {m1=m
+      y=predict(object1$f1,na.action=na.exclude)}
    else
      m1=m[-object1$f1$na.action]
    cate=F
@@ -3563,7 +3563,7 @@ on.exit(par(oldpar)) #line i+1
     else
       m.j<-two(object1$data2$m2y[,grep(var,colnames(object1$data2$m2y))],object1$data2$parameter$level)
    }
-    if(is.null(names(object1$f1)))
+    if(is.null(names(object1$f1))) 
       y.j<-two(y,object1$data2$parameter$level)   #what if y is binary?---get the linear part
     else
       y.j<-two(y,object1$data2$parameter$level[-object1$f1$na.action])

@@ -187,7 +187,7 @@ data2<-data.org(ifelse(sim.111$x>1.9,1,0), m=sim.111$m,
                 f10y=list(1,c("x^2","sqrt(x+6)")), 
                 f20ky=list(2,c("x","x^3")), 
                 f10km=list(matrix(c(2,1),1),"log(x+2)"), level=sim.111$level)
-temp2.boot<-boot.mlma(y=sim.111$y, data1=data2,boot=2)
+temp2.boot<-boot.mlma(y=sim.111$y, data1=data2,boot=2,joint=list(1,1:2))
 
 \donttest{
 #can also do the above analysis using the following code

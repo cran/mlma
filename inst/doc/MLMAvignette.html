@@ -12,29 +12,42 @@
 
 <meta name="author" content="Qingzhao Yu and Bin Li" />
 
-<meta name="date" content="2022-05-16" />
+<meta name="date" content="2023-08-29" />
 
 <title>Examples for Multilevel Mediation Analysis</title>
 
-<script src="data:application/javascript;base64,Ly8gUGFuZG9jIDIuOSBhZGRzIGF0dHJpYnV0ZXMgb24gYm90aCBoZWFkZXIgYW5kIGRpdi4gV2UgcmVtb3ZlIHRoZSBmb3JtZXIgKHRvCi8vIGJlIGNvbXBhdGlibGUgd2l0aCB0aGUgYmVoYXZpb3Igb2YgUGFuZG9jIDwgMi44KS4KZG9jdW1lbnQuYWRkRXZlbnRMaXN0ZW5lcignRE9NQ29udGVudExvYWRlZCcsIGZ1bmN0aW9uKGUpIHsKICB2YXIgaHMgPSBkb2N1bWVudC5xdWVyeVNlbGVjdG9yQWxsKCJkaXYuc2VjdGlvbltjbGFzcyo9J2xldmVsJ10gPiA6Zmlyc3QtY2hpbGQiKTsKICB2YXIgaSwgaCwgYTsKICBmb3IgKGkgPSAwOyBpIDwgaHMubGVuZ3RoOyBpKyspIHsKICAgIGggPSBoc1tpXTsKICAgIGlmICghL15oWzEtNl0kL2kudGVzdChoLnRhZ05hbWUpKSBjb250aW51ZTsgIC8vIGl0IHNob3VsZCBiZSBhIGhlYWRlciBoMS1oNgogICAgYSA9IGguYXR0cmlidXRlczsKICAgIHdoaWxlIChhLmxlbmd0aCA+IDApIGgucmVtb3ZlQXR0cmlidXRlKGFbMF0ubmFtZSk7CiAgfQp9KTsK"></script>
+<script>// Pandoc 2.9 adds attributes on both header and div. We remove the former (to
+// be compatible with the behavior of Pandoc < 2.8).
+document.addEventListener('DOMContentLoaded', function(e) {
+  var hs = document.querySelectorAll("div.section[class*='level'] > :first-child");
+  var i, h, a;
+  for (i = 0; i < hs.length; i++) {
+    h = hs[i];
+    if (!/^h[1-6]$/i.test(h.tagName)) continue;  // it should be a header h1-h6
+    a = h.attributes;
+    while (a.length > 0) h.removeAttribute(a[0].name);
+  }
+});
+</script>
 
 <style type="text/css">
-  code{white-space: pre-wrap;}
-  span.smallcaps{font-variant: small-caps;}
-  span.underline{text-decoration: underline;}
-  div.column{display: inline-block; vertical-align: top; width: 50%;}
-  div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
-  ul.task-list{list-style: none;}
-    </style>
+code{white-space: pre-wrap;}
+span.smallcaps{font-variant: small-caps;}
+span.underline{text-decoration: underline;}
+div.column{display: inline-block; vertical-align: top; width: 50%;}
+div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+ul.task-list{list-style: none;}
+</style>
+
 
 
 <style type="text/css">
-  code {
-    white-space: pre;
-  }
-  .sourceCode {
-    overflow: visible;
-  }
+code {
+white-space: pre;
+}
+.sourceCode {
+overflow: visible;
+}
 </style>
 <style type="text/css" data-origin="pandoc">
 pre > code.sourceCode { white-space: pre; position: relative; }
@@ -52,55 +65,54 @@ pre > code.sourceCode { white-space: pre-wrap; }
 pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
 }
 pre.numberSource code
-  { counter-reset: source-line 0; }
+{ counter-reset: source-line 0; }
 pre.numberSource code > span
-  { position: relative; left: -4em; counter-increment: source-line; }
+{ position: relative; left: -4em; counter-increment: source-line; }
 pre.numberSource code > span > a:first-child::before
-  { content: counter(source-line);
-    position: relative; left: -1em; text-align: right; vertical-align: baseline;
-    border: none; display: inline-block;
-    -webkit-touch-callout: none; -webkit-user-select: none;
-    -khtml-user-select: none; -moz-user-select: none;
-    -ms-user-select: none; user-select: none;
-    padding: 0 4px; width: 4em;
-    color: #aaaaaa;
-  }
-pre.numberSource { margin-left: 3em; border-left: 1px solid #aaaaaa;  padding-left: 4px; }
+{ content: counter(source-line);
+position: relative; left: -1em; text-align: right; vertical-align: baseline;
+border: none; display: inline-block;
+-webkit-touch-callout: none; -webkit-user-select: none;
+-khtml-user-select: none; -moz-user-select: none;
+-ms-user-select: none; user-select: none;
+padding: 0 4px; width: 4em;
+color: #aaaaaa;
+}
+pre.numberSource { margin-left: 3em; border-left: 1px solid #aaaaaa; padding-left: 4px; }
 div.sourceCode
-  {   }
+{ }
 @media screen {
 pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
 }
-code span.al { color: #ff0000; font-weight: bold; } /* Alert */
-code span.an { color: #60a0b0; font-weight: bold; font-style: italic; } /* Annotation */
-code span.at { color: #7d9029; } /* Attribute */
-code span.bn { color: #40a070; } /* BaseN */
-code span.bu { } /* BuiltIn */
-code span.cf { color: #007020; font-weight: bold; } /* ControlFlow */
-code span.ch { color: #4070a0; } /* Char */
-code span.cn { color: #880000; } /* Constant */
-code span.co { color: #60a0b0; font-style: italic; } /* Comment */
-code span.cv { color: #60a0b0; font-weight: bold; font-style: italic; } /* CommentVar */
-code span.do { color: #ba2121; font-style: italic; } /* Documentation */
-code span.dt { color: #902000; } /* DataType */
-code span.dv { color: #40a070; } /* DecVal */
-code span.er { color: #ff0000; font-weight: bold; } /* Error */
-code span.ex { } /* Extension */
-code span.fl { color: #40a070; } /* Float */
-code span.fu { color: #06287e; } /* Function */
-code span.im { } /* Import */
-code span.in { color: #60a0b0; font-weight: bold; font-style: italic; } /* Information */
-code span.kw { color: #007020; font-weight: bold; } /* Keyword */
-code span.op { color: #666666; } /* Operator */
-code span.ot { color: #007020; } /* Other */
-code span.pp { color: #bc7a00; } /* Preprocessor */
-code span.sc { color: #4070a0; } /* SpecialChar */
-code span.ss { color: #bb6688; } /* SpecialString */
-code span.st { color: #4070a0; } /* String */
-code span.va { color: #19177c; } /* Variable */
-code span.vs { color: #4070a0; } /* VerbatimString */
-code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warning */
-
+code span.al { color: #ff0000; font-weight: bold; } 
+code span.an { color: #60a0b0; font-weight: bold; font-style: italic; } 
+code span.at { color: #7d9029; } 
+code span.bn { color: #40a070; } 
+code span.bu { color: #008000; } 
+code span.cf { color: #007020; font-weight: bold; } 
+code span.ch { color: #4070a0; } 
+code span.cn { color: #880000; } 
+code span.co { color: #60a0b0; font-style: italic; } 
+code span.cv { color: #60a0b0; font-weight: bold; font-style: italic; } 
+code span.do { color: #ba2121; font-style: italic; } 
+code span.dt { color: #902000; } 
+code span.dv { color: #40a070; } 
+code span.er { color: #ff0000; font-weight: bold; } 
+code span.ex { } 
+code span.fl { color: #40a070; } 
+code span.fu { color: #06287e; } 
+code span.im { color: #008000; font-weight: bold; } 
+code span.in { color: #60a0b0; font-weight: bold; font-style: italic; } 
+code span.kw { color: #007020; font-weight: bold; } 
+code span.op { color: #666666; } 
+code span.ot { color: #007020; } 
+code span.pp { color: #bc7a00; } 
+code span.sc { color: #4070a0; } 
+code span.ss { color: #bb6688; } 
+code span.st { color: #4070a0; } 
+code span.va { color: #19177c; } 
+code span.vs { color: #4070a0; } 
+code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } 
 </style>
 <script>
 // apply pandoc div.sourceCode style to pre.sourceCode instead
@@ -109,13 +121,20 @@ code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warni
   for (var i = 0; i < sheets.length; i++) {
     if (sheets[i].ownerNode.dataset["origin"] !== "pandoc") continue;
     try { var rules = sheets[i].cssRules; } catch (e) { continue; }
-    for (var j = 0; j < rules.length; j++) {
+    var j = 0;
+    while (j < rules.length) {
       var rule = rules[j];
       // check if there is a div.sourceCode rule
-      if (rule.type !== rule.STYLE_RULE || rule.selectorText !== "div.sourceCode") continue;
+      if (rule.type !== rule.STYLE_RULE || rule.selectorText !== "div.sourceCode") {
+        j++;
+        continue;
+      }
       var style = rule.style.cssText;
       // check if color or background-color is set
-      if (rule.style.color === '' && rule.style.backgroundColor === '') continue;
+      if (rule.style.color === '' && rule.style.backgroundColor === '') {
+        j++;
+        continue;
+      }
       // replace div.sourceCode by a pre.sourceCode rule
       sheets[i].deleteRule(j);
       sheets[i].insertRule('pre.sourceCode{' + style + '}', j);
@@ -127,29 +146,209 @@ code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warni
 
 
 <style type="text/css">
-/* for pandoc --citeproc since 2.11 */
+
 div.csl-bib-body { }
 div.csl-entry {
-  clear: both;
+clear: both;
 }
 .hanging div.csl-entry {
-  margin-left:2em;
-  text-indent:-2em;
+margin-left:2em;
+text-indent:-2em;
 }
 div.csl-left-margin {
-  min-width:2em;
-  float:left;
+min-width:2em;
+float:left;
 }
 div.csl-right-inline {
-  margin-left:2em;
-  padding-left:1em;
+margin-left:2em;
+padding-left:1em;
 }
 div.csl-indent {
-  margin-left: 2em;
+margin-left: 2em;
 }
 </style>
 
-<link rel="stylesheet" href="data:text/css,body%20%7B%0Abackground%2Dcolor%3A%20%23fff%3B%0Amargin%3A%201em%20auto%3B%0Amax%2Dwidth%3A%20700px%3B%0Aoverflow%3A%20visible%3B%0Apadding%2Dleft%3A%202em%3B%0Apadding%2Dright%3A%202em%3B%0Afont%2Dfamily%3A%20%22Open%20Sans%22%2C%20%22Helvetica%20Neue%22%2C%20Helvetica%2C%20Arial%2C%20sans%2Dserif%3B%0Afont%2Dsize%3A%2014px%3B%0Aline%2Dheight%3A%201%2E35%3B%0A%7D%0A%23TOC%20%7B%0Aclear%3A%20both%3B%0Amargin%3A%200%200%2010px%2010px%3B%0Apadding%3A%204px%3B%0Awidth%3A%20400px%3B%0Aborder%3A%201px%20solid%20%23CCCCCC%3B%0Aborder%2Dradius%3A%205px%3B%0Abackground%2Dcolor%3A%20%23f6f6f6%3B%0Afont%2Dsize%3A%2013px%3B%0Aline%2Dheight%3A%201%2E3%3B%0A%7D%0A%23TOC%20%2Etoctitle%20%7B%0Afont%2Dweight%3A%20bold%3B%0Afont%2Dsize%3A%2015px%3B%0Amargin%2Dleft%3A%205px%3B%0A%7D%0A%23TOC%20ul%20%7B%0Apadding%2Dleft%3A%2040px%3B%0Amargin%2Dleft%3A%20%2D1%2E5em%3B%0Amargin%2Dtop%3A%205px%3B%0Amargin%2Dbottom%3A%205px%3B%0A%7D%0A%23TOC%20ul%20ul%20%7B%0Amargin%2Dleft%3A%20%2D2em%3B%0A%7D%0A%23TOC%20li%20%7B%0Aline%2Dheight%3A%2016px%3B%0A%7D%0Atable%20%7B%0Amargin%3A%201em%20auto%3B%0Aborder%2Dwidth%3A%201px%3B%0Aborder%2Dcolor%3A%20%23DDDDDD%3B%0Aborder%2Dstyle%3A%20outset%3B%0Aborder%2Dcollapse%3A%20collapse%3B%0A%7D%0Atable%20th%20%7B%0Aborder%2Dwidth%3A%202px%3B%0Apadding%3A%205px%3B%0Aborder%2Dstyle%3A%20inset%3B%0A%7D%0Atable%20td%20%7B%0Aborder%2Dwidth%3A%201px%3B%0Aborder%2Dstyle%3A%20inset%3B%0Aline%2Dheight%3A%2018px%3B%0Apadding%3A%205px%205px%3B%0A%7D%0Atable%2C%20table%20th%2C%20table%20td%20%7B%0Aborder%2Dleft%2Dstyle%3A%20none%3B%0Aborder%2Dright%2Dstyle%3A%20none%3B%0A%7D%0Atable%20thead%2C%20table%20tr%2Eeven%20%7B%0Abackground%2Dcolor%3A%20%23f7f7f7%3B%0A%7D%0Ap%20%7B%0Amargin%3A%200%2E5em%200%3B%0A%7D%0Ablockquote%20%7B%0Abackground%2Dcolor%3A%20%23f6f6f6%3B%0Apadding%3A%200%2E25em%200%2E75em%3B%0A%7D%0Ahr%20%7B%0Aborder%2Dstyle%3A%20solid%3B%0Aborder%3A%20none%3B%0Aborder%2Dtop%3A%201px%20solid%20%23777%3B%0Amargin%3A%2028px%200%3B%0A%7D%0Adl%20%7B%0Amargin%2Dleft%3A%200%3B%0A%7D%0Adl%20dd%20%7B%0Amargin%2Dbottom%3A%2013px%3B%0Amargin%2Dleft%3A%2013px%3B%0A%7D%0Adl%20dt%20%7B%0Afont%2Dweight%3A%20bold%3B%0A%7D%0Aul%20%7B%0Amargin%2Dtop%3A%200%3B%0A%7D%0Aul%20li%20%7B%0Alist%2Dstyle%3A%20circle%20outside%3B%0A%7D%0Aul%20ul%20%7B%0Amargin%2Dbottom%3A%200%3B%0A%7D%0Apre%2C%20code%20%7B%0Abackground%2Dcolor%3A%20%23f7f7f7%3B%0Aborder%2Dradius%3A%203px%3B%0Acolor%3A%20%23333%3B%0Awhite%2Dspace%3A%20pre%2Dwrap%3B%20%0A%7D%0Apre%20%7B%0Aborder%2Dradius%3A%203px%3B%0Amargin%3A%205px%200px%2010px%200px%3B%0Apadding%3A%2010px%3B%0A%7D%0Apre%3Anot%28%5Bclass%5D%29%20%7B%0Abackground%2Dcolor%3A%20%23f7f7f7%3B%0A%7D%0Acode%20%7B%0Afont%2Dfamily%3A%20Consolas%2C%20Monaco%2C%20%27Courier%20New%27%2C%20monospace%3B%0Afont%2Dsize%3A%2085%25%3B%0A%7D%0Ap%20%3E%20code%2C%20li%20%3E%20code%20%7B%0Apadding%3A%202px%200px%3B%0A%7D%0Adiv%2Efigure%20%7B%0Atext%2Dalign%3A%20center%3B%0A%7D%0Aimg%20%7B%0Abackground%2Dcolor%3A%20%23FFFFFF%3B%0Apadding%3A%202px%3B%0Aborder%3A%201px%20solid%20%23DDDDDD%3B%0Aborder%2Dradius%3A%203px%3B%0Aborder%3A%201px%20solid%20%23CCCCCC%3B%0Amargin%3A%200%205px%3B%0A%7D%0Ah1%20%7B%0Amargin%2Dtop%3A%200%3B%0Afont%2Dsize%3A%2035px%3B%0Aline%2Dheight%3A%2040px%3B%0A%7D%0Ah2%20%7B%0Aborder%2Dbottom%3A%204px%20solid%20%23f7f7f7%3B%0Apadding%2Dtop%3A%2010px%3B%0Apadding%2Dbottom%3A%202px%3B%0Afont%2Dsize%3A%20145%25%3B%0A%7D%0Ah3%20%7B%0Aborder%2Dbottom%3A%202px%20solid%20%23f7f7f7%3B%0Apadding%2Dtop%3A%2010px%3B%0Afont%2Dsize%3A%20120%25%3B%0A%7D%0Ah4%20%7B%0Aborder%2Dbottom%3A%201px%20solid%20%23f7f7f7%3B%0Amargin%2Dleft%3A%208px%3B%0Afont%2Dsize%3A%20105%25%3B%0A%7D%0Ah5%2C%20h6%20%7B%0Aborder%2Dbottom%3A%201px%20solid%20%23ccc%3B%0Afont%2Dsize%3A%20105%25%3B%0A%7D%0Aa%20%7B%0Acolor%3A%20%230033dd%3B%0Atext%2Ddecoration%3A%20none%3B%0A%7D%0Aa%3Ahover%20%7B%0Acolor%3A%20%236666ff%3B%20%7D%0Aa%3Avisited%20%7B%0Acolor%3A%20%23800080%3B%20%7D%0Aa%3Avisited%3Ahover%20%7B%0Acolor%3A%20%23BB00BB%3B%20%7D%0Aa%5Bhref%5E%3D%22http%3A%22%5D%20%7B%0Atext%2Ddecoration%3A%20underline%3B%20%7D%0Aa%5Bhref%5E%3D%22https%3A%22%5D%20%7B%0Atext%2Ddecoration%3A%20underline%3B%20%7D%0A%0Acode%20%3E%20span%2Ekw%20%7B%20color%3A%20%23555%3B%20font%2Dweight%3A%20bold%3B%20%7D%20%0Acode%20%3E%20span%2Edt%20%7B%20color%3A%20%23902000%3B%20%7D%20%0Acode%20%3E%20span%2Edv%20%7B%20color%3A%20%2340a070%3B%20%7D%20%0Acode%20%3E%20span%2Ebn%20%7B%20color%3A%20%23d14%3B%20%7D%20%0Acode%20%3E%20span%2Efl%20%7B%20color%3A%20%23d14%3B%20%7D%20%0Acode%20%3E%20span%2Ech%20%7B%20color%3A%20%23d14%3B%20%7D%20%0Acode%20%3E%20span%2Est%20%7B%20color%3A%20%23d14%3B%20%7D%20%0Acode%20%3E%20span%2Eco%20%7B%20color%3A%20%23888888%3B%20font%2Dstyle%3A%20italic%3B%20%7D%20%0Acode%20%3E%20span%2Eot%20%7B%20color%3A%20%23007020%3B%20%7D%20%0Acode%20%3E%20span%2Eal%20%7B%20color%3A%20%23ff0000%3B%20font%2Dweight%3A%20bold%3B%20%7D%20%0Acode%20%3E%20span%2Efu%20%7B%20color%3A%20%23900%3B%20font%2Dweight%3A%20bold%3B%20%7D%20%0Acode%20%3E%20span%2Eer%20%7B%20color%3A%20%23a61717%3B%20background%2Dcolor%3A%20%23e3d2d2%3B%20%7D%20%0A" type="text/css" />
+<style type="text/css">body {
+background-color: #fff;
+margin: 1em auto;
+max-width: 700px;
+overflow: visible;
+padding-left: 2em;
+padding-right: 2em;
+font-family: "Open Sans", "Helvetica Neue", Helvetica, Arial, sans-serif;
+font-size: 14px;
+line-height: 1.35;
+}
+#TOC {
+clear: both;
+margin: 0 0 10px 10px;
+padding: 4px;
+width: 400px;
+border: 1px solid #CCCCCC;
+border-radius: 5px;
+background-color: #f6f6f6;
+font-size: 13px;
+line-height: 1.3;
+}
+#TOC .toctitle {
+font-weight: bold;
+font-size: 15px;
+margin-left: 5px;
+}
+#TOC ul {
+padding-left: 40px;
+margin-left: -1.5em;
+margin-top: 5px;
+margin-bottom: 5px;
+}
+#TOC ul ul {
+margin-left: -2em;
+}
+#TOC li {
+line-height: 16px;
+}
+table {
+margin: 1em auto;
+border-width: 1px;
+border-color: #DDDDDD;
+border-style: outset;
+border-collapse: collapse;
+}
+table th {
+border-width: 2px;
+padding: 5px;
+border-style: inset;
+}
+table td {
+border-width: 1px;
+border-style: inset;
+line-height: 18px;
+padding: 5px 5px;
+}
+table, table th, table td {
+border-left-style: none;
+border-right-style: none;
+}
+table thead, table tr.even {
+background-color: #f7f7f7;
+}
+p {
+margin: 0.5em 0;
+}
+blockquote {
+background-color: #f6f6f6;
+padding: 0.25em 0.75em;
+}
+hr {
+border-style: solid;
+border: none;
+border-top: 1px solid #777;
+margin: 28px 0;
+}
+dl {
+margin-left: 0;
+}
+dl dd {
+margin-bottom: 13px;
+margin-left: 13px;
+}
+dl dt {
+font-weight: bold;
+}
+ul {
+margin-top: 0;
+}
+ul li {
+list-style: circle outside;
+}
+ul ul {
+margin-bottom: 0;
+}
+pre, code {
+background-color: #f7f7f7;
+border-radius: 3px;
+color: #333;
+white-space: pre-wrap; 
+}
+pre {
+border-radius: 3px;
+margin: 5px 0px 10px 0px;
+padding: 10px;
+}
+pre:not([class]) {
+background-color: #f7f7f7;
+}
+code {
+font-family: Consolas, Monaco, 'Courier New', monospace;
+font-size: 85%;
+}
+p > code, li > code {
+padding: 2px 0px;
+}
+div.figure {
+text-align: center;
+}
+img {
+background-color: #FFFFFF;
+padding: 2px;
+border: 1px solid #DDDDDD;
+border-radius: 3px;
+border: 1px solid #CCCCCC;
+margin: 0 5px;
+}
+h1 {
+margin-top: 0;
+font-size: 35px;
+line-height: 40px;
+}
+h2 {
+border-bottom: 4px solid #f7f7f7;
+padding-top: 10px;
+padding-bottom: 2px;
+font-size: 145%;
+}
+h3 {
+border-bottom: 2px solid #f7f7f7;
+padding-top: 10px;
+font-size: 120%;
+}
+h4 {
+border-bottom: 1px solid #f7f7f7;
+margin-left: 8px;
+font-size: 105%;
+}
+h5, h6 {
+border-bottom: 1px solid #ccc;
+font-size: 105%;
+}
+a {
+color: #0033dd;
+text-decoration: none;
+}
+a:hover {
+color: #6666ff; }
+a:visited {
+color: #800080; }
+a:visited:hover {
+color: #BB00BB; }
+a[href^="http:"] {
+text-decoration: underline; }
+a[href^="https:"] {
+text-decoration: underline; }
+
+code > span.kw { color: #555; font-weight: bold; } 
+code > span.dt { color: #902000; } 
+code > span.dv { color: #40a070; } 
+code > span.bn { color: #d14; } 
+code > span.fl { color: #d14; } 
+code > span.ch { color: #d14; } 
+code > span.st { color: #d14; } 
+code > span.co { color: #888888; font-style: italic; } 
+code > span.ot { color: #007020; } 
+code > span.al { color: #ff0000; font-weight: bold; } 
+code > span.fu { color: #900; font-weight: bold; } 
+code > span.er { color: #a61717; background-color: #e3d2d2; } 
+</style>
 
 
 
@@ -161,222 +360,344 @@ div.csl-indent {
 
 
 
-<h1 class="title toc-ignore">Examples for Multilevel Mediation Analysis</h1>
+<h1 class="title toc-ignore">Examples for Multilevel Mediation
+Analysis</h1>
 <h4 class="author">Qingzhao Yu and Bin Li</h4>
-<h4 class="date">2022-05-16</h4>
+<h4 class="date">2023-08-29</h4>
 
 
 
 <div id="package-installation" class="section level2">
 <h2>Package installation</h2>
-<p>The R package mlma is created for linear and nonlinear mediation analysis with multilevel data using multilevel additive models <span class="citation"><a href="#ref-Yu2022" role="doc-biblioref">Yu and Li</a> (<a href="#ref-Yu2022" role="doc-biblioref">2022</a>)</span>. The vignette is composed of three parts. We first generate a simulated dataset. Based on the simulation, part I focuses on how to transform variables and prepare data for the mediation analysis. Part II walks through functions of the multilevel mediation analysis and Part III explains how to make inferences on multilevel mediation effects.</p>
-<p>To use the R package mlma, we first install the package in R (<code>install.packages(&quot;mlma&quot;)</code>) and load it.</p>
+<p>The R package mlma is created for linear and nonlinear mediation
+analysis with multilevel data using multilevel additive models <span class="citation">Yu and Li (<a href="#ref-Yu2022">2022</a>)</span>. The
+vignette is composed of three parts. We first generate a simulated
+dataset. Based on the simulation, part I focuses on how to transform
+variables and prepare data for the mediation analysis. Part II walks
+through functions of the multilevel mediation analysis and Part III
+explains how to make inferences on multilevel mediation effects.</p>
+<p>To use the R package mlma, we first install the package in R
+(<code>install.packages(&quot;mlma&quot;)</code>) and load it.</p>
 </div>
 <div id="a-simulated-dataset" class="section level2">
 <h2>A simulated dataset</h2>
-<p>We generate a dataset with two levels. In the simulation, there are 1 level one exposure that is binary and 1 level two exposure that is continuous. There are also two mediators, one at each level. The level one mediator is continuous while the level two mediator is binary. The variables are generated by the following code:</p>
-<div class="sourceCode" id="cb1"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="fu">set.seed</span>(<span class="dv">1</span>)</span>
-<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a>n<span class="ot">=</span><span class="dv">20</span>       <span class="co"># the number of observations in each group</span></span>
-<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a>J<span class="ot">&lt;-</span><span class="dv">600</span><span class="sc">/</span>n   <span class="co"># there are 30 groups</span></span>
-<span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a>level<span class="ot">=</span><span class="fu">rep</span>(<span class="dv">1</span><span class="sc">:</span>J,<span class="at">each=</span>n)</span>
-<span id="cb1-5"><a href="#cb1-5" aria-hidden="true" tabindex="-1"></a>alpha_211<span class="ot">&lt;-</span><span class="fl">0.8</span>     <span class="co">#covariates coefficients</span></span>
-<span id="cb1-6"><a href="#cb1-6" aria-hidden="true" tabindex="-1"></a>alpha_1111<span class="ot">&lt;-</span><span class="fl">0.8</span></span>
-<span id="cb1-7"><a href="#cb1-7" aria-hidden="true" tabindex="-1"></a>alpha_2111<span class="ot">&lt;-</span><span class="fl">0.8</span></span>
-<span id="cb1-8"><a href="#cb1-8" aria-hidden="true" tabindex="-1"></a>beta_1<span class="ot">&lt;-</span><span class="fl">0.4</span></span>
-<span id="cb1-9"><a href="#cb1-9" aria-hidden="true" tabindex="-1"></a>beta_2<span class="ot">&lt;-</span><span class="fl">0.4</span></span>
-<span id="cb1-10"><a href="#cb1-10" aria-hidden="true" tabindex="-1"></a>beta_3<span class="ot">&lt;-</span><span class="fl">0.4</span></span>
-<span id="cb1-11"><a href="#cb1-11" aria-hidden="true" tabindex="-1"></a>beta_4<span class="ot">&lt;-</span><span class="fl">0.4</span></span>
-<span id="cb1-12"><a href="#cb1-12" aria-hidden="true" tabindex="-1"></a>beta_5<span class="ot">&lt;-</span><span class="fl">0.4</span></span>
-<span id="cb1-13"><a href="#cb1-13" aria-hidden="true" tabindex="-1"></a>v1<span class="ot">=</span><span class="dv">5</span>              <span class="co">#the level 1 variance</span></span>
-<span id="cb1-14"><a href="#cb1-14" aria-hidden="true" tabindex="-1"></a>v2<span class="ot">=</span>v1<span class="sc">/</span><span class="dv">5</span>           <span class="co">#the level 2 variance</span></span>
-<span id="cb1-15"><a href="#cb1-15" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-16"><a href="#cb1-16" aria-hidden="true" tabindex="-1"></a><span class="co">#The exposure variables</span></span>
-<span id="cb1-17"><a href="#cb1-17" aria-hidden="true" tabindex="-1"></a>x1<span class="ot">&lt;-</span><span class="fu">rbinom</span>(<span class="dv">600</span>,<span class="dv">1</span>,<span class="fl">0.5</span>) <span class="co">#binary level 1 exposure, xij</span></span>
-<span id="cb1-18"><a href="#cb1-18" aria-hidden="true" tabindex="-1"></a>x2<span class="ot">&lt;-</span><span class="fu">rep</span>(<span class="fu">rnorm</span>(J),<span class="at">each=</span>n) <span class="co">#continuous level 2 exposure</span></span>
-<span id="cb1-19"><a href="#cb1-19" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-20"><a href="#cb1-20" aria-hidden="true" tabindex="-1"></a><span class="co">#The mediators</span></span>
-<span id="cb1-21"><a href="#cb1-21" aria-hidden="true" tabindex="-1"></a>m2<span class="ot">&lt;-</span><span class="fu">rep</span>(<span class="fu">rbinom</span>(J,<span class="dv">1</span>,<span class="fu">exp</span>(alpha_211<span class="sc">*</span><span class="fu">unique</span>(x2<span class="sc">^</span><span class="dv">2</span>))<span class="sc">/</span>(<span class="dv">1</span><span class="sc">+</span><span class="fu">exp</span>(alpha_211<span class="sc">*</span><span class="fu">unique</span>(x2<span class="sc">^</span><span class="dv">2</span>)))),<span class="at">each=</span>n)    <span class="co">#level 2 binary mediator</span></span>
-<span id="cb1-22"><a href="#cb1-22" aria-hidden="true" tabindex="-1"></a>u1<span class="ot">&lt;-</span><span class="fu">rep</span>(<span class="fu">rnorm</span>(J,<span class="dv">0</span>,<span class="fl">0.5</span>),<span class="at">each=</span>n) <span class="co">#level 2 variance for mij</span></span>
-<span id="cb1-23"><a href="#cb1-23" aria-hidden="true" tabindex="-1"></a>e1<span class="ot">&lt;-</span><span class="fu">rnorm</span>(n<span class="sc">*</span>J)  <span class="co">#level 1 variance for mij</span></span>
-<span id="cb1-24"><a href="#cb1-24" aria-hidden="true" tabindex="-1"></a>m1<span class="ot">&lt;-</span>u1<span class="sc">+</span>alpha_1111<span class="sc">*</span>x1<span class="sc">+</span>alpha_2111<span class="sc">*</span>x2<span class="sc">+</span>e1 <span class="co">#level 1 continuous mediator</span></span>
-<span id="cb1-25"><a href="#cb1-25" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-26"><a href="#cb1-26" aria-hidden="true" tabindex="-1"></a><span class="co">#The response variable</span></span>
-<span id="cb1-27"><a href="#cb1-27" aria-hidden="true" tabindex="-1"></a>u0<span class="ot">&lt;-</span><span class="fu">rep</span>(<span class="fu">rnorm</span>(J,<span class="dv">0</span>,v2),<span class="at">each=</span>n)</span>
-<span id="cb1-28"><a href="#cb1-28" aria-hidden="true" tabindex="-1"></a>e0<span class="ot">&lt;-</span><span class="fu">rnorm</span>(n<span class="sc">*</span>J,<span class="dv">0</span>,v1)</span>
-<span id="cb1-29"><a href="#cb1-29" aria-hidden="true" tabindex="-1"></a>y<span class="ot">&lt;-</span>u0<span class="sc">+</span>beta_1<span class="sc">*</span>x1<span class="sc">+</span>beta_2<span class="sc">*</span>x2<span class="sc">+</span>beta_3<span class="sc">*</span><span class="fu">ifelse</span>(x2<span class="sc">&lt;=</span><span class="dv">0</span>,<span class="dv">0</span>,<span class="fu">log</span>(<span class="dv">1</span><span class="sc">+</span>x2))<span class="sc">+</span>beta_4<span class="sc">*</span>m1<span class="sc">+</span>beta_5<span class="sc">*</span>m2<span class="sc">+</span>e0</span></code></pre></div>
+<p>We generate a dataset with two levels. In the simulation, there are 1
+level one exposure that is binary and 1 level two exposure that is
+continuous. There are also two mediators, one at each level. The level
+one mediator is continuous while the level two mediator is binary. The
+variables are generated by the following code:</p>
+<div class="sourceCode" id="cb1"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb1-1"><a href="#cb1-1" tabindex="-1"></a><span class="fu">set.seed</span>(<span class="dv">1</span>)</span>
+<span id="cb1-2"><a href="#cb1-2" tabindex="-1"></a>n<span class="ot">=</span><span class="dv">20</span>       <span class="co"># the number of observations in each group</span></span>
+<span id="cb1-3"><a href="#cb1-3" tabindex="-1"></a>J<span class="ot">&lt;-</span><span class="dv">600</span><span class="sc">/</span>n   <span class="co"># there are 30 groups</span></span>
+<span id="cb1-4"><a href="#cb1-4" tabindex="-1"></a>level<span class="ot">=</span><span class="fu">rep</span>(<span class="dv">1</span><span class="sc">:</span>J,<span class="at">each=</span>n)</span>
+<span id="cb1-5"><a href="#cb1-5" tabindex="-1"></a>alpha_211<span class="ot">&lt;-</span><span class="fl">0.8</span>     <span class="co">#covariates coefficients</span></span>
+<span id="cb1-6"><a href="#cb1-6" tabindex="-1"></a>alpha_1111<span class="ot">&lt;-</span><span class="fl">0.8</span></span>
+<span id="cb1-7"><a href="#cb1-7" tabindex="-1"></a>alpha_2111<span class="ot">&lt;-</span><span class="fl">0.8</span></span>
+<span id="cb1-8"><a href="#cb1-8" tabindex="-1"></a>beta_1<span class="ot">&lt;-</span><span class="fl">0.4</span></span>
+<span id="cb1-9"><a href="#cb1-9" tabindex="-1"></a>beta_2<span class="ot">&lt;-</span><span class="fl">0.4</span></span>
+<span id="cb1-10"><a href="#cb1-10" tabindex="-1"></a>beta_3<span class="ot">&lt;-</span><span class="fl">0.4</span></span>
+<span id="cb1-11"><a href="#cb1-11" tabindex="-1"></a>beta_4<span class="ot">&lt;-</span><span class="fl">0.4</span></span>
+<span id="cb1-12"><a href="#cb1-12" tabindex="-1"></a>beta_5<span class="ot">&lt;-</span><span class="fl">0.4</span></span>
+<span id="cb1-13"><a href="#cb1-13" tabindex="-1"></a>v1<span class="ot">=</span><span class="dv">5</span>              <span class="co">#the level 1 variance</span></span>
+<span id="cb1-14"><a href="#cb1-14" tabindex="-1"></a>v2<span class="ot">=</span>v1<span class="sc">/</span><span class="dv">5</span>           <span class="co">#the level 2 variance</span></span>
+<span id="cb1-15"><a href="#cb1-15" tabindex="-1"></a></span>
+<span id="cb1-16"><a href="#cb1-16" tabindex="-1"></a><span class="co">#The exposure variables</span></span>
+<span id="cb1-17"><a href="#cb1-17" tabindex="-1"></a>x1<span class="ot">&lt;-</span><span class="fu">rbinom</span>(<span class="dv">600</span>,<span class="dv">1</span>,<span class="fl">0.5</span>) <span class="co">#binary level 1 exposure, xij</span></span>
+<span id="cb1-18"><a href="#cb1-18" tabindex="-1"></a>x2<span class="ot">&lt;-</span><span class="fu">rep</span>(<span class="fu">rnorm</span>(J),<span class="at">each=</span>n) <span class="co">#continuous level 2 exposure</span></span>
+<span id="cb1-19"><a href="#cb1-19" tabindex="-1"></a></span>
+<span id="cb1-20"><a href="#cb1-20" tabindex="-1"></a><span class="co">#The mediators</span></span>
+<span id="cb1-21"><a href="#cb1-21" tabindex="-1"></a>m2<span class="ot">&lt;-</span><span class="fu">rep</span>(<span class="fu">rbinom</span>(J,<span class="dv">1</span>,<span class="fu">exp</span>(alpha_211<span class="sc">*</span><span class="fu">unique</span>(x2<span class="sc">^</span><span class="dv">2</span>))<span class="sc">/</span>(<span class="dv">1</span><span class="sc">+</span><span class="fu">exp</span>(alpha_211<span class="sc">*</span><span class="fu">unique</span>(x2<span class="sc">^</span><span class="dv">2</span>)))),<span class="at">each=</span>n)    <span class="co">#level 2 binary mediator</span></span>
+<span id="cb1-22"><a href="#cb1-22" tabindex="-1"></a>u1<span class="ot">&lt;-</span><span class="fu">rep</span>(<span class="fu">rnorm</span>(J,<span class="dv">0</span>,<span class="fl">0.5</span>),<span class="at">each=</span>n) <span class="co">#level 2 variance for mij</span></span>
+<span id="cb1-23"><a href="#cb1-23" tabindex="-1"></a>e1<span class="ot">&lt;-</span><span class="fu">rnorm</span>(n<span class="sc">*</span>J)  <span class="co">#level 1 variance for mij</span></span>
+<span id="cb1-24"><a href="#cb1-24" tabindex="-1"></a>m1<span class="ot">&lt;-</span>u1<span class="sc">+</span>alpha_1111<span class="sc">*</span>x1<span class="sc">+</span>alpha_2111<span class="sc">*</span>x2<span class="sc">+</span>e1 <span class="co">#level 1 continuous mediator</span></span>
+<span id="cb1-25"><a href="#cb1-25" tabindex="-1"></a></span>
+<span id="cb1-26"><a href="#cb1-26" tabindex="-1"></a><span class="co">#The response variable</span></span>
+<span id="cb1-27"><a href="#cb1-27" tabindex="-1"></a>u0<span class="ot">&lt;-</span><span class="fu">rep</span>(<span class="fu">rnorm</span>(J,<span class="dv">0</span>,v2),<span class="at">each=</span>n)</span>
+<span id="cb1-28"><a href="#cb1-28" tabindex="-1"></a>e0<span class="ot">&lt;-</span><span class="fu">rnorm</span>(n<span class="sc">*</span>J,<span class="dv">0</span>,v1)</span>
+<span id="cb1-29"><a href="#cb1-29" tabindex="-1"></a>y<span class="ot">&lt;-</span>u0<span class="sc">+</span>beta_1<span class="sc">*</span>x1<span class="sc">+</span>beta_2<span class="sc">*</span>x2<span class="sc">+</span>beta_3<span class="sc">*</span><span class="fu">ifelse</span>(x2<span class="sc">&lt;=</span><span class="dv">0</span>,<span class="dv">0</span>,<span class="fu">log</span>(<span class="dv">1</span><span class="sc">+</span>x2))<span class="sc">+</span>beta_4<span class="sc">*</span>m1<span class="sc">+</span>beta_5<span class="sc">*</span>m2<span class="sc">+</span>e0</span></code></pre></div>
 </div>
 <div id="data-transformation-and-organization" class="section level2">
 <h2>Data Transformation and Organization</h2>
-<p>The <span class="math inline">\(data.org\)</span> function is used to do the transformation before the mediation analysis. In the function, the exposure variable(s) (<span class="math inline">\(x\)</span>) and the mediator(s) (<span class="math inline">\(m\)</span>) are required to input. The response variable (<span class="math inline">\(y\)</span>) is required only when its level (<span class="math inline">\(levely\)</span>) is not given. The argument <span class="math inline">\(levelx\)</span> is to identify the levels of the exposure variable. <span class="math inline">\(levelx\)</span> does not need to be provided. The function can automatically decide the level of the exposure variable(s). If any of the exposure variable is binary or categorical, <span class="math inline">\(xref\)</span> is used to identify the reference group of the exposure variable.</p>
-<p>Note that the name for one mediator in <span class="math inline">\(m\)</span> should <strong>not</strong> be the subset of the name of another mediator.</p>
-<p>The arguments <span class="math inline">\(l1\)</span> and <span class="math inline">\(l2\)</span> specify the column numbers in <span class="math inline">\(m\)</span> the continuous mediators at level one or level two respectively. <span class="math inline">\(c1\)</span> and <span class="math inline">\(c2\)</span> refers to the categorical mediators where <span class="math inline">\(c1r\)</span> and <span class="math inline">\(c2r\)</span> specify the reference group respectively. <span class="math inline">\(l1, l2, c1\)</span>, and <span class="math inline">\(c2\)</span> does not have to be provided. If not provided, the function <span class="math inline">\(data.org\)</span> checks each column of <span class="math inline">\(m\)</span> and decide whether each variable belongs to level 1 or 2, and be continuous or categorical.</p>
-<p><span class="math inline">\(level\)</span> is a vector that record the group number for each observation. <span class="math inline">\(weight\)</span> defines the weight of each observation.</p>
-<p><span class="math inline">\(f01y\)</span> and <span class="math inline">\(f10y\)</span> specify the desired transformation of exposures at level two or level one respectively in explaining the response variable. <span class="math inline">\(f01y\)</span> and <span class="math inline">\(f10y\)</span> are lists with the first item identify the column number of the exposure variable in <span class="math inline">\(x\)</span> that needs to be transformed, and then in that order, each of the rest items list the transformation functional expressions for each exposure. For example, <code>f10y=list(1,c(&quot;x^2&quot;,&quot;log(x)&quot;))</code> means that column 1 of <span class="math inline">\(x\)</span> is a level 1 exposure. It needs to be transformed to its square form and natural log form to predict the response variable. If not specified in <span class="math inline">\(f01y\)</span> or <span class="math inline">\(f10y\)</span>, the exposure will keep its original format without transformation. In our simulation data, the level two exposure is transformed to itself, <span class="math inline">\(x_{.j}\)</span> and <span class="math inline">\(I(x_{.j}&gt;0)\times log(x_{.j}+1)\)</span>. Therefore, we define <code>f01y=list(2,c(&quot;x&quot;,&quot;ifelse(x&gt;0,log(x+1),0)&quot;))</code>. Similarly, <span class="math inline">\(f02ky\)</span> and <span class="math inline">\(f20ky\)</span> defines the transformation of level two and level one mediators respectively in explaining <span class="math inline">\(y\)</span>.</p>
-<p><span class="math inline">\(f01km1\)</span> and <span class="math inline">\(f01km2\)</span> are arguments that define transformation of level two exposures in explaining level one or level two mediator(s) respectively. Since only higher or equivalent level variables can be used as predictors, level one exposures can only be predictors for level one mediators. <span class="math inline">\(f10km\)</span> defines the transformation of level one exposure(s) in explaining level one mediator(s). In addition, when there are level two mediators but not level two exposure variable, the level one exposure variable(s) will be aggregated at level two to form the level two exposure variable(s). The first item of the the <span class="math inline">\(f01km1\)</span>, <span class="math inline">\(f01km2\)</span> and <span class="math inline">\(f10km\)</span> is a matrix of two columns, where the first column indicates the column number of the mediator in <span class="math inline">\(m\)</span>. The second column indicates the column number of the exposure in <span class="math inline">\(x\)</span>. By the order of the rows of the first item, each of the rest items of <span class="math inline">\(f01km1, f01km2\)</span> and <span class="math inline">\(f10km\)</span> list the transformation functional expressions for the exposure (identified by column 2) in explaining each mediator (identified by column 1). In our example, level two mediator <span class="math inline">\(m2\)</span> is explained by the level two exposure <span class="math inline">\(x2\)</span> in the form of <span class="math inline">\(x2^2\)</span>. Therefore, we set the argument <code>f01km2=list(matrix(c(2,2),1,2),&quot;x^2&quot;)</code>.</p>
-<p>The following codes prepare for the data and perform the transformations. Note that the transformation functions can be set in different ways. Besides those in the example, we can also use the natural spline bases (e.g. <code>ns(x,df=5)</code>) and piecewise functions (e.g. <code>ifelse(x&gt;0,0,sqrt(x))</code>).</p>
-<div class="sourceCode" id="cb2"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a>example1<span class="ot">&lt;-</span><span class="fu">data.org</span>(<span class="at">x=</span><span class="fu">cbind</span>(<span class="at">x1=</span>x1,<span class="at">x2=</span>x2), <span class="at">m=</span><span class="fu">cbind</span>(<span class="at">m1=</span>m1,<span class="at">m2=</span>m2), </span>
-<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a>                   <span class="at">f01y=</span><span class="fu">list</span>(<span class="dv">2</span>,<span class="fu">c</span>(<span class="st">&quot;x&quot;</span>,<span class="st">&quot;ifelse(x&gt;0,log(x+1),0)&quot;</span>)),</span>
-<span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a>                   <span class="at">level=</span>level,</span>
-<span id="cb2-4"><a href="#cb2-4" aria-hidden="true" tabindex="-1"></a>                   <span class="at">f01km2=</span><span class="fu">list</span>(<span class="fu">matrix</span>(<span class="fu">c</span>(<span class="dv">2</span>,<span class="dv">2</span>),<span class="dv">1</span>,<span class="dv">2</span>),<span class="st">&quot;x^2&quot;</span>)) </span></code></pre></div>
+<p>The <span class="math inline">\(data.org\)</span> function is used to
+do the transformation before the mediation analysis. In the function,
+the exposure variable(s) (<span class="math inline">\(x\)</span>) and
+the mediator(s) (<span class="math inline">\(m\)</span>) are required to
+input. The response variable (<span class="math inline">\(y\)</span>) is
+required only when its level (<span class="math inline">\(levely\)</span>) is not given. The argument <span class="math inline">\(levelx\)</span> is to identify the levels of the
+exposure variable. <span class="math inline">\(levelx\)</span> does not
+need to be provided. The function can automatically decide the level of
+the exposure variable(s). If any of the exposure variable is binary or
+categorical, <span class="math inline">\(xref\)</span> is used to
+identify the reference group of the exposure variable.</p>
+<p>Note that the name for one mediator in <span class="math inline">\(m\)</span> should <strong>not</strong> be the
+subset of the name of another mediator.</p>
+<p>The arguments <span class="math inline">\(l1\)</span> and <span class="math inline">\(l2\)</span> specify the column numbers in <span class="math inline">\(m\)</span> the continuous mediators at level one
+or level two respectively. <span class="math inline">\(c1\)</span> and
+<span class="math inline">\(c2\)</span> refers to the categorical
+mediators where <span class="math inline">\(c1r\)</span> and <span class="math inline">\(c2r\)</span> specify the reference group
+respectively. <span class="math inline">\(l1, l2, c1\)</span>, and <span class="math inline">\(c2\)</span> does not have to be provided. If not
+provided, the function <span class="math inline">\(data.org\)</span>
+checks each column of <span class="math inline">\(m\)</span> and decide
+whether each variable belongs to level 1 or 2, and be continuous or
+categorical.</p>
+<p><span class="math inline">\(level\)</span> is a vector that record
+the group number for each observation. <span class="math inline">\(weight\)</span> defines the weight of each
+observation.</p>
+<p><span class="math inline">\(f01y\)</span> and <span class="math inline">\(f10y\)</span> specify the desired transformation
+of exposures at level two or level one respectively in explaining the
+response variable. <span class="math inline">\(f01y\)</span> and <span class="math inline">\(f10y\)</span> are lists with the first item
+identify the column number of the exposure variable in <span class="math inline">\(x\)</span> that needs to be transformed, and then
+in that order, each of the rest items list the transformation functional
+expressions for each exposure. For example,
+<code>f10y=list(1,c(&quot;x^2&quot;,&quot;log(x)&quot;))</code> means that column 1 of <span class="math inline">\(x\)</span> is a level 1 exposure. It needs to be
+transformed to its square form and natural log form to predict the
+response variable. If not specified in <span class="math inline">\(f01y\)</span> or <span class="math inline">\(f10y\)</span>, the exposure will keep its original
+format without transformation. In our simulation data, the level two
+exposure is transformed to itself, <span class="math inline">\(x_{.j}\)</span> and <span class="math inline">\(I(x_{.j}&gt;0)\times log(x_{.j}+1)\)</span>.
+Therefore, we define
+<code>f01y=list(2,c(&quot;x&quot;,&quot;ifelse(x&gt;0,log(x+1),0)&quot;))</code>. Similarly,
+<span class="math inline">\(f02ky\)</span> and <span class="math inline">\(f20ky\)</span> defines the transformation of level
+two and level one mediators respectively in explaining <span class="math inline">\(y\)</span>.</p>
+<p><span class="math inline">\(f01km1\)</span> and <span class="math inline">\(f01km2\)</span> are arguments that define
+transformation of level two exposures in explaining level one or level
+two mediator(s) respectively. Since only higher or equivalent level
+variables can be used as predictors, level one exposures can only be
+predictors for level one mediators. <span class="math inline">\(f10km\)</span> defines the transformation of level
+one exposure(s) in explaining level one mediator(s). In addition, when
+there are level two mediators but not level two exposure variable, the
+level one exposure variable(s) will be aggregated at level two to form
+the level two exposure variable(s). The first item of the the <span class="math inline">\(f01km1\)</span>, <span class="math inline">\(f01km2\)</span> and <span class="math inline">\(f10km\)</span> is a matrix of two columns, where
+the first column indicates the column number of the mediator in <span class="math inline">\(m\)</span>. The second column indicates the column
+number of the exposure in <span class="math inline">\(x\)</span>. By the
+order of the rows of the first item, each of the rest items of <span class="math inline">\(f01km1, f01km2\)</span> and <span class="math inline">\(f10km\)</span> list the transformation functional
+expressions for the exposure (identified by column 2) in explaining each
+mediator (identified by column 1). In our example, level two mediator
+<span class="math inline">\(m2\)</span> is explained by the level two
+exposure <span class="math inline">\(x2\)</span> in the form of <span class="math inline">\(x2^2\)</span>. Therefore, we set the argument
+<code>f01km2=list(matrix(c(2,2),1,2),&quot;x^2&quot;)</code>.</p>
+<p>The following codes prepare for the data and perform the
+transformations. Note that the transformation functions can be set in
+different ways. Besides those in the example, we can also use the
+natural spline bases (e.g. <code>ns(x,df=5)</code>) and piecewise
+functions (e.g. <code>ifelse(x&gt;0,0,sqrt(x))</code>).</p>
+<div class="sourceCode" id="cb2"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb2-1"><a href="#cb2-1" tabindex="-1"></a>example1<span class="ot">&lt;-</span><span class="fu">data.org</span>(<span class="at">x=</span><span class="fu">cbind</span>(<span class="at">x1=</span>x1,<span class="at">x2=</span>x2), <span class="at">m=</span><span class="fu">cbind</span>(<span class="at">m1=</span>m1,<span class="at">m2=</span>m2), </span>
+<span id="cb2-2"><a href="#cb2-2" tabindex="-1"></a>                   <span class="at">f01y=</span><span class="fu">list</span>(<span class="dv">2</span>,<span class="fu">c</span>(<span class="st">&quot;x&quot;</span>,<span class="st">&quot;ifelse(x&gt;0,log(x+1),0)&quot;</span>)),</span>
+<span id="cb2-3"><a href="#cb2-3" tabindex="-1"></a>                   <span class="at">level=</span>level,</span>
+<span id="cb2-4"><a href="#cb2-4" tabindex="-1"></a>                   <span class="at">f01km2=</span><span class="fu">list</span>(<span class="fu">matrix</span>(<span class="fu">c</span>(<span class="dv">2</span>,<span class="dv">2</span>),<span class="dv">1</span>,<span class="dv">2</span>),<span class="st">&quot;x^2&quot;</span>)) </span></code></pre></div>
 </div>
 <div id="the-function-mlma-for-multilevel-mediation-analysis" class="section level2">
-<h2>The function <span class="math inline">\(mlma\)</span> for multilevel mediation analysis</h2>
-<p>The function <span class="math inline">\(mlma\)</span> can be executed based on the results from <span class="math inline">\(data.org\)</span> or on the original arguments of <span class="math inline">\(data.org\)</span>. In addition, the response variable needs to be set up by <span class="math inline">\(y\)</span>. If the response variable is categorical, <span class="math inline">\(yref\)</span> is used to specify the reference group. The <span class="math inline">\(random\)</span> argument is to set up the random effect part for the response variable and <span class="math inline">\(random.m1\)</span> is for the mediators.</p>
-<p>The argument <span class="math inline">\(covariates\)</span> includes the data frame of all covariates for the response variable and/or mediators. For the response variable, covariates are defined as those variables used to explain <span class="math inline">\(y\)</span>, but are not related or caused by the exposure variable(s). Arguments <span class="math inline">\(cy1\)</span> and <span class="math inline">\(cy2\)</span> specify the column numbers of level one and two covariates respectively in <span class="math inline">\(covariates\)</span>. <span class="math inline">\(cm\)</span> specifies the covariates for mediators.</p>
-<p>If the joint effect of a group of mediators are of interest, the group can be set up with the <span class="math inline">\(joint\)</span> argument. Finally, if users are interested in the medation effects on a new set of exposure and mediators. The new sets can also be set. Please read the menu of the package.</p>
-<div class="sourceCode" id="cb3"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a>mlma.e1<span class="ot">&lt;-</span><span class="fu">mlma</span>(<span class="at">y=</span>y,<span class="at">data1=</span>example1,<span class="at">intercept=</span>F)</span>
-<span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a>mlma.e1</span>
-<span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; Level 2 Third Variable Effects: </span></span>
-<span id="cb3-4"><a href="#cb3-4" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;      TE   DE m2.1   m1</span></span>
-<span id="cb3-5"><a href="#cb3-5" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; x2 0.76 0.62 0.02 0.11</span></span>
-<span id="cb3-6"><a href="#cb3-6" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; Level 1 Third Variable Effects: </span></span>
-<span id="cb3-7"><a href="#cb3-7" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;      TE  DE   m1</span></span>
-<span id="cb3-8"><a href="#cb3-8" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; x1 0.65 0.5 0.14</span></span></code></pre></div>
-<p>The result of mediation effect analysis shows the mediation effect from different levels. The direct effect, indirect effects and total effect are shown for each exposure-response pair of variables. For the above example, the level 1 total effect from <span class="math inline">\(x1\)</span> to <span class="math inline">\(y\)</span> is <span class="math inline">\(1.04\)</span>, of which direct effect is <span class="math inline">\(0.5\)</span>, indirect effect from <span class="math inline">\(m1\)</span> is <span class="math inline">\(0.54\)</span>. The level 2 total effect between <span class="math inline">\(x2\)</span> and <span class="math inline">\(y\)</span> is <span class="math inline">\(1.05\)</span>, in which the direct effect is <span class="math inline">\(0.62\)</span>, the indirect effect from <span class="math inline">\(m2\)</span> is <span class="math inline">\(0.01\)</span>, and from <span class="math inline">\(m1\)</span> is <span class="math inline">\(0.43\)</span>.</p>
+<h2>The function <span class="math inline">\(mlma\)</span> for
+multilevel mediation analysis</h2>
+<p>The function <span class="math inline">\(mlma\)</span> can be
+executed based on the results from <span class="math inline">\(data.org\)</span> or on the original arguments of
+<span class="math inline">\(data.org\)</span>. In addition, the response
+variable needs to be set up by <span class="math inline">\(y\)</span>.
+If the response variable is categorical, <span class="math inline">\(yref\)</span> is used to specify the reference
+group. The <span class="math inline">\(random\)</span> argument is to
+set up the random effect part for the response variable and <span class="math inline">\(random.m1\)</span> is for the mediators.</p>
+<p>The argument <span class="math inline">\(covariates\)</span> includes
+the data frame of all covariates for the response variable and/or
+mediators. For the response variable, covariates are defined as those
+variables used to explain <span class="math inline">\(y\)</span>, but
+are not related or caused by the exposure variable(s). Arguments <span class="math inline">\(cy1\)</span> and <span class="math inline">\(cy2\)</span> specify the column numbers of level
+one and two covariates respectively in <span class="math inline">\(covariates\)</span>. <span class="math inline">\(cm\)</span> specifies the covariates for
+mediators.</p>
+<p>If the joint effect of a group of mediators are of interest, the
+group can be set up with the <span class="math inline">\(joint\)</span>
+argument. Finally, if users are interested in the medation effects on a
+new set of exposure and mediators. The new sets can also be set. Please
+read the menu of the package.</p>
+<div class="sourceCode" id="cb3"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb3-1"><a href="#cb3-1" tabindex="-1"></a>mlma.e1<span class="ot">&lt;-</span><span class="fu">mlma</span>(<span class="at">y=</span>y,<span class="at">data1=</span>example1,<span class="at">intercept=</span>F)</span>
+<span id="cb3-2"><a href="#cb3-2" tabindex="-1"></a>mlma.e1</span>
+<span id="cb3-3"><a href="#cb3-3" tabindex="-1"></a><span class="co">#&gt; Level 2 Third Variable Effects: </span></span>
+<span id="cb3-4"><a href="#cb3-4" tabindex="-1"></a><span class="co">#&gt;      TE   DE m2.1   m1</span></span>
+<span id="cb3-5"><a href="#cb3-5" tabindex="-1"></a><span class="co">#&gt; x2 0.76 0.62 0.02 0.11</span></span>
+<span id="cb3-6"><a href="#cb3-6" tabindex="-1"></a><span class="co">#&gt; Level 1 Third Variable Effects: </span></span>
+<span id="cb3-7"><a href="#cb3-7" tabindex="-1"></a><span class="co">#&gt;      TE  DE   m1</span></span>
+<span id="cb3-8"><a href="#cb3-8" tabindex="-1"></a><span class="co">#&gt; x1 0.65 0.5 0.14</span></span></code></pre></div>
+<p>The result of mediation effect analysis shows the mediation effect
+from different levels. The direct effect, indirect effects and total
+effect are shown for each exposure-response pair of variables. For the
+above example, the level 1 total effect from <span class="math inline">\(x1\)</span> to <span class="math inline">\(y\)</span> is <span class="math inline">\(1.04\)</span>, of which direct effect is <span class="math inline">\(0.5\)</span>, indirect effect from <span class="math inline">\(m1\)</span> is <span class="math inline">\(0.54\)</span>. The level 2 total effect between
+<span class="math inline">\(x2\)</span> and <span class="math inline">\(y\)</span> is <span class="math inline">\(1.05\)</span>, in which the direct effect is <span class="math inline">\(0.62\)</span>, the indirect effect from <span class="math inline">\(m2\)</span> is <span class="math inline">\(0.01\)</span>, and from <span class="math inline">\(m1\)</span> is <span class="math inline">\(0.43\)</span>.</p>
 <div id="the-summary-function-for-multilevel-mediaiton-analysis" class="section level3">
-<h3>The <span class="math inline">\(summary\)</span> function for multilevel mediaiton analysis</h3>
-<p>The <span class="math inline">\(summary\)</span> function provides the ANOVA tests of the exposure variables and mediators in the full model to estimate the response variable. It also provides the ANOVA tests of the exposure variable(s) in predicting each mediator. Using the results, users can decide which variables should be included as mediators and which ones should be used as covariates and rerun the multilevel mediation analysis.</p>
-<div class="sourceCode" id="cb4"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a><span class="fu">summary</span>(mlma.e1)</span>
-<span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; 1. Anova on the Full Model:</span></span>
-<span id="cb4-3"><a href="#cb4-3" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; Analysis of Deviance Table (Type III Wald chisquare tests)</span></span>
-<span id="cb4-4"><a href="#cb4-4" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; </span></span>
-<span id="cb4-5"><a href="#cb4-5" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; Response: y</span></span>
-<span id="cb4-6"><a href="#cb4-6" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;       Chisq Df Pr(&gt;Chisq)   </span></span>
-<span id="cb4-7"><a href="#cb4-7" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; x1   1.3500  1   0.245285   </span></span>
-<span id="cb4-8"><a href="#cb4-8" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; x2.1 0.3080  1   0.578897   </span></span>
-<span id="cb4-9"><a href="#cb4-9" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; x2.2 0.0998  1   0.752076   </span></span>
-<span id="cb4-10"><a href="#cb4-10" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; m2.2 0.0403  1   0.840988   </span></span>
-<span id="cb4-11"><a href="#cb4-11" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; m1   7.5740  1   0.005922 **</span></span>
-<span id="cb4-12"><a href="#cb4-12" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; ---</span></span>
-<span id="cb4-13"><a href="#cb4-13" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; Signif. codes:  0 &#39;***&#39; 0.001 &#39;**&#39; 0.01 &#39;*&#39; 0.05 &#39;.&#39; 0.1 &#39; &#39; 1</span></span>
-<span id="cb4-14"><a href="#cb4-14" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; </span></span>
-<span id="cb4-15"><a href="#cb4-15" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; </span></span>
-<span id="cb4-16"><a href="#cb4-16" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; 2. Anova on models for Level 1 mediators:</span></span>
-<span id="cb4-17"><a href="#cb4-17" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; $m1</span></span>
-<span id="cb4-18"><a href="#cb4-18" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; Analysis of Deviance Table (Type III Wald chisquare tests)</span></span>
-<span id="cb4-19"><a href="#cb4-19" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; </span></span>
-<span id="cb4-20"><a href="#cb4-20" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; Response: y</span></span>
-<span id="cb4-21"><a href="#cb4-21" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;      Chisq Df Pr(&gt;Chisq)    </span></span>
-<span id="cb4-22"><a href="#cb4-22" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; x2  51.817  1  6.092e-13 ***</span></span>
-<span id="cb4-23"><a href="#cb4-23" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; x1 111.038  1  &lt; 2.2e-16 ***</span></span>
-<span id="cb4-24"><a href="#cb4-24" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; ---</span></span>
-<span id="cb4-25"><a href="#cb4-25" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; Signif. codes:  0 &#39;***&#39; 0.001 &#39;**&#39; 0.01 &#39;*&#39; 0.05 &#39;.&#39; 0.1 &#39; &#39; 1</span></span>
-<span id="cb4-26"><a href="#cb4-26" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; </span></span>
-<span id="cb4-27"><a href="#cb4-27" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; </span></span>
-<span id="cb4-28"><a href="#cb4-28" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; </span></span>
-<span id="cb4-29"><a href="#cb4-29" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; 3. Anova on models for Level 2 mediators:</span></span>
-<span id="cb4-30"><a href="#cb4-30" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; $m2</span></span>
-<span id="cb4-31"><a href="#cb4-31" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; Analysis of Deviance Table (Type III tests)</span></span>
-<span id="cb4-32"><a href="#cb4-32" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; </span></span>
-<span id="cb4-33"><a href="#cb4-33" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; Response: y</span></span>
-<span id="cb4-34"><a href="#cb4-34" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;        LR Chisq Df Pr(&gt;Chisq)   </span></span>
-<span id="cb4-35"><a href="#cb4-35" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; x2.2.1   9.5608  1   0.001988 **</span></span>
-<span id="cb4-36"><a href="#cb4-36" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; ---</span></span>
-<span id="cb4-37"><a href="#cb4-37" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; Signif. codes:  0 &#39;***&#39; 0.001 &#39;**&#39; 0.01 &#39;*&#39; 0.05 &#39;.&#39; 0.1 &#39; &#39; 1</span></span></code></pre></div>
-<p>To check the actual coefficients for each variable in the full model or in the model to predict level one or level two mediators, we can check the results from <span class="math inline">\(mlma\)</span> directly.</p>
-<div class="sourceCode" id="cb5"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a>mlma.e1<span class="sc">$</span>f1   <span class="co">#the full model</span></span>
-<span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; Linear mixed model fit by REML [&#39;lmerMod&#39;]</span></span>
-<span id="cb5-3"><a href="#cb5-3" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; Formula: y ~ x1 + x2.1 + x2.2 + m2.2 + m1 - 1 + (1 | level)</span></span>
-<span id="cb5-4"><a href="#cb5-4" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;    Data: data.frame(temp.data)</span></span>
-<span id="cb5-5"><a href="#cb5-5" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; REML criterion at convergence: 3660.149</span></span>
-<span id="cb5-6"><a href="#cb5-6" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; Random effects:</span></span>
-<span id="cb5-7"><a href="#cb5-7" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;  Groups   Name        Std.Dev.</span></span>
-<span id="cb5-8"><a href="#cb5-8" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;  level    (Intercept) 1.182   </span></span>
-<span id="cb5-9"><a href="#cb5-9" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;  Residual             5.040   </span></span>
-<span id="cb5-10"><a href="#cb5-10" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; Number of obs: 600, groups:  level, 30</span></span>
-<span id="cb5-11"><a href="#cb5-11" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; Fixed Effects:</span></span>
-<span id="cb5-12"><a href="#cb5-12" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;     x1    x2.1    x2.2    m2.2      m1  </span></span>
-<span id="cb5-13"><a href="#cb5-13" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; 0.5021  0.4120  0.5781  0.1328  0.4979</span></span>
-<span id="cb5-14"><a href="#cb5-14" aria-hidden="true" tabindex="-1"></a>mlma.e1<span class="sc">$</span>fm1  <span class="co">#models for level 1 mediators</span></span>
-<span id="cb5-15"><a href="#cb5-15" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; [[1]]</span></span>
-<span id="cb5-16"><a href="#cb5-16" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; [1] 1</span></span>
-<span id="cb5-17"><a href="#cb5-17" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; </span></span>
-<span id="cb5-18"><a href="#cb5-18" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; [[2]]</span></span>
-<span id="cb5-19"><a href="#cb5-19" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; Linear mixed model fit by REML [&#39;lmerMod&#39;]</span></span>
-<span id="cb5-20"><a href="#cb5-20" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; Formula: y ~ x2 + x1 - 1 + (1 | level)</span></span>
-<span id="cb5-21"><a href="#cb5-21" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;    Data: data.frame(temp.data)</span></span>
-<span id="cb5-22"><a href="#cb5-22" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; REML criterion at convergence: 1863.169</span></span>
-<span id="cb5-23"><a href="#cb5-23" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; Random effects:</span></span>
-<span id="cb5-24"><a href="#cb5-24" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;  Groups   Name        Std.Dev.</span></span>
-<span id="cb5-25"><a href="#cb5-25" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;  level    (Intercept) 0.5675  </span></span>
-<span id="cb5-26"><a href="#cb5-26" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;  Residual             1.0878  </span></span>
-<span id="cb5-27"><a href="#cb5-27" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; Number of obs: 600, groups:  level, 30</span></span>
-<span id="cb5-28"><a href="#cb5-28" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; Fixed Effects:</span></span>
-<span id="cb5-29"><a href="#cb5-29" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;     x2      x1  </span></span>
-<span id="cb5-30"><a href="#cb5-30" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; 0.8537  0.8955</span></span>
-<span id="cb5-31"><a href="#cb5-31" aria-hidden="true" tabindex="-1"></a>mlma.e1<span class="sc">$</span>fm2  <span class="co">#models for level 2 mediators</span></span>
-<span id="cb5-32"><a href="#cb5-32" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; [[1]]</span></span>
-<span id="cb5-33"><a href="#cb5-33" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; [1] 2</span></span>
-<span id="cb5-34"><a href="#cb5-34" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; </span></span>
-<span id="cb5-35"><a href="#cb5-35" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; [[2]]</span></span>
-<span id="cb5-36"><a href="#cb5-36" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; </span></span>
-<span id="cb5-37"><a href="#cb5-37" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; Call:  glm(formula = frml.m, family = binomial(link = &quot;logit&quot;), data = data.frame(temp.data))</span></span>
-<span id="cb5-38"><a href="#cb5-38" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; </span></span>
-<span id="cb5-39"><a href="#cb5-39" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; Coefficients:</span></span>
-<span id="cb5-40"><a href="#cb5-40" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; x2.2.1  </span></span>
-<span id="cb5-41"><a href="#cb5-41" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;  1.277  </span></span>
-<span id="cb5-42"><a href="#cb5-42" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; </span></span>
-<span id="cb5-43"><a href="#cb5-43" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; Degrees of Freedom: 30 Total (i.e. Null);  29 Residual</span></span>
-<span id="cb5-44"><a href="#cb5-44" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; Null Deviance:       41.59 </span></span>
-<span id="cb5-45"><a href="#cb5-45" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; Residual Deviance: 32.03     AIC: 34.03</span></span></code></pre></div>
+<h3>The <span class="math inline">\(summary\)</span> function for
+multilevel mediaiton analysis</h3>
+<p>The <span class="math inline">\(summary\)</span> function provides
+the ANOVA tests of the exposure variables and mediators in the full
+model to estimate the response variable. It also provides the ANOVA
+tests of the exposure variable(s) in predicting each mediator. Using the
+results, users can decide which variables should be included as
+mediators and which ones should be used as covariates and rerun the
+multilevel mediation analysis.</p>
+<div class="sourceCode" id="cb4"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb4-1"><a href="#cb4-1" tabindex="-1"></a><span class="fu">summary</span>(mlma.e1)</span>
+<span id="cb4-2"><a href="#cb4-2" tabindex="-1"></a><span class="co">#&gt; 1. Anova on the Full Model:</span></span>
+<span id="cb4-3"><a href="#cb4-3" tabindex="-1"></a><span class="co">#&gt; Analysis of Deviance Table (Type III Wald chisquare tests)</span></span>
+<span id="cb4-4"><a href="#cb4-4" tabindex="-1"></a><span class="co">#&gt; </span></span>
+<span id="cb4-5"><a href="#cb4-5" tabindex="-1"></a><span class="co">#&gt; Response: y</span></span>
+<span id="cb4-6"><a href="#cb4-6" tabindex="-1"></a><span class="co">#&gt;       Chisq Df Pr(&gt;Chisq)   </span></span>
+<span id="cb4-7"><a href="#cb4-7" tabindex="-1"></a><span class="co">#&gt; x1   1.3500  1   0.245285   </span></span>
+<span id="cb4-8"><a href="#cb4-8" tabindex="-1"></a><span class="co">#&gt; x2.1 0.3080  1   0.578897   </span></span>
+<span id="cb4-9"><a href="#cb4-9" tabindex="-1"></a><span class="co">#&gt; x2.2 0.0998  1   0.752076   </span></span>
+<span id="cb4-10"><a href="#cb4-10" tabindex="-1"></a><span class="co">#&gt; m2.1 0.0403  1   0.840988   </span></span>
+<span id="cb4-11"><a href="#cb4-11" tabindex="-1"></a><span class="co">#&gt; m1   7.5740  1   0.005922 **</span></span>
+<span id="cb4-12"><a href="#cb4-12" tabindex="-1"></a><span class="co">#&gt; ---</span></span>
+<span id="cb4-13"><a href="#cb4-13" tabindex="-1"></a><span class="co">#&gt; Signif. codes:  0 &#39;***&#39; 0.001 &#39;**&#39; 0.01 &#39;*&#39; 0.05 &#39;.&#39; 0.1 &#39; &#39; 1</span></span>
+<span id="cb4-14"><a href="#cb4-14" tabindex="-1"></a><span class="co">#&gt; </span></span>
+<span id="cb4-15"><a href="#cb4-15" tabindex="-1"></a><span class="co">#&gt; </span></span>
+<span id="cb4-16"><a href="#cb4-16" tabindex="-1"></a><span class="co">#&gt; 2. Anova on models for Level 1 mediators:</span></span>
+<span id="cb4-17"><a href="#cb4-17" tabindex="-1"></a><span class="co">#&gt; $m1</span></span>
+<span id="cb4-18"><a href="#cb4-18" tabindex="-1"></a><span class="co">#&gt; Analysis of Deviance Table (Type III Wald chisquare tests)</span></span>
+<span id="cb4-19"><a href="#cb4-19" tabindex="-1"></a><span class="co">#&gt; </span></span>
+<span id="cb4-20"><a href="#cb4-20" tabindex="-1"></a><span class="co">#&gt; Response: y</span></span>
+<span id="cb4-21"><a href="#cb4-21" tabindex="-1"></a><span class="co">#&gt;      Chisq Df Pr(&gt;Chisq)    </span></span>
+<span id="cb4-22"><a href="#cb4-22" tabindex="-1"></a><span class="co">#&gt; x2  51.817  1  6.092e-13 ***</span></span>
+<span id="cb4-23"><a href="#cb4-23" tabindex="-1"></a><span class="co">#&gt; x1 111.038  1  &lt; 2.2e-16 ***</span></span>
+<span id="cb4-24"><a href="#cb4-24" tabindex="-1"></a><span class="co">#&gt; ---</span></span>
+<span id="cb4-25"><a href="#cb4-25" tabindex="-1"></a><span class="co">#&gt; Signif. codes:  0 &#39;***&#39; 0.001 &#39;**&#39; 0.01 &#39;*&#39; 0.05 &#39;.&#39; 0.1 &#39; &#39; 1</span></span>
+<span id="cb4-26"><a href="#cb4-26" tabindex="-1"></a><span class="co">#&gt; </span></span>
+<span id="cb4-27"><a href="#cb4-27" tabindex="-1"></a><span class="co">#&gt; </span></span>
+<span id="cb4-28"><a href="#cb4-28" tabindex="-1"></a><span class="co">#&gt; </span></span>
+<span id="cb4-29"><a href="#cb4-29" tabindex="-1"></a><span class="co">#&gt; 3. Anova on models for Level 2 mediators:</span></span>
+<span id="cb4-30"><a href="#cb4-30" tabindex="-1"></a><span class="co">#&gt; $m2</span></span>
+<span id="cb4-31"><a href="#cb4-31" tabindex="-1"></a><span class="co">#&gt; Analysis of Deviance Table (Type III tests)</span></span>
+<span id="cb4-32"><a href="#cb4-32" tabindex="-1"></a><span class="co">#&gt; </span></span>
+<span id="cb4-33"><a href="#cb4-33" tabindex="-1"></a><span class="co">#&gt; Response: y</span></span>
+<span id="cb4-34"><a href="#cb4-34" tabindex="-1"></a><span class="co">#&gt;        LR Chisq Df Pr(&gt;Chisq)   </span></span>
+<span id="cb4-35"><a href="#cb4-35" tabindex="-1"></a><span class="co">#&gt; x2.2.1   9.5608  1   0.001988 **</span></span>
+<span id="cb4-36"><a href="#cb4-36" tabindex="-1"></a><span class="co">#&gt; ---</span></span>
+<span id="cb4-37"><a href="#cb4-37" tabindex="-1"></a><span class="co">#&gt; Signif. codes:  0 &#39;***&#39; 0.001 &#39;**&#39; 0.01 &#39;*&#39; 0.05 &#39;.&#39; 0.1 &#39; &#39; 1</span></span></code></pre></div>
+<p>To check the actual coefficients for each variable in the full model
+or in the model to predict level one or level two mediators, we can
+check the results from <span class="math inline">\(mlma\)</span>
+directly.</p>
+<div class="sourceCode" id="cb5"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb5-1"><a href="#cb5-1" tabindex="-1"></a>mlma.e1<span class="sc">$</span>f1   <span class="co">#the full model</span></span>
+<span id="cb5-2"><a href="#cb5-2" tabindex="-1"></a><span class="co">#&gt; Linear mixed model fit by REML [&#39;lmerMod&#39;]</span></span>
+<span id="cb5-3"><a href="#cb5-3" tabindex="-1"></a><span class="co">#&gt; Formula: y ~ x1 + x2.1 + x2.2 + m2.1 + m1 - 1 + (1 | level)</span></span>
+<span id="cb5-4"><a href="#cb5-4" tabindex="-1"></a><span class="co">#&gt;    Data: data.frame(temp.data)</span></span>
+<span id="cb5-5"><a href="#cb5-5" tabindex="-1"></a><span class="co">#&gt; REML criterion at convergence: 3660.149</span></span>
+<span id="cb5-6"><a href="#cb5-6" tabindex="-1"></a><span class="co">#&gt; Random effects:</span></span>
+<span id="cb5-7"><a href="#cb5-7" tabindex="-1"></a><span class="co">#&gt;  Groups   Name        Std.Dev.</span></span>
+<span id="cb5-8"><a href="#cb5-8" tabindex="-1"></a><span class="co">#&gt;  level    (Intercept) 1.182   </span></span>
+<span id="cb5-9"><a href="#cb5-9" tabindex="-1"></a><span class="co">#&gt;  Residual             5.040   </span></span>
+<span id="cb5-10"><a href="#cb5-10" tabindex="-1"></a><span class="co">#&gt; Number of obs: 600, groups:  level, 30</span></span>
+<span id="cb5-11"><a href="#cb5-11" tabindex="-1"></a><span class="co">#&gt; Fixed Effects:</span></span>
+<span id="cb5-12"><a href="#cb5-12" tabindex="-1"></a><span class="co">#&gt;     x1    x2.1    x2.2    m2.1      m1  </span></span>
+<span id="cb5-13"><a href="#cb5-13" tabindex="-1"></a><span class="co">#&gt; 0.5021  0.4120  0.5781  0.1328  0.4979</span></span>
+<span id="cb5-14"><a href="#cb5-14" tabindex="-1"></a>mlma.e1<span class="sc">$</span>fm1  <span class="co">#models for level 1 mediators</span></span>
+<span id="cb5-15"><a href="#cb5-15" tabindex="-1"></a><span class="co">#&gt; [[1]]</span></span>
+<span id="cb5-16"><a href="#cb5-16" tabindex="-1"></a><span class="co">#&gt; [1] 1</span></span>
+<span id="cb5-17"><a href="#cb5-17" tabindex="-1"></a><span class="co">#&gt; </span></span>
+<span id="cb5-18"><a href="#cb5-18" tabindex="-1"></a><span class="co">#&gt; [[2]]</span></span>
+<span id="cb5-19"><a href="#cb5-19" tabindex="-1"></a><span class="co">#&gt; Linear mixed model fit by REML [&#39;lmerMod&#39;]</span></span>
+<span id="cb5-20"><a href="#cb5-20" tabindex="-1"></a><span class="co">#&gt; Formula: y ~ x2 + x1 - 1 + (1 | level)</span></span>
+<span id="cb5-21"><a href="#cb5-21" tabindex="-1"></a><span class="co">#&gt;    Data: data.frame(temp.data)</span></span>
+<span id="cb5-22"><a href="#cb5-22" tabindex="-1"></a><span class="co">#&gt; REML criterion at convergence: 1863.169</span></span>
+<span id="cb5-23"><a href="#cb5-23" tabindex="-1"></a><span class="co">#&gt; Random effects:</span></span>
+<span id="cb5-24"><a href="#cb5-24" tabindex="-1"></a><span class="co">#&gt;  Groups   Name        Std.Dev.</span></span>
+<span id="cb5-25"><a href="#cb5-25" tabindex="-1"></a><span class="co">#&gt;  level    (Intercept) 0.5675  </span></span>
+<span id="cb5-26"><a href="#cb5-26" tabindex="-1"></a><span class="co">#&gt;  Residual             1.0878  </span></span>
+<span id="cb5-27"><a href="#cb5-27" tabindex="-1"></a><span class="co">#&gt; Number of obs: 600, groups:  level, 30</span></span>
+<span id="cb5-28"><a href="#cb5-28" tabindex="-1"></a><span class="co">#&gt; Fixed Effects:</span></span>
+<span id="cb5-29"><a href="#cb5-29" tabindex="-1"></a><span class="co">#&gt;     x2      x1  </span></span>
+<span id="cb5-30"><a href="#cb5-30" tabindex="-1"></a><span class="co">#&gt; 0.8537  0.8955</span></span>
+<span id="cb5-31"><a href="#cb5-31" tabindex="-1"></a>mlma.e1<span class="sc">$</span>fm2  <span class="co">#models for level 2 mediators</span></span>
+<span id="cb5-32"><a href="#cb5-32" tabindex="-1"></a><span class="co">#&gt; [[1]]</span></span>
+<span id="cb5-33"><a href="#cb5-33" tabindex="-1"></a><span class="co">#&gt; [1] 2</span></span>
+<span id="cb5-34"><a href="#cb5-34" tabindex="-1"></a><span class="co">#&gt; </span></span>
+<span id="cb5-35"><a href="#cb5-35" tabindex="-1"></a><span class="co">#&gt; [[2]]</span></span>
+<span id="cb5-36"><a href="#cb5-36" tabindex="-1"></a><span class="co">#&gt; </span></span>
+<span id="cb5-37"><a href="#cb5-37" tabindex="-1"></a><span class="co">#&gt; Call:  glm(formula = frml.m, family = binomial(link = &quot;logit&quot;), data = data.frame(temp.data))</span></span>
+<span id="cb5-38"><a href="#cb5-38" tabindex="-1"></a><span class="co">#&gt; </span></span>
+<span id="cb5-39"><a href="#cb5-39" tabindex="-1"></a><span class="co">#&gt; Coefficients:</span></span>
+<span id="cb5-40"><a href="#cb5-40" tabindex="-1"></a><span class="co">#&gt; x2.2.1  </span></span>
+<span id="cb5-41"><a href="#cb5-41" tabindex="-1"></a><span class="co">#&gt;  1.277  </span></span>
+<span id="cb5-42"><a href="#cb5-42" tabindex="-1"></a><span class="co">#&gt; </span></span>
+<span id="cb5-43"><a href="#cb5-43" tabindex="-1"></a><span class="co">#&gt; Degrees of Freedom: 30 Total (i.e. Null);  29 Residual</span></span>
+<span id="cb5-44"><a href="#cb5-44" tabindex="-1"></a><span class="co">#&gt; Null Deviance:       41.59 </span></span>
+<span id="cb5-45"><a href="#cb5-45" tabindex="-1"></a><span class="co">#&gt; Residual Deviance: 32.03     AIC: 34.03</span></span></code></pre></div>
 </div>
 <div id="the-plot-function-for-the-mlma-object" class="section level3">
 <h3>The plot function for the mlma object</h3>
-<p>The <span class="math inline">\(plot\)</span> function help depict the directions of mediaiton effects. Without specifying the mediator (by <span class="math inline">\(var\)</span>), the <span class="math inline">\(plot\)</span> function plots the overall medation effects.</p>
-<div class="sourceCode" id="cb6"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a><span class="fu">plot</span>(mlma.e1)</span>
-<span id="cb6-2"><a href="#cb6-2" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; Error in plot.new(): figure margins too large</span></span></code></pre></div>
-<p>By specifying the mediator, the <span class="math inline">\(plot\)</span> function shows the indirect effect of the mediator, and its marginal relationship with the response variable and with the exposure variable at each level.</p>
-<div class="sourceCode" id="cb7"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a><span class="fu">plot</span>(mlma.e1,<span class="at">var=</span><span class="st">&quot;m1&quot;</span>)</span>
-<span id="cb7-2"><a href="#cb7-2" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; Error in plot.new(): figure margins too large</span></span>
-<span id="cb7-3"><a href="#cb7-3" aria-hidden="true" tabindex="-1"></a><span class="fu">plot</span>(mlma.e1,<span class="at">var=</span><span class="st">&quot;m2&quot;</span>)</span>
-<span id="cb7-4"><a href="#cb7-4" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; Error in plot.new(): figure margins too large</span></span></code></pre></div>
+<p>The <span class="math inline">\(plot\)</span> function help depict
+the directions of mediaiton effects. Without specifying the mediator (by
+<span class="math inline">\(var\)</span>), the <span class="math inline">\(plot\)</span> function plots the overall medation
+effects.</p>
+<div class="sourceCode" id="cb6"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb6-1"><a href="#cb6-1" tabindex="-1"></a><span class="fu">plot</span>(mlma.e1)</span>
+<span id="cb6-2"><a href="#cb6-2" tabindex="-1"></a><span class="co">#&gt; Error in plot.new(): figure margins too large</span></span></code></pre></div>
+<p>By specifying the mediator, the <span class="math inline">\(plot\)</span> function shows the indirect effect
+of the mediator, and its marginal relationship with the response
+variable and with the exposure variable at each level.</p>
+<div class="sourceCode" id="cb7"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb7-1"><a href="#cb7-1" tabindex="-1"></a><span class="fu">plot</span>(mlma.e1,<span class="at">var=</span><span class="st">&quot;m1&quot;</span>)</span>
+<span id="cb7-2"><a href="#cb7-2" tabindex="-1"></a><span class="co">#&gt; Error in plot.new(): figure margins too large</span></span>
+<span id="cb7-3"><a href="#cb7-3" tabindex="-1"></a><span class="fu">plot</span>(mlma.e1,<span class="at">var=</span><span class="st">&quot;m2&quot;</span>)</span>
+<span id="cb7-4"><a href="#cb7-4" tabindex="-1"></a><span class="co">#&gt; Error in plot.new(): figure margins too large</span></span></code></pre></div>
 </div>
 </div>
 <div id="make-inferences-on-multilevel-mediation-effect" class="section level2">
 <h2>Make Inferences on Multilevel Mediation effect</h2>
-<p>Finally, the <span class="math inline">\(boot.mlma\)</span> function uses the bootstrap method to estimate mediation effects and the estimated variances and confidence intervals. Again, the analysis can be built on the results from <span class="math inline">\(data.org\)</span>. The default number of bootstrap samples is <span class="math inline">\(100\)</span>, which can be changed to other desired numbers. The <span class="math inline">\(summary\)</span> function for the output of <span class="math inline">\(boot.mlma\)</span> gives the inference results for all mediation effects. Two confidence intervals are built up for the estimated mediation effects. (lwbd, upbd) is based on the normal approximation and (lwbd_quan, upbd.quan) is built by the quantiles of the bootstrap results.</p>
-<div class="sourceCode" id="cb8"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true" tabindex="-1"></a>boot.e1<span class="ot">&lt;-</span><span class="fu">boot.mlma</span>(<span class="at">y=</span>y,<span class="at">data1=</span>example1,<span class="at">echo=</span>F,<span class="at">intercept =</span> F)</span>
-<span id="cb8-2"><a href="#cb8-2" aria-hidden="true" tabindex="-1"></a><span class="fu">summary</span>(boot.e1)</span>
-<span id="cb8-3"><a href="#cb8-3" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; MLMA Analysis: Estimated Effects at level 1:</span></span>
-<span id="cb8-4"><a href="#cb8-4" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; $x1</span></span>
-<span id="cb8-5"><a href="#cb8-5" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;                te      de      m1</span></span>
-<span id="cb8-6"><a href="#cb8-6" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; est        0.6468  0.5021  0.1447</span></span>
-<span id="cb8-7"><a href="#cb8-7" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; mean       0.5176  0.4909  0.0268</span></span>
-<span id="cb8-8"><a href="#cb8-8" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; sd         0.3691  0.3782  0.0975</span></span>
-<span id="cb8-9"><a href="#cb8-9" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; upbd       1.2410  1.2322  0.2179</span></span>
-<span id="cb8-10"><a href="#cb8-10" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; lwbd      -0.2058 -0.2505 -0.1644</span></span>
-<span id="cb8-11"><a href="#cb8-11" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; upbd.quan  1.1380  1.1508  0.2597</span></span>
-<span id="cb8-12"><a href="#cb8-12" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; lwbd.quan -0.2448 -0.2705 -0.1395</span></span>
-<span id="cb8-13"><a href="#cb8-13" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; </span></span>
-<span id="cb8-14"><a href="#cb8-14" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; MLMA Analysis: Estimated Effects at level 2:</span></span>
-<span id="cb8-15"><a href="#cb8-15" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; $x2</span></span>
-<span id="cb8-16"><a href="#cb8-16" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;                te     de   m2.1      m1</span></span>
-<span id="cb8-17"><a href="#cb8-17" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; est        0.7554 0.6183 0.0238  0.1133</span></span>
-<span id="cb8-18"><a href="#cb8-18" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; mean       0.7611 0.6574 0.0238  0.0798</span></span>
-<span id="cb8-19"><a href="#cb8-19" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; sd         0.4362 0.2847 0.0084  0.3579</span></span>
-<span id="cb8-20"><a href="#cb8-20" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; upbd       1.6159 1.2155 0.0403  0.7813</span></span>
-<span id="cb8-21"><a href="#cb8-21" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; lwbd      -0.0938 0.0993 0.0074 -0.6216</span></span>
-<span id="cb8-22"><a href="#cb8-22" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; upbd.quan  1.5272 1.2840 0.0370  0.7615</span></span>
-<span id="cb8-23"><a href="#cb8-23" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; lwbd.quan  0.0240 0.1685 0.0093 -0.6276</span></span></code></pre></div>
-<p>The <span class="math inline">\(plot\)</span> function for the <span class="math inline">\(boot.mlma\)</span> objects works similarly for the <span class="math inline">\(mlma\)</span> objects but confidence intervals for estimations are added.</p>
-<div class="sourceCode" id="cb9"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true" tabindex="-1"></a><span class="fu">plot</span>(boot.e1)</span>
-<span id="cb9-2"><a href="#cb9-2" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; Error in plot.new(): figure margins too large</span></span>
-<span id="cb9-3"><a href="#cb9-3" aria-hidden="true" tabindex="-1"></a><span class="fu">plot</span>(boot.e1,<span class="at">var=</span><span class="st">&quot;m1&quot;</span>)</span>
-<span id="cb9-4"><a href="#cb9-4" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; Error in plot.new(): figure margins too large</span></span>
-<span id="cb9-5"><a href="#cb9-5" aria-hidden="true" tabindex="-1"></a><span class="fu">plot</span>(boot.e1,<span class="at">var=</span><span class="st">&quot;m2&quot;</span>)</span>
-<span id="cb9-6"><a href="#cb9-6" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; Error in plot.new(): figure margins too large</span></span></code></pre></div>
+<p>Finally, the <span class="math inline">\(boot.mlma\)</span> function
+uses the bootstrap method to estimate mediation effects and the
+estimated variances and confidence intervals. Again, the analysis can be
+built on the results from <span class="math inline">\(data.org\)</span>.
+The default number of bootstrap samples is <span class="math inline">\(100\)</span>, which can be changed to other
+desired numbers. The <span class="math inline">\(summary\)</span>
+function for the output of <span class="math inline">\(boot.mlma\)</span> gives the inference results for
+all mediation effects. Two confidence intervals are built up for the
+estimated mediation effects. (lwbd, upbd) is based on the normal
+approximation and (lwbd_quan, upbd.quan) is built by the quantiles of
+the bootstrap results.</p>
+<div class="sourceCode" id="cb8"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb8-1"><a href="#cb8-1" tabindex="-1"></a>boot.e1<span class="ot">&lt;-</span><span class="fu">boot.mlma</span>(<span class="at">y=</span>y,<span class="at">data1=</span>example1,<span class="at">echo=</span>F,<span class="at">intercept =</span> F)</span>
+<span id="cb8-2"><a href="#cb8-2" tabindex="-1"></a><span class="fu">summary</span>(boot.e1)</span>
+<span id="cb8-3"><a href="#cb8-3" tabindex="-1"></a><span class="co">#&gt; MLMA Analysis: Estimated Effects at level 1:</span></span>
+<span id="cb8-4"><a href="#cb8-4" tabindex="-1"></a><span class="co">#&gt; $x1</span></span>
+<span id="cb8-5"><a href="#cb8-5" tabindex="-1"></a><span class="co">#&gt;                te      de      m1</span></span>
+<span id="cb8-6"><a href="#cb8-6" tabindex="-1"></a><span class="co">#&gt; est        0.6468  0.5021  0.1447</span></span>
+<span id="cb8-7"><a href="#cb8-7" tabindex="-1"></a><span class="co">#&gt; mean       0.5176  0.4909  0.0268</span></span>
+<span id="cb8-8"><a href="#cb8-8" tabindex="-1"></a><span class="co">#&gt; sd         0.3691  0.3782  0.0975</span></span>
+<span id="cb8-9"><a href="#cb8-9" tabindex="-1"></a><span class="co">#&gt; upbd       1.2410  1.2322  0.2179</span></span>
+<span id="cb8-10"><a href="#cb8-10" tabindex="-1"></a><span class="co">#&gt; lwbd      -0.2058 -0.2505 -0.1644</span></span>
+<span id="cb8-11"><a href="#cb8-11" tabindex="-1"></a><span class="co">#&gt; upbd.quan  1.1380  1.1508  0.2597</span></span>
+<span id="cb8-12"><a href="#cb8-12" tabindex="-1"></a><span class="co">#&gt; lwbd.quan -0.2448 -0.2705 -0.1395</span></span>
+<span id="cb8-13"><a href="#cb8-13" tabindex="-1"></a><span class="co">#&gt; </span></span>
+<span id="cb8-14"><a href="#cb8-14" tabindex="-1"></a><span class="co">#&gt; MLMA Analysis: Estimated Effects at level 2:</span></span>
+<span id="cb8-15"><a href="#cb8-15" tabindex="-1"></a><span class="co">#&gt; $x2</span></span>
+<span id="cb8-16"><a href="#cb8-16" tabindex="-1"></a><span class="co">#&gt;                te     de   m2.1      m1</span></span>
+<span id="cb8-17"><a href="#cb8-17" tabindex="-1"></a><span class="co">#&gt; est        0.7554 0.6183 0.0238  0.1133</span></span>
+<span id="cb8-18"><a href="#cb8-18" tabindex="-1"></a><span class="co">#&gt; mean       0.7611 0.6574 0.0238  0.0798</span></span>
+<span id="cb8-19"><a href="#cb8-19" tabindex="-1"></a><span class="co">#&gt; sd         0.4362 0.2847 0.0084  0.3579</span></span>
+<span id="cb8-20"><a href="#cb8-20" tabindex="-1"></a><span class="co">#&gt; upbd       1.6159 1.2155 0.0403  0.7813</span></span>
+<span id="cb8-21"><a href="#cb8-21" tabindex="-1"></a><span class="co">#&gt; lwbd      -0.0938 0.0993 0.0074 -0.6216</span></span>
+<span id="cb8-22"><a href="#cb8-22" tabindex="-1"></a><span class="co">#&gt; upbd.quan  1.5272 1.2840 0.0370  0.7615</span></span>
+<span id="cb8-23"><a href="#cb8-23" tabindex="-1"></a><span class="co">#&gt; lwbd.quan  0.0240 0.1685 0.0093 -0.6276</span></span></code></pre></div>
+<p>The <span class="math inline">\(plot\)</span> function for the <span class="math inline">\(boot.mlma\)</span> objects works similarly for the
+<span class="math inline">\(mlma\)</span> objects but confidence
+intervals for estimations are added.</p>
+<div class="sourceCode" id="cb9"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb9-1"><a href="#cb9-1" tabindex="-1"></a><span class="fu">plot</span>(boot.e1)</span>
+<span id="cb9-2"><a href="#cb9-2" tabindex="-1"></a><span class="co">#&gt; Error in plot.new(): figure margins too large</span></span>
+<span id="cb9-3"><a href="#cb9-3" tabindex="-1"></a><span class="fu">plot</span>(boot.e1,<span class="at">var=</span><span class="st">&quot;m1&quot;</span>)</span>
+<span id="cb9-4"><a href="#cb9-4" tabindex="-1"></a><span class="co">#&gt; Error in plot.new(): figure margins too large</span></span>
+<span id="cb9-5"><a href="#cb9-5" tabindex="-1"></a><span class="fu">plot</span>(boot.e1,<span class="at">var=</span><span class="st">&quot;m2&quot;</span>)</span>
+<span id="cb9-6"><a href="#cb9-6" tabindex="-1"></a><span class="co">#&gt; Error in plot.new(): figure margins too large</span></span></code></pre></div>
 </div>
 <div id="references" class="section level2 unnumbered">
 <h2 class="unnumbered">References</h2>
 <div id="refs" class="references csl-bib-body hanging-indent">
 <div id="ref-Yu2020a" class="csl-entry">
-Yu, Qingzhao, and Bin Li. 2020. <span>“Third-Variable Effect Analysis with Multilevel Additive Models.”</span> <em>PLoS ONE</em> 15 (10). https://doi.org/<a href="https://doi.org/10.1371/journal.pone.0241072">https://doi.org/10.1371/journal.pone.0241072</a>.
+Yu, Qingzhao, and Bin Li. 2020. <span>“Third-Variable Effect Analysis
+with Multilevel Additive Models.”</span> <em>PLoS ONE</em> 15 (10).
+https://doi.org/<a href="https://doi.org/10.1371/journal.pone.0241072">https://doi.org/10.1371/journal.pone.0241072</a>.
 </div>
 <div id="ref-Yu2022" class="csl-entry">
-———. 2022. <em>Statistical Methods for Mediation, Confounding and Moderation Analysis Using r and SAS</em>. Chapman &amp; Hall/CRC. <a href="https://www.routledge.com/Statistical-Methods-for-Mediation-Confounding-and-Moderation-Analysis/Yu-Li/p/book/9780367365479">https://www.routledge.com/Statistical-Methods-for-Mediation-Confounding-and-Moderation-Analysis/Yu-Li/p/book/9780367365479</a>.
+———. 2022. <em>Statistical Methods for Mediation, Confounding and
+Moderation Analysis Using r and SAS</em>. Chapman &amp; Hall/CRC. <a href="https://www.routledge.com/Statistical-Methods-for-Mediation-Confounding-and-Moderation-Analysis/Yu-Li/p/book/9780367365479">https://www.routledge.com/Statistical-Methods-for-Mediation-Confounding-and-Moderation-Analysis/Yu-Li/p/book/9780367365479</a>.
 </div>
 <div id="ref-Yu2021" class="csl-entry">
-Yu, Qingzhao, Mandi Yu, J Zou, X Wu, SL Gomez, and Bin Li. 2021. <span>“Multilevel Mediation Analysis on Time-to-Event Outcomes - Exploring Racial/Ethnic Disparities in Breast Cancer Survival in California.”</span> <em>Research Methods in Medicine &amp; Health Sciences</em>. https://doi.org/<a href="https://doi.org/10.1177/26320843211061292">https://doi.org/10.1177/26320843211061292</a>.
+Yu, Qingzhao, Mandi Yu, J Zou, X Wu, SL Gomez, and Bin Li. 2021.
+<span>“Multilevel Mediation Analysis on Time-to-Event Outcomes -
+Exploring Racial/Ethnic Disparities in Breast Cancer Survival in
+California.”</span> <em>Research Methods in Medicine &amp; Health
+Sciences</em>. https://doi.org/<a href="https://doi.org/10.1177/26320843211061292">https://doi.org/10.1177/26320843211061292</a>.
 </div>
 </div>
 </div>

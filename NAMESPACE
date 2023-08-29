@@ -11,6 +11,7 @@ importFrom("graphics", "polygon", "barplot", "boxplot", "lines", "par", "plot")
 importFrom("stats", "D", "binomial", "rbinom", "glm", "lm", "predict", "qnorm",
            "quantile", "sd", "weighted.mean", "rmultinom", "rnorm", "scatter.smooth")
 importFrom("stats", "aggregate", "as.formula", "na.pass", "vcov")
+importFrom("stats", "na.exclude")
 S3method(summary,mlma.boot)
 S3method(print,summary.mlma.boot)
 S3method(plot,mlma.boot)

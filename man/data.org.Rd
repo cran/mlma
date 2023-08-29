@@ -8,13 +8,12 @@ Transform and Organize Data for Mediation Analysis
 To transform variables and generate data sets for mediation analysis.
 }
 \usage{
-data.org(x, m, levely=1,  y=NULL, levelx=NULL, xref=NULL, 
-         l1 = NULL, l2 = NULL, c1 = NULL, 
-         c1r = rep(1, length(c1)), c2 = NULL, 
-         c2r = rep(1, length(c2)), f01y = NULL, f10y = NULL, 
-         f02ky = NULL, f20ky = NULL, f01km1 = NULL, 
-         f01km2 = NULL, f10km = NULL,  
-         level = 1:nrow(as.matrix(x)), weight = NULL)
+data.org(x, m, levely = 1, y = NULL, levelx = NULL, xref =
+                    NULL, l1 = NULL, l2 = NULL, c1 = NULL, c1r = NULL, c2
+                    = NULL, c2r = NULL, f01y = NULL, f10y = NULL, f02ky =
+                    NULL, f20ky = NULL, f01km1 = NULL, f01km2 = NULL,
+                    f10km = NULL, level = 1:nrow(as.matrix(x)), weight =
+                    NULL)
 }
 %- maybe also 'usage' for other objects documented here.
 \arguments{
